@@ -20,32 +20,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// ../Shaku/lib/gfx/blend_modes.js
-var require_blend_modes = __commonJS({
-  "../Shaku/lib/gfx/blend_modes.js"(exports, module) {
-    "use strict";
-    var BlendModes2 = {
-      AlphaBlend: "alpha",
-      Opaque: "opaque",
-      Additive: "additive",
-      Multiply: "multiply",
-      Subtract: "subtract",
-      Screen: "screen",
-      Overlay: "overlay",
-      Invert: "invert",
-      Darken: "darken",
-      DestIn: "dest-in",
-      DestOut: "dest-out"
-    };
-    Object.defineProperty(BlendModes2, "_values", {
-      value: new Set(Object.values(BlendModes2)),
-      writable: false
-    });
-    Object.freeze(BlendModes2);
-    module.exports = BlendModes2;
-  }
-});
-
 // ../Shaku/lib/manager.js
 var require_manager = __commonJS({
   "../Shaku/lib/manager.js"(exports, module) {
@@ -65,459 +39,6 @@ var require_manager = __commonJS({
       }
     };
     module.exports = IManager;
-  }
-});
-
-// ../Shaku/lib/utils/math_helper.js
-var require_math_helper = __commonJS({
-  "../Shaku/lib/utils/math_helper.js"(exports, module) {
-    "use strict";
-    var _toRadsFactor = Math.PI / 180;
-    var _toDegreesFactor = 180 / Math.PI;
-    var MathHelper = class {
-      static lerp(start, end, amount) {
-        if (start === end) {
-          return end;
-        }
-        return (1 - amount) * start + amount * end;
-      }
-      static dot(x1, y1, x2, y2) {
-        return x1 * x2 + y1 * y2;
-      }
-      static toRadians(degrees) {
-        return degrees * _toRadsFactor;
-      }
-      static toDegrees(radians) {
-        return radians * _toDegreesFactor;
-      }
-      static radiansDistanceSigned(a1, a2) {
-        var max = Math.PI * 2;
-        var da = (a2 - a1) % max;
-        return 2 * da % max - da;
-      }
-      static radiansDistance(a1, a2) {
-        return Math.abs(this.radiansDistanceSigned(a1, a2));
-      }
-      static degreesDistanceSigned(a1, a2) {
-        let a1r = a1 * _toRadsFactor;
-        let a2r = a2 * _toRadsFactor;
-        let ret = this.radiansDistanceSigned(a1r, a2r);
-        return ret * _toDegreesFactor;
-      }
-      static degreesDistance(a1, a2) {
-        let a1r = a1 * _toRadsFactor;
-        let a2r = a2 * _toRadsFactor;
-        let ret = this.radiansDistance(a1r, a2r);
-        return ret * _toDegreesFactor;
-      }
-      static lerpRadians(a1, a2, alpha) {
-        if (a1 === a2) {
-          return a2;
-        }
-        return a1 + this.radiansDistanceSigned(a1, a2) * alpha;
-      }
-      static lerpDegrees(a1, a2, alpha) {
-        if (a1 === a2) {
-          return a2;
-        }
-        a1 = this.toRadians(a1);
-        a2 = this.toRadians(a2);
-        var ret = this.lerpRadians(a1, a2, alpha);
-        return this.toDegrees(ret);
-      }
-      static round10(num) {
-        return Math.round(num * 1e8) / 1e8;
-      }
-      static wrapDegrees(degrees) {
-        degrees = degrees % 360;
-        if (degrees < 0) {
-          degrees += 360;
-        }
-        return degrees;
-      }
-    };
-    MathHelper.PI2 = Math.PI * 2;
-    module.exports = MathHelper;
-  }
-});
-
-// ../Shaku/lib/utils/vector2.js
-var require_vector2 = __commonJS({
-  "../Shaku/lib/utils/vector2.js"(exports, module) {
-    "use strict";
-    var MathHelper = require_math_helper();
-    var Vector22 = class {
-      constructor(x = 0, y = 0) {
-        this.x = x;
-        this.y = y;
-      }
-      clone() {
-        return new Vector22(this.x, this.y);
-      }
-      set(x, y) {
-        this.x = x;
-        this.y = y;
-        return this;
-      }
-      copy(other) {
-        this.x = other.x;
-        this.y = other.y;
-        return this;
-      }
-      add(other) {
-        if (typeof other === "number") {
-          return new Vector22(this.x + other, this.y + (arguments[1] === void 0 ? other : arguments[1]));
-        }
-        return new Vector22(this.x + other.x, this.y + other.y);
-      }
-      sub(other) {
-        if (typeof other === "number") {
-          return new Vector22(this.x - other, this.y - (arguments[1] === void 0 ? other : arguments[1]));
-        }
-        return new Vector22(this.x - other.x, this.y - other.y);
-      }
-      div(other) {
-        if (typeof other === "number") {
-          return new Vector22(this.x / other, this.y / (arguments[1] === void 0 ? other : arguments[1]));
-        }
-        return new Vector22(this.x / other.x, this.y / other.y);
-      }
-      mul(other) {
-        if (typeof other === "number") {
-          return new Vector22(this.x * other, this.y * (arguments[1] === void 0 ? other : arguments[1]));
-        }
-        return new Vector22(this.x * other.x, this.y * other.y);
-      }
-      round() {
-        return new Vector22(Math.round(this.x), Math.round(this.y));
-      }
-      floor() {
-        return new Vector22(Math.floor(this.x), Math.floor(this.y));
-      }
-      ceil() {
-        return new Vector22(Math.ceil(this.x), Math.ceil(this.y));
-      }
-      normalized() {
-        if (this.x == 0 && this.y == 0) {
-          return Vector22.zero;
-        }
-        let mag = this.length;
-        return new Vector22(this.x / mag, this.y / mag);
-      }
-      rotatedRadians(radians) {
-        return Vector22.fromRadians(this.getRadians() + radians).mulSelf(this.length);
-      }
-      rotatedDegrees(degrees) {
-        return Vector22.fromDegree(this.getDegrees() + degrees).mulSelf(this.length);
-      }
-      addSelf(other) {
-        if (typeof other === "number") {
-          this.x += other;
-          this.y += arguments[1] === void 0 ? other : arguments[1];
-        } else {
-          this.x += other.x;
-          this.y += other.y;
-        }
-        return this;
-      }
-      subSelf(other) {
-        if (typeof other === "number") {
-          this.x -= other;
-          this.y -= arguments[1] === void 0 ? other : arguments[1];
-        } else {
-          this.x -= other.x;
-          this.y -= other.y;
-        }
-        return this;
-      }
-      divSelf(other) {
-        if (typeof other === "number") {
-          this.x /= other;
-          this.y /= arguments[1] === void 0 ? other : arguments[1];
-        } else {
-          this.x /= other.x;
-          this.y /= other.y;
-        }
-        return this;
-      }
-      mulSelf(other) {
-        if (typeof other === "number") {
-          this.x *= other;
-          this.y *= arguments[1] === void 0 ? other : arguments[1];
-        } else {
-          this.x *= other.x;
-          this.y *= other.y;
-        }
-        return this;
-      }
-      roundSelf() {
-        this.x = Math.round(this.x);
-        this.y = Math.round(this.y);
-        return this;
-      }
-      floorSelf() {
-        this.x = Math.floor(this.x);
-        this.y = Math.floor(this.y);
-        return this;
-      }
-      ceilSelf() {
-        this.x = Math.ceil(this.x);
-        this.y = Math.ceil(this.y);
-        return this;
-      }
-      normalizeSelf() {
-        if (this.x == 0 && this.y == 0) {
-          return this;
-        }
-        let mag = this.length;
-        this.x /= mag;
-        this.y /= mag;
-        return this;
-      }
-      equals(other) {
-        return this === other || other.constructor === this.constructor && this.x === other.x && this.y === other.y;
-      }
-      approximate(other, threshold) {
-        threshold = threshold || 1;
-        return this === other || Math.abs(this.x - other.x) <= threshold && Math.abs(this.y - other.y) <= threshold;
-      }
-      get length() {
-        return Math.sqrt(this.x * this.x + this.y * this.y);
-      }
-      scaled(fac) {
-        return new Vector22(this.x * fac, this.y * fac);
-      }
-      static get zero() {
-        return new Vector22();
-      }
-      static get one() {
-        return new Vector22(1, 1);
-      }
-      static get half() {
-        return new Vector22(0.5, 0.5);
-      }
-      static get left() {
-        return new Vector22(-1, 0);
-      }
-      static get right() {
-        return new Vector22(1, 0);
-      }
-      static get up() {
-        return new Vector22(0, -1);
-      }
-      static get down() {
-        return new Vector22(0, 1);
-      }
-      static get random() {
-        return Vector22.fromDegree(Math.random() * 360);
-      }
-      degreesTo(other) {
-        return Vector22.degreesBetween(this, other);
-      }
-      radiansTo(other) {
-        return Vector22.radiansBetween(this, other);
-      }
-      degreesToFull(other) {
-        return Vector22.degreesBetweenFull(this, other);
-      }
-      radiansToFull(other) {
-        return Vector22.radiansBetweenFull(this, other);
-      }
-      distanceTo(other) {
-        return Vector22.distance(this, other);
-      }
-      static fromDegree(degrees) {
-        let rads = degrees * (Math.PI / 180);
-        return new Vector22(Math.cos(rads), Math.sin(rads));
-      }
-      static fromRadians(radians) {
-        return new Vector22(Math.cos(radians), Math.sin(radians));
-      }
-      static lerp(p1, p2, a) {
-        let lerpScalar = MathHelper.lerp;
-        return new Vector22(lerpScalar(p1.x, p2.x, a), lerpScalar(p1.y, p2.y, a));
-      }
-      static degreesBetween(P1, P2) {
-        let deltaY = P2.y - P1.y, deltaX = P2.x - P1.x;
-        return Math.atan2(deltaY, deltaX) * (180 / Math.PI);
-      }
-      static radiansBetween(P1, P2) {
-        return MathHelper.toRadians(Vector22.degreesBetween(P1, P2));
-      }
-      static degreesBetweenFull(P1, P2) {
-        let temp = P2.sub(P1);
-        return temp.getDegrees();
-      }
-      getDegrees() {
-        var angle = Math.atan2(this.y, this.x);
-        var degrees = 180 * angle / Math.PI;
-        return (360 + Math.round(degrees)) % 360;
-      }
-      getRadians() {
-        var angle = Math.atan2(this.y, this.x);
-        return angle;
-      }
-      static radiansBetweenFull(P1, P2) {
-        return MathHelper.toRadians(Vector22.degreesBetweenFull(P1, P2));
-      }
-      static distance(p1, p2) {
-        let a = p1.x - p2.x;
-        let b = p1.y - p2.y;
-        return Math.sqrt(a * a + b * b);
-      }
-      static cross(p1, p2) {
-        return p1.x * p2.y - p1.y * p2.x;
-      }
-      static dot(p1, p2) {
-        return p1.x * p2.x + p1.y * p2.y;
-      }
-      string() {
-        return this.x + "," + this.y;
-      }
-      static parse(str) {
-        let parts = str.split(",");
-        return new Vector22(parseFloat(parts[0].trim()), parseFloat(parts[1].trim()));
-      }
-      toArray() {
-        return [this.x, this.y];
-      }
-      static fromArray(arr) {
-        return new Vector22(arr[0], arr[1]);
-      }
-      static fromDict(data) {
-        return new Vector22(data.x || 0, data.y || 0);
-      }
-      toDict(minimized) {
-        if (minimized) {
-          const ret = {};
-          if (this.x) {
-            ret.x = this.x;
-          }
-          if (this.y) {
-            ret.y = this.y;
-          }
-          return ret;
-        }
-        return { x: this.x, y: this.y };
-      }
-    };
-    module.exports = Vector22;
-  }
-});
-
-// ../Shaku/lib/input/key_codes.js
-var require_key_codes = __commonJS({
-  "../Shaku/lib/input/key_codes.js"(exports, module) {
-    "use strict";
-    var MouseButtons2 = {
-      left: 0,
-      middle: 1,
-      right: 2
-    };
-    var KeyboardKeys = {
-      backspace: 8,
-      tab: 9,
-      enter: 13,
-      shift: 16,
-      ctrl: 17,
-      alt: 18,
-      break: 19,
-      caps_lock: 20,
-      escape: 27,
-      page_up: 33,
-      page_down: 34,
-      end: 35,
-      home: 36,
-      left: 37,
-      up: 38,
-      right: 39,
-      down: 40,
-      insert: 45,
-      delete: 46,
-      space: 32,
-      n0: 48,
-      n1: 49,
-      n2: 50,
-      n3: 51,
-      n4: 52,
-      n5: 53,
-      n6: 54,
-      n7: 55,
-      n8: 56,
-      n9: 57,
-      a: 65,
-      b: 66,
-      c: 67,
-      d: 68,
-      e: 69,
-      f: 70,
-      g: 71,
-      h: 72,
-      i: 73,
-      j: 74,
-      k: 75,
-      l: 76,
-      m: 77,
-      n: 78,
-      o: 79,
-      p: 80,
-      q: 81,
-      r: 82,
-      s: 83,
-      t: 84,
-      u: 85,
-      v: 86,
-      w: 87,
-      x: 88,
-      y: 89,
-      z: 90,
-      left_window_key: 91,
-      right_window_key: 92,
-      select_key: 93,
-      numpad_0: 96,
-      numpad_1: 97,
-      numpad_2: 98,
-      numpad_3: 99,
-      numpad_4: 100,
-      numpad_5: 101,
-      numpad_6: 102,
-      numpad_7: 103,
-      numpad_8: 104,
-      numpad_9: 105,
-      multiply: 106,
-      add: 107,
-      subtract: 109,
-      decimal_point: 110,
-      divide: 111,
-      f1: 112,
-      f2: 113,
-      f3: 114,
-      f4: 115,
-      f5: 116,
-      f6: 117,
-      f7: 118,
-      f8: 119,
-      f9: 120,
-      f10: 121,
-      f11: 122,
-      f12: 123,
-      numlock: 144,
-      scroll_lock: 145,
-      semicolon: 186,
-      equal_sign: 187,
-      plus: 187,
-      comma: 188,
-      dash: 189,
-      minus: 189,
-      period: 190,
-      forward_slash: 191,
-      grave_accent: 192,
-      open_bracket: 219,
-      back_slash: 220,
-      close_braket: 221,
-      single_quote: 222
-    };
-    module.exports = { KeyboardKeys, MouseButtons: MouseButtons2 };
   }
 });
 
@@ -586,405 +107,6 @@ var require_logger = __commonJS({
         return this;
       }
     };
-  }
-});
-
-// ../Shaku/lib/input/input.js
-var require_input = __commonJS({
-  "../Shaku/lib/input/input.js"(exports, module) {
-    "use strict";
-    var IManager = require_manager();
-    var Vector22 = require_vector2();
-    var { MouseButtons: MouseButtons2, KeyboardKeys } = require_key_codes();
-    var _logger = require_logger().getLogger("input");
-    var Input = class extends IManager {
-      constructor() {
-        super();
-        this._callbacks = null;
-        this._targetElement = window;
-        this.MouseButtons = MouseButtons2;
-        this.KeyboardKeys = KeyboardKeys;
-        this.preventDefaults = false;
-        this.enableMouseDeltaWhileMouseWheelDown = true;
-        this.disableContextMenu = true;
-        this.resetOnFocusLoss = true;
-        this._resetAll();
-      }
-      setup() {
-        return new Promise((resolve, reject2) => {
-          _logger.info("Setup input manager..");
-          if (typeof this._targetElement === "function") {
-            this._targetElement = this._targetElement();
-            if (!this._targetElement) {
-              throw new Error("Input target element was set to be a method, but the returned value was invalid!");
-            }
-          }
-          let element = this._targetElement;
-          if (element.tabIndex === -1 || element.tabIndex === void 0) {
-            element.tabIndex = 1e3;
-          }
-          window.setTimeout(() => element.focus(), 0);
-          var _this = this;
-          this._callbacks = {
-            "mousedown": function(event2) {
-              _this._onMouseDown(event2);
-              if (this.preventDefaults)
-                event2.preventDefault();
-            },
-            "mouseup": function(event2) {
-              _this._onMouseUp(event2);
-              if (this.preventDefaults)
-                event2.preventDefault();
-            },
-            "mousemove": function(event2) {
-              _this._onMouseMove(event2);
-              if (this.preventDefaults)
-                event2.preventDefault();
-            },
-            "keydown": function(event2) {
-              _this._onKeyDown(event2);
-              if (this.preventDefaults)
-                event2.preventDefault();
-            },
-            "keyup": function(event2) {
-              _this._onKeyUp(event2);
-              if (this.preventDefaults)
-                event2.preventDefault();
-            },
-            "blur": function(event2) {
-              _this._onBlur(event2);
-              if (this.preventDefaults)
-                event2.preventDefault();
-            },
-            "wheel": function(event2) {
-              _this._onMouseWheel(event2);
-            },
-            "touchstart": function(event2) {
-              _this._onTouchStart(event2);
-              if (this.preventDefaults)
-                event2.preventDefault();
-            },
-            "touchend": function(event2) {
-              _this._onMouseUp(event2);
-              if (this.preventDefaults)
-                event2.preventDefault();
-            },
-            "touchmove": function(event2) {
-              _this._onTouchMove(event2);
-              if (this.preventDefaults)
-                event2.preventDefault();
-            },
-            "contextmenu": function(event2) {
-              if (_this.disableContextMenu) {
-                event2.preventDefault();
-              }
-            }
-          };
-          this._resetAll();
-          for (var event in this._callbacks) {
-            element.addEventListener(event, this._callbacks[event], false);
-          }
-          if (element !== window) {
-            window.addEventListener("mouseup", this._callbacks["mouseup"], false);
-            window.addEventListener("touchend", this._callbacks["touchend"], false);
-          }
-          resolve();
-        });
-      }
-      startFrame() {
-      }
-      destroy() {
-        if (this._callbacks) {
-          let element = this._targetElement;
-          for (var event in this._callbacks) {
-            element.removeEventListener(event, this._callbacks[event]);
-          }
-          if (element !== window) {
-            window.removeEventListener("mouseup", this._callbacks["mouseup"], false);
-            window.removeEventListener("touchend", this._callbacks["touchend"], false);
-          }
-          this._callbacks = null;
-        }
-      }
-      setTargetElement(element) {
-        if (this._callbacks) {
-          throw new Error("'setTargetElement() must be called before initializing the input manager!");
-        }
-        this._targetElement = element;
-      }
-      _resetAll() {
-        this._mousePos = new Vector22();
-        this._mousePrevPos = new Vector22();
-        this._mouseState = {};
-        this._mousePrevState = {};
-        this._mouseWheel = 0;
-        this._keyboardState = {};
-        this._keyboardPrevState = {};
-        this._touchStarted = false;
-      }
-      get mousePosition() {
-        return this._mousePos.clone();
-      }
-      get prevMousePosition() {
-        return (this._mousePrevPos || this._mousePos).clone();
-      }
-      get mouseDelta() {
-        if (!this._mousePrevPos) {
-          return Vector22.zero;
-        }
-        return new Vector22(this._mousePos.x - this._mousePrevPos.x, this._mousePos.y - this._mousePrevPos.y);
-      }
-      get mouseMoving() {
-        return this._mousePrevPos && !this._mousePrevPos.equals(this._mousePos);
-      }
-      mousePressed(button = 0) {
-        if (button === void 0)
-          throw new Error("Invalid button code!");
-        return Boolean(this._mouseState[button] && !this._mousePrevState[button]);
-      }
-      mouseDown(button = 0) {
-        if (button === void 0)
-          throw new Error("Invalid button code!");
-        return Boolean(this._mouseState[button]);
-      }
-      mouseUp(button = 0) {
-        if (button === void 0)
-          throw new Error("Invalid button code!");
-        return Boolean(!this.mouseDown(button));
-      }
-      mouseReleased(button = 0) {
-        if (button === void 0)
-          throw new Error("Invalid button code!");
-        return Boolean(!this._mouseState[button] && this._mousePrevState[button]);
-      }
-      keyDown(key) {
-        if (key === void 0)
-          throw new Error("Invalid key code!");
-        return Boolean(this._keyboardState[key]);
-      }
-      keyUp(key) {
-        if (key === void 0)
-          throw new Error("Invalid key code!");
-        return Boolean(!this.keyDown(key));
-      }
-      keyReleased(key) {
-        if (key === void 0)
-          throw new Error("Invalid key code!");
-        return Boolean(!this._keyboardState[key] && this._keyboardPrevState[key]);
-      }
-      keyPressed(key) {
-        if (key === void 0)
-          throw new Error("Invalid key code!");
-        return Boolean(this._keyboardState[key] && !this._keyboardPrevState[key]);
-      }
-      get shiftDown() {
-        return Boolean(this.keyDown(this.KeyboardKeys.shift));
-      }
-      get ctrlDown() {
-        return Boolean(this.keyDown(this.KeyboardKeys.ctrl));
-      }
-      get altDown() {
-        return Boolean(this.keyDown(this.KeyboardKeys.alt));
-      }
-      get anyKeyPressed() {
-        for (var key in this._keyboardState) {
-          if (this._keyboardState[key] && !this._keyboardPrevState[key]) {
-            return true;
-          }
-        }
-        return false;
-      }
-      get anyKeyDown() {
-        for (var key in this._keyboardState) {
-          if (this._keyboardState[key]) {
-            return true;
-          }
-        }
-        return false;
-      }
-      get anyMouseButtonPressed() {
-        for (var key in this._mouseState) {
-          if (this._mouseState[key] && !this._mousePrevState[key]) {
-            return true;
-          }
-        }
-        return false;
-      }
-      get anyMouseButtonDown() {
-        for (var key in this._mouseState) {
-          if (this._mouseState[key]) {
-            return true;
-          }
-        }
-        return false;
-      }
-      _getValueWithCode(code, mouseCheck, keyboardCheck) {
-        code = String(code);
-        if (code.indexOf("mouse_") === 0) {
-          var codename = code.split("_")[1];
-          return mouseCheck.call(this, this.MouseButtons[codename]);
-        }
-        if (!isNaN(parseInt(code)) && code.length === 1) {
-          code = "n" + code;
-        }
-        return keyboardCheck.call(this, this.KeyboardKeys[code]);
-      }
-      down(code) {
-        if (!(code instanceof Array)) {
-          code = [code];
-        }
-        for (let c of code) {
-          if (Boolean(this._getValueWithCode(c, this.mouseDown, this.keyDown))) {
-            return true;
-          }
-        }
-        return false;
-      }
-      released(code) {
-        if (!(code instanceof Array)) {
-          code = [code];
-        }
-        for (let c of code) {
-          if (Boolean(this._getValueWithCode(c, this.mouseReleased, this.keyReleased))) {
-            return true;
-          }
-        }
-        return false;
-      }
-      pressed(code) {
-        if (!(code instanceof Array)) {
-          code = [code];
-        }
-        for (let c of code) {
-          if (Boolean(this._getValueWithCode(c, this.mousePressed, this.keyPressed))) {
-            return true;
-          }
-        }
-        return false;
-      }
-      get mouseWheelSign() {
-        return Math.sign(this._mouseWheel);
-      }
-      get mouseWheel() {
-        return this._mouseWheel;
-      }
-      endFrame() {
-        this._mousePrevPos = this._mousePos.clone();
-        this._keyboardPrevState = {};
-        for (var key in this._keyboardState) {
-          this._keyboardPrevState[key] = this._keyboardState[key];
-        }
-        this._mousePrevState = {};
-        for (var key in this._mouseState) {
-          this._mousePrevState[key] = this._mouseState[key];
-        }
-        if (this._touchStarted) {
-          this._mouseState[this.MouseButtons.left] = true;
-          this._touchStarted = false;
-        }
-        this._mouseWheel = 0;
-      }
-      _getKeyboardKeyCode(event) {
-        event = this._getEvent(event);
-        return event.keyCode !== void 0 ? event.keyCode : event.key.charCodeAt(0);
-      }
-      _onBlur(event) {
-        if (this.resetOnFocusLoss) {
-          this._resetAll();
-        }
-      }
-      _onMouseWheel(event) {
-        this._mouseWheel = event.deltaY;
-      }
-      _onKeyDown(event) {
-        var keycode = this._getKeyboardKeyCode(event);
-        this._keyboardState[keycode] = true;
-      }
-      _onKeyUp(event) {
-        var keycode = this._getKeyboardKeyCode(event);
-        this._keyboardState[keycode || 0] = false;
-      }
-      _onTouchStart(event) {
-        var touches = event.changedTouches;
-        if (touches && touches.length) {
-          var touch = touches[0];
-          var x = touch.pageX || touch.offsetX || touch.clientX;
-          var y = touch.pageY || touch.offsetY || touch.clientY;
-          if (x !== void 0 && y !== void 0) {
-            this._mousePos.x = x;
-            this._mousePos.y = y;
-            this._normalizeMousePos();
-          }
-        }
-        this._touchStarted = true;
-      }
-      _onMouseDown(event) {
-        event = this._getEvent(event);
-        if (this.enableMouseDeltaWhileMouseWheelDown && event.button === this.MouseButtons.middle) {
-          event.preventDefault();
-        }
-        this._mouseState[event.button || 0] = true;
-      }
-      _onMouseUp(event) {
-        event = this._getEvent(event);
-        this._mouseState[event.button || 0] = false;
-      }
-      _onTouchMove(event) {
-        event = this._getEvent(event);
-        this._mousePos.x = event.touches[0].pageX;
-        this._mousePos.y = event.touches[0].pageY;
-        this._normalizeMousePos();
-      }
-      _onMouseMove(event) {
-        event = this._getEvent(event);
-        var pageX = event.clientX;
-        if (pageX === void 0) {
-          pageX = event.x;
-        }
-        if (pageX === void 0) {
-          pageX = event.offsetX;
-        }
-        if (pageX === void 0) {
-          pageX = event.pageX;
-        }
-        var pageY = event.clientY;
-        if (pageY === void 0) {
-          pageY = event.y;
-        }
-        if (pageY === void 0) {
-          pageY = event.offsetY;
-        }
-        if (pageY === void 0) {
-          pageY = event.pageY;
-        }
-        if (pageX === void 0) {
-          pageX = event.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
-          pageY = event.clientY + document.body.scrollTop + document.documentElement.scrollTop;
-        }
-        this._mousePos.x = pageX;
-        this._mousePos.y = pageY;
-        this._normalizeMousePos();
-      }
-      _normalizeMousePos() {
-        if (this._targetElement && this._targetElement.getBoundingClientRect) {
-          var rect = this._targetElement.getBoundingClientRect();
-          this._mousePos.x -= rect.left;
-          this._mousePos.y -= rect.top;
-        }
-      }
-      _getEvent(event) {
-        return event || window.event;
-      }
-    };
-    module.exports = new Input();
-  }
-});
-
-// ../Shaku/lib/input/index.js
-var require_input2 = __commonJS({
-  "../Shaku/lib/input/index.js"(exports, module) {
-    "use strict";
-    module.exports = require_input();
   }
 });
 
@@ -1380,6 +502,79 @@ var require_sfx2 = __commonJS({
   }
 });
 
+// ../Shaku/lib/utils/math_helper.js
+var require_math_helper = __commonJS({
+  "../Shaku/lib/utils/math_helper.js"(exports, module) {
+    "use strict";
+    var _toRadsFactor = Math.PI / 180;
+    var _toDegreesFactor = 180 / Math.PI;
+    var MathHelper = class {
+      static lerp(start, end, amount) {
+        if (start === end) {
+          return end;
+        }
+        return (1 - amount) * start + amount * end;
+      }
+      static dot(x1, y1, x2, y2) {
+        return x1 * x2 + y1 * y2;
+      }
+      static toRadians(degrees) {
+        return degrees * _toRadsFactor;
+      }
+      static toDegrees(radians) {
+        return radians * _toDegreesFactor;
+      }
+      static radiansDistanceSigned(a1, a2) {
+        var max = Math.PI * 2;
+        var da = (a2 - a1) % max;
+        return 2 * da % max - da;
+      }
+      static radiansDistance(a1, a2) {
+        return Math.abs(this.radiansDistanceSigned(a1, a2));
+      }
+      static degreesDistanceSigned(a1, a2) {
+        let a1r = a1 * _toRadsFactor;
+        let a2r = a2 * _toRadsFactor;
+        let ret = this.radiansDistanceSigned(a1r, a2r);
+        return ret * _toDegreesFactor;
+      }
+      static degreesDistance(a1, a2) {
+        let a1r = a1 * _toRadsFactor;
+        let a2r = a2 * _toRadsFactor;
+        let ret = this.radiansDistance(a1r, a2r);
+        return ret * _toDegreesFactor;
+      }
+      static lerpRadians(a1, a2, alpha) {
+        if (a1 === a2) {
+          return a2;
+        }
+        return a1 + this.radiansDistanceSigned(a1, a2) * alpha;
+      }
+      static lerpDegrees(a1, a2, alpha) {
+        if (a1 === a2) {
+          return a2;
+        }
+        a1 = this.toRadians(a1);
+        a2 = this.toRadians(a2);
+        var ret = this.lerpRadians(a1, a2, alpha);
+        return this.toDegrees(ret);
+      }
+      static round10(num) {
+        return Math.round(num * 1e8) / 1e8;
+      }
+      static wrapDegrees(degrees) {
+        degrees = degrees % 360;
+        if (degrees < 0) {
+          degrees += 360;
+        }
+        return degrees;
+      }
+    };
+    MathHelper.PI2 = Math.PI * 2;
+    module.exports = MathHelper;
+  }
+});
+
 // ../Shaku/lib/utils/color.js
 var require_color = __commonJS({
   "../Shaku/lib/utils/color.js"(exports, module) {
@@ -1729,6 +924,296 @@ var require_color = __commonJS({
       return new Color2(components.r, components.g, components.b, 1);
     }
     module.exports = Color2;
+  }
+});
+
+// ../Shaku/lib/gfx/blend_modes.js
+var require_blend_modes = __commonJS({
+  "../Shaku/lib/gfx/blend_modes.js"(exports, module) {
+    "use strict";
+    var BlendModes2 = {
+      AlphaBlend: "alpha",
+      Opaque: "opaque",
+      Additive: "additive",
+      Multiply: "multiply",
+      Subtract: "subtract",
+      Screen: "screen",
+      Overlay: "overlay",
+      Invert: "invert",
+      Darken: "darken",
+      DestIn: "dest-in",
+      DestOut: "dest-out"
+    };
+    Object.defineProperty(BlendModes2, "_values", {
+      value: new Set(Object.values(BlendModes2)),
+      writable: false
+    });
+    Object.freeze(BlendModes2);
+    module.exports = { BlendModes: BlendModes2 };
+  }
+});
+
+// ../Shaku/lib/utils/vector2.js
+var require_vector2 = __commonJS({
+  "../Shaku/lib/utils/vector2.js"(exports, module) {
+    "use strict";
+    var MathHelper = require_math_helper();
+    var Vector22 = class {
+      constructor(x = 0, y = 0) {
+        this.x = x;
+        this.y = y;
+      }
+      clone() {
+        return new Vector22(this.x, this.y);
+      }
+      set(x, y) {
+        this.x = x;
+        this.y = y;
+        return this;
+      }
+      copy(other) {
+        this.x = other.x;
+        this.y = other.y;
+        return this;
+      }
+      add(other) {
+        if (typeof other === "number") {
+          return new Vector22(this.x + other, this.y + (arguments[1] === void 0 ? other : arguments[1]));
+        }
+        return new Vector22(this.x + other.x, this.y + other.y);
+      }
+      sub(other) {
+        if (typeof other === "number") {
+          return new Vector22(this.x - other, this.y - (arguments[1] === void 0 ? other : arguments[1]));
+        }
+        return new Vector22(this.x - other.x, this.y - other.y);
+      }
+      div(other) {
+        if (typeof other === "number") {
+          return new Vector22(this.x / other, this.y / (arguments[1] === void 0 ? other : arguments[1]));
+        }
+        return new Vector22(this.x / other.x, this.y / other.y);
+      }
+      mul(other) {
+        if (typeof other === "number") {
+          return new Vector22(this.x * other, this.y * (arguments[1] === void 0 ? other : arguments[1]));
+        }
+        return new Vector22(this.x * other.x, this.y * other.y);
+      }
+      round() {
+        return new Vector22(Math.round(this.x), Math.round(this.y));
+      }
+      floor() {
+        return new Vector22(Math.floor(this.x), Math.floor(this.y));
+      }
+      ceil() {
+        return new Vector22(Math.ceil(this.x), Math.ceil(this.y));
+      }
+      normalized() {
+        if (this.x == 0 && this.y == 0) {
+          return Vector22.zero;
+        }
+        let mag = this.length;
+        return new Vector22(this.x / mag, this.y / mag);
+      }
+      rotatedRadians(radians) {
+        return Vector22.fromRadians(this.getRadians() + radians).mulSelf(this.length);
+      }
+      rotatedDegrees(degrees) {
+        return Vector22.fromDegree(this.getDegrees() + degrees).mulSelf(this.length);
+      }
+      addSelf(other) {
+        if (typeof other === "number") {
+          this.x += other;
+          this.y += arguments[1] === void 0 ? other : arguments[1];
+        } else {
+          this.x += other.x;
+          this.y += other.y;
+        }
+        return this;
+      }
+      subSelf(other) {
+        if (typeof other === "number") {
+          this.x -= other;
+          this.y -= arguments[1] === void 0 ? other : arguments[1];
+        } else {
+          this.x -= other.x;
+          this.y -= other.y;
+        }
+        return this;
+      }
+      divSelf(other) {
+        if (typeof other === "number") {
+          this.x /= other;
+          this.y /= arguments[1] === void 0 ? other : arguments[1];
+        } else {
+          this.x /= other.x;
+          this.y /= other.y;
+        }
+        return this;
+      }
+      mulSelf(other) {
+        if (typeof other === "number") {
+          this.x *= other;
+          this.y *= arguments[1] === void 0 ? other : arguments[1];
+        } else {
+          this.x *= other.x;
+          this.y *= other.y;
+        }
+        return this;
+      }
+      roundSelf() {
+        this.x = Math.round(this.x);
+        this.y = Math.round(this.y);
+        return this;
+      }
+      floorSelf() {
+        this.x = Math.floor(this.x);
+        this.y = Math.floor(this.y);
+        return this;
+      }
+      ceilSelf() {
+        this.x = Math.ceil(this.x);
+        this.y = Math.ceil(this.y);
+        return this;
+      }
+      normalizeSelf() {
+        if (this.x == 0 && this.y == 0) {
+          return this;
+        }
+        let mag = this.length;
+        this.x /= mag;
+        this.y /= mag;
+        return this;
+      }
+      equals(other) {
+        return this === other || other.constructor === this.constructor && this.x === other.x && this.y === other.y;
+      }
+      approximate(other, threshold) {
+        threshold = threshold || 1;
+        return this === other || Math.abs(this.x - other.x) <= threshold && Math.abs(this.y - other.y) <= threshold;
+      }
+      get length() {
+        return Math.sqrt(this.x * this.x + this.y * this.y);
+      }
+      scaled(fac) {
+        return new Vector22(this.x * fac, this.y * fac);
+      }
+      static get zero() {
+        return new Vector22();
+      }
+      static get one() {
+        return new Vector22(1, 1);
+      }
+      static get half() {
+        return new Vector22(0.5, 0.5);
+      }
+      static get left() {
+        return new Vector22(-1, 0);
+      }
+      static get right() {
+        return new Vector22(1, 0);
+      }
+      static get up() {
+        return new Vector22(0, -1);
+      }
+      static get down() {
+        return new Vector22(0, 1);
+      }
+      static get random() {
+        return Vector22.fromDegree(Math.random() * 360);
+      }
+      degreesTo(other) {
+        return Vector22.degreesBetween(this, other);
+      }
+      radiansTo(other) {
+        return Vector22.radiansBetween(this, other);
+      }
+      degreesToFull(other) {
+        return Vector22.degreesBetweenFull(this, other);
+      }
+      radiansToFull(other) {
+        return Vector22.radiansBetweenFull(this, other);
+      }
+      distanceTo(other) {
+        return Vector22.distance(this, other);
+      }
+      static fromDegree(degrees) {
+        let rads = degrees * (Math.PI / 180);
+        return new Vector22(Math.cos(rads), Math.sin(rads));
+      }
+      static fromRadians(radians) {
+        return new Vector22(Math.cos(radians), Math.sin(radians));
+      }
+      static lerp(p1, p2, a) {
+        let lerpScalar = MathHelper.lerp;
+        return new Vector22(lerpScalar(p1.x, p2.x, a), lerpScalar(p1.y, p2.y, a));
+      }
+      static degreesBetween(P1, P2) {
+        let deltaY = P2.y - P1.y, deltaX = P2.x - P1.x;
+        return Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+      }
+      static radiansBetween(P1, P2) {
+        return MathHelper.toRadians(Vector22.degreesBetween(P1, P2));
+      }
+      static degreesBetweenFull(P1, P2) {
+        let temp = P2.sub(P1);
+        return temp.getDegrees();
+      }
+      getDegrees() {
+        var angle = Math.atan2(this.y, this.x);
+        var degrees = 180 * angle / Math.PI;
+        return (360 + Math.round(degrees)) % 360;
+      }
+      getRadians() {
+        var angle = Math.atan2(this.y, this.x);
+        return angle;
+      }
+      static radiansBetweenFull(P1, P2) {
+        return MathHelper.toRadians(Vector22.degreesBetweenFull(P1, P2));
+      }
+      static distance(p1, p2) {
+        let a = p1.x - p2.x;
+        let b = p1.y - p2.y;
+        return Math.sqrt(a * a + b * b);
+      }
+      static cross(p1, p2) {
+        return p1.x * p2.y - p1.y * p2.x;
+      }
+      static dot(p1, p2) {
+        return p1.x * p2.x + p1.y * p2.y;
+      }
+      string() {
+        return this.x + "," + this.y;
+      }
+      static parse(str) {
+        let parts = str.split(",");
+        return new Vector22(parseFloat(parts[0].trim()), parseFloat(parts[1].trim()));
+      }
+      toArray() {
+        return [this.x, this.y];
+      }
+      static fromArray(arr) {
+        return new Vector22(arr[0], arr[1]);
+      }
+      static fromDict(data) {
+        return new Vector22(data.x || 0, data.y || 0);
+      }
+      toDict(minimized) {
+        if (minimized) {
+          const ret = {};
+          if (this.x) {
+            ret.x = this.x;
+          }
+          if (this.y) {
+            ret.y = this.y;
+          }
+          return ret;
+        }
+        return { x: this.x, y: this.y };
+      }
+    };
+    module.exports = Vector22;
   }
 });
 
@@ -2113,7 +1598,7 @@ var require_texture_filter_modes = __commonJS({
       writable: false
     });
     Object.freeze(TextureFilterModes);
-    module.exports = TextureFilterModes;
+    module.exports = { TextureFilterModes };
   }
 });
 
@@ -2131,7 +1616,7 @@ var require_texture_wrap_modes = __commonJS({
       writable: false
     });
     Object.freeze(TextureWrapModes);
-    module.exports = TextureWrapModes;
+    module.exports = { TextureWrapModes };
   }
 });
 
@@ -4272,8 +3757,8 @@ var require_effect = __commonJS({
     var TextureAsset = require_texture_asset();
     var Color2 = require_color();
     var Rectangle2 = require_rectangle();
-    var TextureFilterModes = require_texture_filter_modes();
-    var TextureWrapModes = require_texture_wrap_modes();
+    var { TextureFilterMode, TextureFilterModes } = require_texture_filter_modes();
+    var { TextureWrapMode, TextureWrapModes } = require_texture_wrap_modes();
     var Matrix = require_matrix();
     var _logger = require_logger().getLogger("gfx-effect");
     var Effect = class {
@@ -4595,10 +4080,10 @@ var require_effect = __commonJS({
         wrapY = wrapX;
       }
       if (!TextureWrapModes._values.has(wrapX)) {
-        throw new Error("Invalid texture wrap mode! Please pick a value from 'WrapModes'.");
+        throw new Error("Invalid texture wrap mode! Please pick a value from 'TextureWrapModes'.");
       }
       if (!TextureWrapModes._values.has(wrapY)) {
-        throw new Error("Invalid texture wrap mode! Please pick a value from 'WrapModes'.");
+        throw new Error("Invalid texture wrap mode! Please pick a value from 'TextureWrapModes'.");
       }
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl[wrapX]);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl[wrapY]);
@@ -4922,7 +4407,7 @@ var require_sprite = __commonJS({
     var Rectangle2 = require_rectangle();
     var Vector22 = require_vector2();
     var Vector32 = require_vector3();
-    var BlendModes2 = require_blend_modes();
+    var { BlendMode, BlendModes: BlendModes2 } = require_blend_modes();
     var Sprite = class {
       constructor(texture, sourceRect) {
         this.texture = texture;
@@ -5396,13 +4881,13 @@ var require_msdf_font_texture_asset = __commonJS({
 var require_text_alignment = __commonJS({
   "../Shaku/lib/gfx/text_alignment.js"(exports, module) {
     "use strict";
-    var TextAlignment = {
+    var TextAlignments = {
       Left: "left",
       Right: "right",
       Center: "center"
     };
-    Object.freeze(TextAlignment);
-    module.exports = TextAlignment;
+    Object.freeze(TextAlignments);
+    module.exports = { TextAlignments };
   }
 });
 
@@ -5413,7 +4898,7 @@ var require_sprite_batch = __commonJS({
     var { Rectangle: Rectangle2, Color: Color2 } = require_utils();
     var Vector22 = require_vector2();
     var Vertex = require_vertex();
-    var BlendModes2 = require_blend_modes();
+    var { BlendModes: BlendModes2 } = require_blend_modes();
     var Matrix = require_matrix();
     var Mesh = require_mesh();
     var _logger = require_logger().getLogger("gfx");
@@ -5742,12 +5227,12 @@ var require_gfx = __commonJS({
     "use strict";
     var IManager = require_manager();
     var Color2 = require_color();
-    var BlendModes2 = require_blend_modes();
+    var { BlendMode, BlendModes: BlendModes2 } = require_blend_modes();
     var Rectangle2 = require_rectangle();
     var { Effect, BasicEffect, MsdfFontEffect } = require_effects();
     var TextureAsset = require_texture_asset();
-    var TextureFilterModes = require_texture_filter_modes();
-    var TextureWrapModes = require_texture_wrap_modes();
+    var { TextureFilterMode, TextureFilterModes } = require_texture_filter_modes();
+    var { TextureWrapMode, TextureWrapModes } = require_texture_wrap_modes();
     var MeshGenerator = require_mesh_generator();
     var Matrix = require_matrix();
     var Camera = require_camera();
@@ -5756,7 +5241,7 @@ var require_gfx = __commonJS({
     var Vector22 = require_vector2();
     var FontTextureAsset = require_font_texture_asset();
     var MsdfFontTextureAsset = require_msdf_font_texture_asset();
-    var TextAlignment = require_text_alignment();
+    var { TextAlignment, TextAlignments } = require_text_alignment();
     var Mesh = require_mesh();
     var Circle = require_circle();
     var SpriteBatch = require_sprite_batch();
@@ -5830,8 +5315,8 @@ var require_gfx = __commonJS({
       get Vertex() {
         return Vertex;
       }
-      get TextAlignment() {
-        return TextAlignment;
+      get TextAlignments() {
+        return TextAlignments;
       }
       createCamera(withViewport) {
         let ret = new Camera(this);
@@ -6041,7 +5526,7 @@ var require_gfx = __commonJS({
         if (!fontTexture || !fontTexture.valid) {
           throw new Error("Font texture is invalid!");
         }
-        alignment = alignment || TextAlignment.Left;
+        alignment = alignment || TextAlignments.Left;
         color = color || Color2.black;
         fontSize = fontSize || fontTexture.fontSize;
         marginFactor = marginFactor || Vector22.one;
@@ -6052,10 +5537,10 @@ var require_gfx = __commonJS({
         function breakLine() {
           let offsetX = 0;
           switch (alignment) {
-            case TextAlignment.Right:
+            case TextAlignments.Right:
               offsetX = -lineWidth;
               break;
-            case TextAlignment.Center:
+            case TextAlignments.Center:
               offsetX = -lineWidth / 2;
               break;
           }
@@ -6151,6 +5636,8 @@ var require_gfx = __commonJS({
           return;
         }
         this.__startDrawingSprites(this._activeEffect, null);
+        console.log("in problematic line, blendMode is: ", blendMode);
+        console.log("in problematic line, BlendModes.AlphaBlend is: ", BlendModes2.AlphaBlend);
         this._setBlendMode(blendMode || BlendModes2.AlphaBlend);
         this.spritesBatch.setTexture(texture);
         this.spritesBatch.pushVertices(vertices);
@@ -6463,10 +5950,10 @@ var require_gfx = __commonJS({
           wrapY = wrapX;
         }
         if (!TextureWrapModes._values.has(wrapX)) {
-          throw new Error("Invalid texture wrap mode! Please pick a value from 'WrapModes'.");
+          throw new Error("Invalid texture wrap mode! Please pick a value from 'TextureWrapModes'.");
         }
         if (!TextureWrapModes._values.has(wrapY)) {
-          throw new Error("Invalid texture wrap mode! Please pick a value from 'WrapModes'.");
+          throw new Error("Invalid texture wrap mode! Please pick a value from 'TextureWrapModes'.");
         }
         this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_S, this._gl[wrapX]);
         this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_T, this._gl[wrapY]);
@@ -6580,6 +6067,521 @@ var require_gfx2 = __commonJS({
   "../Shaku/lib/gfx/index.js"(exports, module) {
     "use strict";
     module.exports = require_gfx();
+  }
+});
+
+// ../Shaku/lib/input/key_codes.js
+var require_key_codes = __commonJS({
+  "../Shaku/lib/input/key_codes.js"(exports, module) {
+    "use strict";
+    var MouseButtons2 = {
+      left: 0,
+      middle: 1,
+      right: 2
+    };
+    var KeyboardKeys2 = {
+      backspace: 8,
+      tab: 9,
+      enter: 13,
+      shift: 16,
+      ctrl: 17,
+      alt: 18,
+      break: 19,
+      caps_lock: 20,
+      escape: 27,
+      page_up: 33,
+      page_down: 34,
+      end: 35,
+      home: 36,
+      left: 37,
+      up: 38,
+      right: 39,
+      down: 40,
+      insert: 45,
+      delete: 46,
+      space: 32,
+      n0: 48,
+      n1: 49,
+      n2: 50,
+      n3: 51,
+      n4: 52,
+      n5: 53,
+      n6: 54,
+      n7: 55,
+      n8: 56,
+      n9: 57,
+      a: 65,
+      b: 66,
+      c: 67,
+      d: 68,
+      e: 69,
+      f: 70,
+      g: 71,
+      h: 72,
+      i: 73,
+      j: 74,
+      k: 75,
+      l: 76,
+      m: 77,
+      n: 78,
+      o: 79,
+      p: 80,
+      q: 81,
+      r: 82,
+      s: 83,
+      t: 84,
+      u: 85,
+      v: 86,
+      w: 87,
+      x: 88,
+      y: 89,
+      z: 90,
+      left_window_key: 91,
+      right_window_key: 92,
+      select_key: 93,
+      numpad_0: 96,
+      numpad_1: 97,
+      numpad_2: 98,
+      numpad_3: 99,
+      numpad_4: 100,
+      numpad_5: 101,
+      numpad_6: 102,
+      numpad_7: 103,
+      numpad_8: 104,
+      numpad_9: 105,
+      multiply: 106,
+      add: 107,
+      subtract: 109,
+      decimal_point: 110,
+      divide: 111,
+      f1: 112,
+      f2: 113,
+      f3: 114,
+      f4: 115,
+      f5: 116,
+      f6: 117,
+      f7: 118,
+      f8: 119,
+      f9: 120,
+      f10: 121,
+      f11: 122,
+      f12: 123,
+      numlock: 144,
+      scroll_lock: 145,
+      semicolon: 186,
+      equal_sign: 187,
+      plus: 187,
+      comma: 188,
+      dash: 189,
+      minus: 189,
+      period: 190,
+      forward_slash: 191,
+      grave_accent: 192,
+      open_bracket: 219,
+      back_slash: 220,
+      close_braket: 221,
+      single_quote: 222
+    };
+    module.exports = { KeyboardKeys: KeyboardKeys2, MouseButtons: MouseButtons2 };
+  }
+});
+
+// ../Shaku/lib/input/input.js
+var require_input = __commonJS({
+  "../Shaku/lib/input/input.js"(exports, module) {
+    "use strict";
+    var IManager = require_manager();
+    var Vector22 = require_vector2();
+    var { MouseButton, MouseButtons: MouseButtons2, KeyboardKey, KeyboardKeys: KeyboardKeys2 } = require_key_codes();
+    var _logger = require_logger().getLogger("input");
+    var Input = class extends IManager {
+      constructor() {
+        super();
+        this._callbacks = null;
+        this._targetElement = window;
+        this.MouseButtons = MouseButtons2;
+        this.KeyboardKeys = KeyboardKeys2;
+        this.preventDefaults = false;
+        this.enableMouseDeltaWhileMouseWheelDown = true;
+        this.disableContextMenu = true;
+        this.resetOnFocusLoss = true;
+        this._resetAll();
+      }
+      setup() {
+        return new Promise((resolve, reject2) => {
+          _logger.info("Setup input manager..");
+          if (typeof this._targetElement === "function") {
+            this._targetElement = this._targetElement();
+            if (!this._targetElement) {
+              throw new Error("Input target element was set to be a method, but the returned value was invalid!");
+            }
+          }
+          let element = this._targetElement;
+          if (element.tabIndex === -1 || element.tabIndex === void 0) {
+            element.tabIndex = 1e3;
+          }
+          window.setTimeout(() => element.focus(), 0);
+          var _this = this;
+          this._callbacks = {
+            "mousedown": function(event2) {
+              _this._onMouseDown(event2);
+              if (this.preventDefaults)
+                event2.preventDefault();
+            },
+            "mouseup": function(event2) {
+              _this._onMouseUp(event2);
+              if (this.preventDefaults)
+                event2.preventDefault();
+            },
+            "mousemove": function(event2) {
+              _this._onMouseMove(event2);
+              if (this.preventDefaults)
+                event2.preventDefault();
+            },
+            "keydown": function(event2) {
+              _this._onKeyDown(event2);
+              if (this.preventDefaults)
+                event2.preventDefault();
+            },
+            "keyup": function(event2) {
+              _this._onKeyUp(event2);
+              if (this.preventDefaults)
+                event2.preventDefault();
+            },
+            "blur": function(event2) {
+              _this._onBlur(event2);
+              if (this.preventDefaults)
+                event2.preventDefault();
+            },
+            "wheel": function(event2) {
+              _this._onMouseWheel(event2);
+            },
+            "touchstart": function(event2) {
+              _this._onTouchStart(event2);
+              if (this.preventDefaults)
+                event2.preventDefault();
+            },
+            "touchend": function(event2) {
+              _this._onMouseUp(event2);
+              if (this.preventDefaults)
+                event2.preventDefault();
+            },
+            "touchmove": function(event2) {
+              _this._onTouchMove(event2);
+              if (this.preventDefaults)
+                event2.preventDefault();
+            },
+            "contextmenu": function(event2) {
+              if (_this.disableContextMenu) {
+                event2.preventDefault();
+              }
+            }
+          };
+          this._resetAll();
+          for (var event in this._callbacks) {
+            element.addEventListener(event, this._callbacks[event], false);
+          }
+          if (element !== window) {
+            window.addEventListener("mouseup", this._callbacks["mouseup"], false);
+            window.addEventListener("touchend", this._callbacks["touchend"], false);
+          }
+          resolve();
+        });
+      }
+      startFrame() {
+      }
+      destroy() {
+        if (this._callbacks) {
+          let element = this._targetElement;
+          for (var event in this._callbacks) {
+            element.removeEventListener(event, this._callbacks[event]);
+          }
+          if (element !== window) {
+            window.removeEventListener("mouseup", this._callbacks["mouseup"], false);
+            window.removeEventListener("touchend", this._callbacks["touchend"], false);
+          }
+          this._callbacks = null;
+        }
+      }
+      setTargetElement(element) {
+        if (this._callbacks) {
+          throw new Error("'setTargetElement() must be called before initializing the input manager!");
+        }
+        this._targetElement = element;
+      }
+      _resetAll() {
+        this._mousePos = new Vector22();
+        this._mousePrevPos = new Vector22();
+        this._mouseState = {};
+        this._mousePrevState = {};
+        this._mouseWheel = 0;
+        this._keyboardState = {};
+        this._keyboardPrevState = {};
+        this._touchStarted = false;
+      }
+      get mousePosition() {
+        return this._mousePos.clone();
+      }
+      get prevMousePosition() {
+        return (this._mousePrevPos || this._mousePos).clone();
+      }
+      get mouseDelta() {
+        if (!this._mousePrevPos) {
+          return Vector22.zero;
+        }
+        return new Vector22(this._mousePos.x - this._mousePrevPos.x, this._mousePos.y - this._mousePrevPos.y);
+      }
+      get mouseMoving() {
+        return this._mousePrevPos && !this._mousePrevPos.equals(this._mousePos);
+      }
+      mousePressed(button = 0) {
+        if (button === void 0)
+          throw new Error("Invalid button code!");
+        return Boolean(this._mouseState[button] && !this._mousePrevState[button]);
+      }
+      mouseDown(button = 0) {
+        if (button === void 0)
+          throw new Error("Invalid button code!");
+        return Boolean(this._mouseState[button]);
+      }
+      mouseUp(button = 0) {
+        if (button === void 0)
+          throw new Error("Invalid button code!");
+        return Boolean(!this.mouseDown(button));
+      }
+      mouseReleased(button = 0) {
+        if (button === void 0)
+          throw new Error("Invalid button code!");
+        return Boolean(!this._mouseState[button] && this._mousePrevState[button]);
+      }
+      keyDown(key) {
+        if (key === void 0)
+          throw new Error("Invalid key code!");
+        return Boolean(this._keyboardState[key]);
+      }
+      keyUp(key) {
+        if (key === void 0)
+          throw new Error("Invalid key code!");
+        return Boolean(!this.keyDown(key));
+      }
+      keyReleased(key) {
+        if (key === void 0)
+          throw new Error("Invalid key code!");
+        return Boolean(!this._keyboardState[key] && this._keyboardPrevState[key]);
+      }
+      keyPressed(key) {
+        if (key === void 0)
+          throw new Error("Invalid key code!");
+        return Boolean(this._keyboardState[key] && !this._keyboardPrevState[key]);
+      }
+      get shiftDown() {
+        return Boolean(this.keyDown(this.KeyboardKeys.shift));
+      }
+      get ctrlDown() {
+        return Boolean(this.keyDown(this.KeyboardKeys.ctrl));
+      }
+      get altDown() {
+        return Boolean(this.keyDown(this.KeyboardKeys.alt));
+      }
+      get anyKeyPressed() {
+        for (var key in this._keyboardState) {
+          if (this._keyboardState[key] && !this._keyboardPrevState[key]) {
+            return true;
+          }
+        }
+        return false;
+      }
+      get anyKeyDown() {
+        for (var key in this._keyboardState) {
+          if (this._keyboardState[key]) {
+            return true;
+          }
+        }
+        return false;
+      }
+      get anyMouseButtonPressed() {
+        for (var key in this._mouseState) {
+          if (this._mouseState[key] && !this._mousePrevState[key]) {
+            return true;
+          }
+        }
+        return false;
+      }
+      get anyMouseButtonDown() {
+        for (var key in this._mouseState) {
+          if (this._mouseState[key]) {
+            return true;
+          }
+        }
+        return false;
+      }
+      _getValueWithCode(code, mouseCheck, keyboardCheck) {
+        code = String(code);
+        if (code.indexOf("mouse_") === 0) {
+          var codename = code.split("_")[1];
+          return mouseCheck.call(this, this.MouseButtons[codename]);
+        }
+        if (!isNaN(parseInt(code)) && code.length === 1) {
+          code = "n" + code;
+        }
+        return keyboardCheck.call(this, this.KeyboardKeys[code]);
+      }
+      down(code) {
+        if (!(code instanceof Array)) {
+          code = [code];
+        }
+        for (let c of code) {
+          if (Boolean(this._getValueWithCode(c, this.mouseDown, this.keyDown))) {
+            return true;
+          }
+        }
+        return false;
+      }
+      released(code) {
+        if (!(code instanceof Array)) {
+          code = [code];
+        }
+        for (let c of code) {
+          if (Boolean(this._getValueWithCode(c, this.mouseReleased, this.keyReleased))) {
+            return true;
+          }
+        }
+        return false;
+      }
+      pressed(code) {
+        if (!(code instanceof Array)) {
+          code = [code];
+        }
+        for (let c of code) {
+          if (Boolean(this._getValueWithCode(c, this.mousePressed, this.keyPressed))) {
+            return true;
+          }
+        }
+        return false;
+      }
+      get mouseWheelSign() {
+        return Math.sign(this._mouseWheel);
+      }
+      get mouseWheel() {
+        return this._mouseWheel;
+      }
+      endFrame() {
+        this._mousePrevPos = this._mousePos.clone();
+        this._keyboardPrevState = {};
+        for (var key in this._keyboardState) {
+          this._keyboardPrevState[key] = this._keyboardState[key];
+        }
+        this._mousePrevState = {};
+        for (var key in this._mouseState) {
+          this._mousePrevState[key] = this._mouseState[key];
+        }
+        if (this._touchStarted) {
+          this._mouseState[this.MouseButtons.left] = true;
+          this._touchStarted = false;
+        }
+        this._mouseWheel = 0;
+      }
+      _getKeyboardKeyCode(event) {
+        event = this._getEvent(event);
+        return event.keyCode !== void 0 ? event.keyCode : event.key.charCodeAt(0);
+      }
+      _onBlur(event) {
+        if (this.resetOnFocusLoss) {
+          this._resetAll();
+        }
+      }
+      _onMouseWheel(event) {
+        this._mouseWheel = event.deltaY;
+      }
+      _onKeyDown(event) {
+        var keycode = this._getKeyboardKeyCode(event);
+        this._keyboardState[keycode] = true;
+      }
+      _onKeyUp(event) {
+        var keycode = this._getKeyboardKeyCode(event);
+        this._keyboardState[keycode || 0] = false;
+      }
+      _onTouchStart(event) {
+        var touches = event.changedTouches;
+        if (touches && touches.length) {
+          var touch = touches[0];
+          var x = touch.pageX || touch.offsetX || touch.clientX;
+          var y = touch.pageY || touch.offsetY || touch.clientY;
+          if (x !== void 0 && y !== void 0) {
+            this._mousePos.x = x;
+            this._mousePos.y = y;
+            this._normalizeMousePos();
+          }
+        }
+        this._touchStarted = true;
+      }
+      _onMouseDown(event) {
+        event = this._getEvent(event);
+        if (this.enableMouseDeltaWhileMouseWheelDown && event.button === this.MouseButtons.middle) {
+          event.preventDefault();
+        }
+        this._mouseState[event.button || 0] = true;
+      }
+      _onMouseUp(event) {
+        event = this._getEvent(event);
+        this._mouseState[event.button || 0] = false;
+      }
+      _onTouchMove(event) {
+        event = this._getEvent(event);
+        this._mousePos.x = event.touches[0].pageX;
+        this._mousePos.y = event.touches[0].pageY;
+        this._normalizeMousePos();
+      }
+      _onMouseMove(event) {
+        event = this._getEvent(event);
+        var pageX = event.clientX;
+        if (pageX === void 0) {
+          pageX = event.x;
+        }
+        if (pageX === void 0) {
+          pageX = event.offsetX;
+        }
+        if (pageX === void 0) {
+          pageX = event.pageX;
+        }
+        var pageY = event.clientY;
+        if (pageY === void 0) {
+          pageY = event.y;
+        }
+        if (pageY === void 0) {
+          pageY = event.offsetY;
+        }
+        if (pageY === void 0) {
+          pageY = event.pageY;
+        }
+        if (pageX === void 0) {
+          pageX = event.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+          pageY = event.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+        }
+        this._mousePos.x = pageX;
+        this._mousePos.y = pageY;
+        this._normalizeMousePos();
+      }
+      _normalizeMousePos() {
+        if (this._targetElement && this._targetElement.getBoundingClientRect) {
+          var rect = this._targetElement.getBoundingClientRect();
+          this._mousePos.x -= rect.left;
+          this._mousePos.y -= rect.top;
+        }
+      }
+      _getEvent(event) {
+        return event || window.event;
+      }
+    };
+    module.exports = new Input();
+  }
+});
+
+// ../Shaku/lib/input/index.js
+var require_input2 = __commonJS({
+  "../Shaku/lib/input/index.js"(exports, module) {
+    "use strict";
+    module.exports = require_input();
   }
 });
 
@@ -7957,12 +7959,12 @@ var require_shaku = __commonJS({
 });
 
 // src/main.ts
-var import_blend_modes = __toESM(require_blend_modes());
-var import_input = __toESM(require_input2());
 var import_shaku = __toESM(require_shaku());
-var import_shaku2 = __toESM(require_shaku());
-var import_utils = __toESM(require_utils());
 var import_vector2 = __toESM(require_vector2());
+var import_color = __toESM(require_color());
+var import_rectangle = __toESM(require_rectangle());
+var import_key_codes = __toESM(require_key_codes());
+var import_blend_modes = __toESM(require_blend_modes());
 function copyPlayer(player) {
   return {
     pos: player.pos.clone(),
@@ -7970,18 +7972,19 @@ function copyPlayer(player) {
     age: player.age
   };
 }
-var walls = makeRectArray(20, 20, false);
-walls[4][4] = true;
-walls[2][5] = true;
-walls[5][7] = true;
-walls[11][9] = true;
+function copySingleUseFloor(floor) {
+  return {
+    pos: floor.pos.clone(),
+    used: floor.used
+  };
+}
 var miniturn_duration = 0.05;
-var robot_delay = 2;
+var robot_delay = 5;
 var robot_tape = [];
 var selected_tape_pos = 0;
 var cur_turn = 0;
 var time_offset = 0;
-var initial_state = singleStep({
+var initial_state = {
   turn: 0,
   spawner: new import_vector2.default(8, 8),
   players: [],
@@ -7989,8 +7992,21 @@ var initial_state = singleStep({
     new import_vector2.default(1, 3),
     new import_vector2.default(6, 2),
     new import_vector2.default(3, 8)
-  ]
-})[0];
+  ],
+  singleUseFloors: [
+    {
+      pos: new import_vector2.default(4, 5),
+      used: true
+    },
+    {
+      pos: new import_vector2.default(4, 6),
+      used: false
+    }
+  ],
+  walls: makeRectArray(20, 20, false)
+};
+initial_state.walls[4][4] = true;
+initial_state = singleStep(initial_state)[0];
 var [all_states, all_deltas] = gameLogic(initial_state, robot_tape);
 function gameLogic(initial_state2, robot_tape2) {
   let res_all_states = [initial_state2];
@@ -8008,6 +8024,11 @@ function singleStep(state) {
   let new_state = copyState(state);
   let intermediate_states = [copyState(new_state)];
   for (let k = 0; k < new_state.players.length; k++) {
+    let floor_had_something_above = new_state.singleUseFloors.map((floor) => {
+      if (floor.used)
+        return false;
+      return new_state.crates.some((crate) => crate.equals(floor.pos)) || new_state.players.some((player) => player.pos.equals(floor.pos)) || new_state.spawner.equals(floor.pos);
+    });
     let action = robot_tape[new_state.players[k].age];
     let direction = selectFromEnum([
       [0 /* LEFT */, import_vector2.default.left],
@@ -8018,10 +8039,15 @@ function singleStep(state) {
     if (direction !== null) {
       moveThing(new_state, new_state.players[k].pos, direction);
       new_state.players[k].dir = direction;
-      intermediate_states.push(copyState(new_state));
-    } else {
-      intermediate_states.push(copyState(new_state));
     }
+    new_state.singleUseFloors.forEach((floor, i) => {
+      if (floor_had_something_above[i]) {
+        if (!new_state.crates.some((crate) => crate.equals(floor.pos)) && !new_state.players.some((player) => player.pos.equals(floor.pos)) && !new_state.spawner.equals(floor.pos)) {
+          floor.used = true;
+        }
+      }
+    });
+    intermediate_states.push(copyState(new_state));
     new_state.players[k].age += 1;
   }
   if (new_state.turn % robot_delay === 0) {
@@ -8046,11 +8072,11 @@ function moveThing(new_state, pos, direction) {
   let crate_to_move_index = indexOfTrue(new_state.crates, (crate) => crate.equals(pos));
   let player_to_move_index = indexOfTrue(new_state.players, (player) => player.pos.equals(pos));
   let spawner_to_move = new_state.spawner.equals(pos);
-  if (!validPos(pos))
+  if (!validPos(pos, new_state))
     return false;
   if (crate_to_move_index === -1 && player_to_move_index === -1 && !spawner_to_move)
     return true;
-  if (!validPos(new_pos))
+  if (!validPos(new_pos, new_state))
     return false;
   if (moveThing(new_state, new_pos, direction)) {
     if (crate_to_move_index !== -1) {
@@ -8067,86 +8093,116 @@ function moveThing(new_state, pos, direction) {
     return false;
   }
 }
-function validPos(coords) {
-  return coords.x >= 0 && coords.x < walls[0].length && coords.y >= 0 && coords.y < walls.length && !walls[coords.y][coords.x];
+function validPos(coords, state) {
+  return coords.x >= 0 && coords.x < state.walls[0].length && coords.y >= 0 && coords.y < state.walls.length && !state.walls[coords.y][coords.x] && !state.singleUseFloors.some((floor) => floor.used && floor.pos.equals(coords));
 }
 function copyState(state) {
   return {
     turn: state.turn,
     spawner: state.spawner.clone(),
     players: state.players.map(copyPlayer),
-    crates: state.crates.map((x) => x.clone())
+    crates: state.crates.map((x) => x.clone()),
+    singleUseFloors: state.singleUseFloors.map(copySingleUseFloor),
+    walls: state.walls
   };
 }
 function drawGameState(state) {
-  forEachTile(walls, (isWall, i, j) => {
+  forEachTile(state.walls, (isWall, i, j) => {
     if (isWall) {
       wall_sprite.position.set((i + 1) * TILE_SIZE, (j + 1) * TILE_SIZE);
-      import_shaku2.default.gfx.drawSprite(wall_sprite);
+      import_shaku.default.gfx.drawSprite(wall_sprite);
+    }
+  });
+  state.singleUseFloors.forEach((floor) => {
+    if (floor.used) {
+      wall_sprite.position.copy(floor.pos.add(1, 1).mul(TILE_SIZE));
+      import_shaku.default.gfx.drawSprite(wall_sprite);
+    } else {
+      import_shaku.default.gfx.outlineRect(
+        new import_rectangle.default(
+          (floor.pos.x + 0.5) * TILE_SIZE,
+          (floor.pos.y + 0.5) * TILE_SIZE,
+          TILE_SIZE,
+          TILE_SIZE
+        ),
+        import_shaku.default.utils.Color.green
+      );
     }
   });
   state.crates.forEach((crate) => {
     crate_sprite.position.set((crate.x + 1) * TILE_SIZE, (crate.y + 1) * TILE_SIZE);
-    import_shaku2.default.gfx.drawSprite(crate_sprite);
+    import_shaku.default.gfx.drawSprite(crate_sprite);
   });
-  let brightColor = new import_utils.Color(1.5, 1.5, 1.5, 1);
+  let brightColor = new import_color.default(1.5, 1.5, 1.5, 1);
   state.players.forEach((player, index) => {
     player_sprite.position.set((player.pos.x + 1) * TILE_SIZE, (player.pos.y + 1) * TILE_SIZE);
     player_sprite.rotation = player.dir.getRadians() + Math.PI / 2;
-    player_sprite.color = index === 0 ? brightColor : import_shaku2.default.utils.Color.white;
-    import_shaku2.default.gfx.drawSprite(player_sprite);
+    player_sprite.color = index === 0 ? brightColor : import_shaku.default.utils.Color.white;
+    import_shaku.default.gfx.drawSprite(player_sprite);
   });
-  import_shaku2.default.gfx.outlineRect(
-    new import_utils.Rectangle(
+  import_shaku.default.gfx.outlineRect(
+    new import_rectangle.default(
       (state.spawner.x + 0.5) * TILE_SIZE,
       (state.spawner.y + 0.5) * TILE_SIZE,
       TILE_SIZE,
       TILE_SIZE
     ),
-    import_shaku2.default.utils.Color.white,
-    null,
-    0
+    import_shaku.default.utils.Color.white
   );
 }
 function drawGameStateLerp(stateA, stateB, t) {
-  forEachTile(walls, (isWall, i, j) => {
+  forEachTile(stateA.walls, (isWall, i, j) => {
     if (isWall) {
       wall_sprite.position.set((i + 1) * TILE_SIZE, (j + 1) * TILE_SIZE);
-      import_shaku2.default.gfx.drawSprite(wall_sprite);
+      import_shaku.default.gfx.drawSprite(wall_sprite);
+    }
+  });
+  stateA.singleUseFloors.forEach((floor) => {
+    if (floor.used) {
+      wall_sprite.position.copy(floor.pos.add(1, 1).mul(TILE_SIZE));
+      import_shaku.default.gfx.drawSprite(wall_sprite);
+    } else {
+      import_shaku.default.gfx.outlineRect(
+        new import_rectangle.default(
+          (floor.pos.x + 0.5) * TILE_SIZE,
+          (floor.pos.y + 0.5) * TILE_SIZE,
+          TILE_SIZE,
+          TILE_SIZE
+        ),
+        import_shaku.default.utils.Color.green
+      );
     }
   });
   for (let k = 0; k < stateA.crates.length; k++) {
     const crateA = stateA.crates[k];
     const crateB = stateB.crates[k];
     crate_sprite.position.copy(import_vector2.default.lerp(crateA, crateB, t).add(1, 1).mul(TILE_SIZE));
-    import_shaku2.default.gfx.drawSprite(crate_sprite);
+    import_shaku.default.gfx.drawSprite(crate_sprite);
   }
-  let brightColor = new import_utils.Color(1.5, 1.5, 1.5, 1);
+  let brightColor = new import_color.default(1.5, 1.5, 1.5, 1);
   for (let k = 0; k < stateA.players.length; k++) {
     const playerA = stateA.players[k];
     const playerB = stateB.players[k];
     player_sprite.position.copy(import_vector2.default.lerp(playerA.pos, playerB.pos, t).add(1, 1).mul(TILE_SIZE));
     player_sprite.rotation = playerB.dir.getRadians() + Math.PI / 2;
-    player_sprite.color = k === 0 ? brightColor : import_shaku2.default.utils.Color.white;
-    import_shaku2.default.gfx.drawSprite(player_sprite);
+    player_sprite.color = k === 0 ? brightColor : import_shaku.default.utils.Color.white;
+    import_shaku.default.gfx.drawSprite(player_sprite);
   }
   if (stateA.players.length < stateB.players.length) {
     let new_player = stateB.players[stateB.players.length - 1];
     player_sprite.position.copy(import_vector2.default.lerp(stateA.spawner, new_player.pos, t).add(1, 1).mul(TILE_SIZE));
     player_sprite.rotation = new_player.dir.getRadians() + Math.PI / 2;
-    import_shaku2.default.gfx.drawSprite(player_sprite);
+    import_shaku.default.gfx.drawSprite(player_sprite);
   }
   let lerp_spawner = import_vector2.default.lerp(stateA.spawner, stateB.spawner, t);
-  import_shaku2.default.gfx.outlineRect(
-    new import_utils.Rectangle(
+  import_shaku.default.gfx.outlineRect(
+    new import_rectangle.default(
       (lerp_spawner.x + 0.5) * TILE_SIZE,
       (lerp_spawner.y + 0.5) * TILE_SIZE,
       TILE_SIZE,
       TILE_SIZE
     ),
-    import_shaku2.default.utils.Color.white,
-    null,
-    0
+    import_shaku.default.utils.Color.white
   );
 }
 function drawDeltaState(delta, t) {
@@ -8162,37 +8218,37 @@ function drawSymbol(symbol, pos) {
     case 0 /* LEFT */:
       left_arrow.rotation = 0;
       left_arrow.position.copy(pos);
-      import_shaku2.default.gfx?.drawSprite(left_arrow);
+      import_shaku.default.gfx?.drawSprite(left_arrow);
       break;
     case 2 /* UP */:
       left_arrow.rotation = Math.PI * 0.5;
       left_arrow.position.copy(pos);
-      import_shaku2.default.gfx?.drawSprite(left_arrow);
+      import_shaku.default.gfx?.drawSprite(left_arrow);
       break;
     case 1 /* RIGHT */:
       left_arrow.rotation = Math.PI;
       left_arrow.position.copy(pos);
-      import_shaku2.default.gfx?.drawSprite(left_arrow);
+      import_shaku.default.gfx?.drawSprite(left_arrow);
       break;
     case 3 /* DOWN */:
       left_arrow.rotation = Math.PI * 1.5;
       left_arrow.position.copy(pos);
-      import_shaku2.default.gfx?.drawSprite(left_arrow);
+      import_shaku.default.gfx?.drawSprite(left_arrow);
       break;
     case 4 /* NONE */:
       none_sprite.position.copy(pos);
-      import_shaku2.default.gfx?.drawSprite(none_sprite);
+      import_shaku.default.gfx?.drawSprite(none_sprite);
       break;
     default:
       break;
   }
 }
 var TILE_SIZE = 30;
-import_shaku2.default.input.setTargetElement(() => import_shaku2.default.gfx.canvas);
-await import_shaku2.default.init(null);
-document.body.appendChild(import_shaku2.default.gfx.canvas);
-import_shaku2.default.gfx.setResolution(800, 600, true);
-import_shaku2.default.gfx.centerCanvas();
+import_shaku.default.input.setTargetElement(() => import_shaku.default.gfx.canvas);
+await import_shaku.default.init();
+document.body.appendChild(import_shaku.default.gfx.canvas);
+import_shaku.default.gfx.setResolution(800, 600, true);
+import_shaku.default.gfx.centerCanvas();
 var player_sprite = await makeAsciiSprite(`
         .000.
         .111.
@@ -8200,10 +8256,10 @@ var player_sprite = await makeAsciiSprite(`
         .333.
         .3.3.
     `, [
-  import_shaku2.default.utils.Color.black,
-  import_shaku2.default.utils.Color.orange,
-  import_shaku2.default.utils.Color.white,
-  import_shaku2.default.utils.Color.blue
+  import_shaku.default.utils.Color.black,
+  import_shaku.default.utils.Color.orange,
+  import_shaku.default.utils.Color.white,
+  import_shaku.default.utils.Color.blue
 ]);
 var wall_sprite = await makeAsciiSprite(`
         00010
@@ -8212,8 +8268,8 @@ var wall_sprite = await makeAsciiSprite(`
         11111
         00010
     `, [
-  import_shaku2.default.utils.Color.brown,
-  import_shaku2.default.utils.Color.darkgray
+  import_shaku.default.utils.Color.brown,
+  import_shaku.default.utils.Color.darkgray
 ]);
 var crate_sprite = await makeAsciiSprite(`
         00000
@@ -8222,7 +8278,7 @@ var crate_sprite = await makeAsciiSprite(`
         0...0
         00000
     `, [
-  import_shaku2.default.utils.Color.orange
+  import_shaku.default.utils.Color.orange
 ]);
 var left_arrow = await makeAsciiSprite(`
         ..0..
@@ -8231,7 +8287,7 @@ var left_arrow = await makeAsciiSprite(`
         .0...
         ..0..
     `, [
-  import_shaku2.default.utils.Color.orange
+  import_shaku.default.utils.Color.orange
 ]);
 var none_sprite = await makeAsciiSprite(`
         .....
@@ -8240,17 +8296,17 @@ var none_sprite = await makeAsciiSprite(`
         .000.
         .....
     `, [
-  import_shaku2.default.utils.Color.orange
+  import_shaku.default.utils.Color.orange
 ]);
 function update() {
-  import_shaku2.default.startFrame();
-  import_shaku2.default.gfx.clear(import_shaku2.default.utils.Color.cornflowerblue);
-  if (import_shaku2.default.input?.pressed(["left", "q"]) && selected_tape_pos > 0) {
+  import_shaku.default.startFrame();
+  import_shaku.default.gfx.clear(import_shaku.default.utils.Color.cornflowerblue);
+  if (import_shaku.default.input?.pressed(["left", "q"]) && selected_tape_pos > 0) {
     selected_tape_pos -= 1;
-  } else if (import_shaku2.default.input?.pressed(["right", "e"]) && selected_tape_pos < robot_tape.length) {
+  } else if (import_shaku.default.input?.pressed(["right", "e"]) && selected_tape_pos < robot_tape.length) {
     selected_tape_pos += 1;
   }
-  if (import_shaku2.default.input?.pressed(["r"])) {
+  if (import_shaku.default.input?.pressed(["r"])) {
     selected_tape_pos = 0;
   }
   if (cur_turn !== selected_tape_pos && time_offset === 0) {
@@ -8274,23 +8330,21 @@ function update() {
     selected_tape_pos += 1;
     [all_states, all_deltas] = gameLogic(initial_state, robot_tape);
   }
-  let mouse_tile = import_shaku2.default.input.mousePosition.div(TILE_SIZE).round().sub(1, 1);
-  import_shaku2.default.gfx.outlineRect(
-    new import_utils.Rectangle(
+  let mouse_tile = import_shaku.default.input.mousePosition.div(TILE_SIZE).round().sub(1, 1);
+  import_shaku.default.gfx.outlineRect(
+    new import_rectangle.default(
       (mouse_tile.x + 0.5) * TILE_SIZE,
       (mouse_tile.y + 0.5) * TILE_SIZE,
       TILE_SIZE,
       TILE_SIZE
     ),
-    import_shaku2.default.utils.Color.white,
-    null,
-    0
+    import_shaku.default.utils.Color.white
   );
-  if (import_shaku2.default.input?.mousePressed(import_input.MouseButtons.left)) {
-    walls[mouse_tile.y][mouse_tile.x] = !walls[mouse_tile.y][mouse_tile.x];
+  if (import_shaku.default.input?.mousePressed(import_key_codes.MouseButtons.left)) {
+    initial_state.walls[mouse_tile.y][mouse_tile.x] = !initial_state.walls[mouse_tile.y][mouse_tile.x];
     [all_states, all_deltas] = gameLogic(initial_state, robot_tape);
   }
-  if (import_shaku2.default.input?.mousePressed(import_input.MouseButtons.right)) {
+  if (import_shaku.default.input?.mousePressed(import_key_codes.MouseButtons.right)) {
     let crate_index = indexOfTrue(initial_state.crates, (c) => c.equals(mouse_tile));
     if (crate_index === -1) {
       initial_state.crates.push(mouse_tile);
@@ -8299,37 +8353,50 @@ function update() {
     }
     [all_states, all_deltas] = gameLogic(initial_state, robot_tape);
   }
-  if (import_shaku2.default.input?.mouseWheelSign !== 0) {
-    robot_delay += import_shaku2.default.input?.mouseWheelSign;
+  if (import_shaku.default.input?.mouseWheelSign !== 0) {
+    robot_delay += import_shaku.default.input?.mouseWheelSign;
     robot_delay = Math.max(1, robot_delay);
+    [all_states, all_deltas] = gameLogic(initial_state, robot_tape);
+  }
+  if (import_shaku.default.input.keyPressed(import_key_codes.KeyboardKeys.n1)) {
+    if (initial_state.singleUseFloors.some((f) => f.pos.equals(mouse_tile))) {
+      initial_state.singleUseFloors = initial_state.singleUseFloors.filter((f) => !f.pos.equals(mouse_tile));
+    } else {
+      initial_state.singleUseFloors.push({
+        pos: mouse_tile,
+        used: false
+      });
+    }
     [all_states, all_deltas] = gameLogic(initial_state, robot_tape);
   }
   if (time_offset > 0) {
     drawDeltaState(all_deltas[cur_turn], time_offset);
-    time_offset = Math.max(0, time_offset - import_shaku2.default.gameTime.delta / (miniturn_duration * all_deltas[cur_turn].intermediate_states.length));
+    time_offset = Math.max(0, time_offset - import_shaku.default.gameTime.delta / (miniturn_duration * all_deltas[cur_turn].intermediate_states.length));
   } else if (time_offset < 0) {
     drawDeltaState(all_deltas[cur_turn - 1], 1 + time_offset);
-    time_offset = Math.min(0, time_offset + import_shaku2.default.gameTime.delta / (miniturn_duration * all_deltas[cur_turn - 1].intermediate_states.length));
+    time_offset = Math.min(0, time_offset + import_shaku.default.gameTime.delta / (miniturn_duration * all_deltas[cur_turn - 1].intermediate_states.length));
   } else {
     drawGameState(all_states[cur_turn]);
   }
+  import_shaku.default.gfx?.fillRect(
+    new import_rectangle.default((robot_delay + 0.5) * TILE_SIZE, import_shaku.default.gfx.canvas.height - TILE_SIZE * 1.5, TILE_SIZE, TILE_SIZE),
+    import_shaku.default.utils.Color.blue
+  );
   for (let k = 0; k < robot_tape.length; k++) {
     let cur_symbol = robot_tape[k];
     drawSymbol(cur_symbol, new import_vector2.default((k + 1) * TILE_SIZE, import_shaku.default.gfx?.canvas.height - TILE_SIZE));
   }
-  import_shaku2.default.gfx?.outlineRect(
-    new import_utils.Rectangle((selected_tape_pos + 0.5) * TILE_SIZE, import_shaku.default.gfx?.canvas.height - TILE_SIZE * 1.5, TILE_SIZE, TILE_SIZE),
-    import_shaku2.default.utils.Color.red,
-    null,
-    0
+  import_shaku.default.gfx?.outlineRect(
+    new import_rectangle.default((selected_tape_pos + 0.5) * TILE_SIZE, import_shaku.default.gfx?.canvas.height - TILE_SIZE * 1.5, TILE_SIZE, TILE_SIZE),
+    import_shaku.default.utils.Color.red
   );
-  import_shaku2.default.endFrame();
-  import_shaku2.default.requestAnimationFrame(update);
+  import_shaku.default.endFrame();
+  import_shaku.default.requestAnimationFrame(update);
 }
 update();
 async function makeAsciiSprite(ascii, colors) {
   let texture = await loadAsciiTexture(ascii, colors);
-  let result_sprite = new import_shaku2.default.gfx.Sprite(texture, null);
+  let result_sprite = new import_shaku.default.gfx.Sprite(texture);
   result_sprite.size.set(TILE_SIZE, TILE_SIZE);
   return result_sprite;
 }
@@ -8337,8 +8404,8 @@ async function loadAsciiTexture(ascii, colors) {
   let rows = ascii.trim().split("\n").map((x) => x.trim());
   let height = rows.length;
   let width = rows[0].length;
-  let renderTarget = await import_shaku2.default.assets.createRenderTarget(null, width, height, 4);
-  import_shaku2.default.gfx.setRenderTarget(renderTarget, false);
+  let renderTarget = await import_shaku.default.assets.createRenderTarget(null, width, height, 4);
+  import_shaku.default.gfx.setRenderTarget(renderTarget, false);
   for (let j = 0; j < height; j++) {
     for (let i = 0; i < width; i++) {
       let val = rows[j][i];
@@ -8347,17 +8414,17 @@ async function loadAsciiTexture(ascii, colors) {
       let n = parseInt(val);
       let col = colors[n];
       if (typeof col === "string") {
-        col = import_shaku2.default.utils.Color.fromHex(col);
+        col = import_shaku.default.utils.Color.fromHex(col);
       }
-      import_shaku2.default.gfx.fillRect(
-        new import_shaku2.default.utils.Rectangle(i, height - j - 1, 1, 1),
+      import_shaku.default.gfx.fillRect(
+        new import_shaku.default.utils.Rectangle(i, height - j - 1, 1, 1),
         col,
-        import_blend_modes.default.Opaque,
+        import_blend_modes.BlendModes.Opaque,
         0
       );
     }
   }
-  import_shaku2.default.gfx.setRenderTarget(null, false);
+  import_shaku.default.gfx.setRenderTarget(null, false);
   return renderTarget;
 }
 function makeRectArray(width, height, fill) {
@@ -8389,7 +8456,7 @@ function selectFromEnum(options, value) {
 }
 function selectFromInput(options) {
   for (const [key, result] of options) {
-    if (import_shaku2.default.input?.pressed(key)) {
+    if (import_shaku.default.input?.pressed(key)) {
       return result;
     }
   }

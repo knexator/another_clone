@@ -1,16 +1,21 @@
-import TextureAsset from "shaku/lib/assets/texture_asset";
-import BlendModes from "shaku/lib/gfx/blend_modes";
-import Sprite from "shaku/lib/gfx/sprite";
-import { MouseButtons } from "shaku/lib/input";
-import shaku from "shaku/lib/shaku";
 import Shaku from "shaku/lib/shaku";
-import { Color, Rectangle } from "shaku/lib/utils";
+import TextureAsset from "shaku/lib/assets/texture_asset";
+import Sprite from "shaku/lib/gfx/sprite";
 import Vector2 from "shaku/lib/utils/vector2";
+import Color from "shaku/lib/utils/color";
+import Rectangle from "shaku/lib/utils/rectangle";
+import { KeyboardKeys, MouseButtons } from "shaku/lib/input/key_codes";
+import { BlendModes } from "shaku/lib/gfx/blend_modes";
 
 interface Player {
     pos: Vector2;
     dir: Vector2;
     age: number;
+}
+
+interface SingleUseFloor {
+    pos: Vector2;
+    used: boolean;
 }
 
 function copyPlayer(player: Player): Player {
@@ -21,12 +26,21 @@ function copyPlayer(player: Player): Player {
     }
 }
 
+function copySingleUseFloor(floor: SingleUseFloor): SingleUseFloor {
+    return {
+        pos: floor.pos.clone(),
+        used: floor.used,
+    }
+}
+
 // strictly game logic, could be fed to a solver for example
 interface GameState {
     spawner: Vector2,
     turn: number,
     crates: Vector2[];
     players: Player[];
+    singleUseFloors: SingleUseFloor[];
+    walls: boolean[][];
 }
 
 // includes animation logic, etc; 
@@ -50,11 +64,6 @@ enum TAPE_SYMBOL {
     NONE,
 }
 
-let walls = makeRectArray(20, 20, false);
-walls[4][4] = true;
-walls[2][5] = true;
-walls[5][7] = true;
-walls[11][9] = true;
 
 /*let player_spawn: Player = {
     pos: new Vector2(8, 8),
@@ -64,7 +73,7 @@ walls[11][9] = true;
 
 let miniturn_duration = .05;
 
-let robot_delay = 2;
+let robot_delay = 5;
 
 // instructions for the robot(s)
 let robot_tape: TAPE_SYMBOL[] = [];
@@ -74,7 +83,7 @@ let selected_tape_pos = 0;
 let cur_turn = 0;
 let time_offset = 0;
 
-let initial_state: GameState = singleStep({
+let initial_state: GameState = {
     turn: 0,
     spawner: new Vector2(8, 8),
     players: [/*{
@@ -86,8 +95,21 @@ let initial_state: GameState = singleStep({
         new Vector2(1, 3),
         new Vector2(6, 2),
         new Vector2(3, 8),
-    ]
-})[0];
+    ],
+    singleUseFloors: [
+        {
+            pos: new Vector2(4, 5),
+            used: true,
+        },
+        {
+            pos: new Vector2(4, 6),
+            used: false,
+        },
+    ],
+    walls: makeRectArray(20, 20, false),
+}
+initial_state.walls[4][4] = true;
+initial_state = singleStep(initial_state)[0];
 
 let [all_states, all_deltas] = gameLogic(initial_state, robot_tape);
 
@@ -108,6 +130,12 @@ function singleStep(state: GameState): [GameState, DeltaState] {
     let new_state = copyState(state);
     let intermediate_states = [copyState(new_state)];
     for (let k = 0; k < new_state.players.length; k++) {
+        let floor_had_something_above = new_state.singleUseFloors.map(floor => {
+            if (floor.used) return false;
+            return new_state.crates.some(crate => crate.equals(floor.pos))
+                || new_state.players.some(player => player.pos.equals(floor.pos))
+                || new_state.spawner.equals(floor.pos);
+        });
         let action = robot_tape[new_state.players[k].age];
         let direction = selectFromEnum([
             [TAPE_SYMBOL.LEFT, Vector2.left],
@@ -118,10 +146,17 @@ function singleStep(state: GameState): [GameState, DeltaState] {
         if (direction !== null) {
             moveThing(new_state, new_state.players[k].pos, direction);
             new_state.players[k].dir = direction;
-            intermediate_states.push(copyState(new_state));
-        } else {
-            intermediate_states.push(copyState(new_state));
         }
+        new_state.singleUseFloors.forEach((floor, i) => {
+            if (floor_had_something_above[i]) {
+                if (!new_state.crates.some(crate => crate.equals(floor.pos))
+                    && !new_state.players.some(player => player.pos.equals(floor.pos))
+                    && !new_state.spawner.equals(floor.pos)) {
+                    floor.used = true;
+                }
+            }
+        });
+        intermediate_states.push(copyState(new_state));
         new_state.players[k].age += 1;
     }
     if (new_state.turn % robot_delay === 0) {
@@ -149,9 +184,9 @@ function moveThing(new_state: GameState, pos: Vector2, direction: Vector2): bool
     let crate_to_move_index = indexOfTrue(new_state.crates, (crate) => crate.equals(pos));
     let player_to_move_index = indexOfTrue(new_state.players, (player) => player.pos.equals(pos));
     let spawner_to_move = new_state.spawner.equals(pos);
-    if (!validPos(pos)) return false;
+    if (!validPos(pos, new_state)) return false;
     if (crate_to_move_index === -1 && player_to_move_index === -1 && !spawner_to_move) return true;
-    if (!validPos(new_pos)) return false;
+    if (!validPos(new_pos, new_state)) return false;
     if (moveThing(new_state, new_pos, direction)) {
         if (crate_to_move_index !== -1) {
             new_state.crates[crate_to_move_index].addSelf(direction);
@@ -168,10 +203,11 @@ function moveThing(new_state: GameState, pos: Vector2, direction: Vector2): bool
     }
 }
 
-function validPos(coords: Vector2) {
-    return coords.x >= 0 && coords.x < walls[0].length
-        && coords.y >= 0 && coords.y < walls.length
-        && !walls[coords.y][coords.x];
+function validPos(coords: Vector2, state: GameState) {
+    return coords.x >= 0 && coords.x < state.walls[0].length
+        && coords.y >= 0 && coords.y < state.walls.length
+        && !state.walls[coords.y][coords.x]
+        && !state.singleUseFloors.some(floor => floor.used && floor.pos.equals(coords));
 }
 
 function copyState(state: GameState): GameState {
@@ -180,16 +216,34 @@ function copyState(state: GameState): GameState {
         spawner: state.spawner.clone(),
         players: state.players.map(copyPlayer),
         crates: state.crates.map(x => x.clone()),
+        singleUseFloors: state.singleUseFloors.map(copySingleUseFloor),
+        walls: state.walls,
     }
 }
 
 function drawGameState(state: GameState) {
-    forEachTile(walls, (isWall, i, j) => {
+    forEachTile(state.walls, (isWall, i, j) => {
         if (isWall) {
             wall_sprite.position.set((i + 1) * TILE_SIZE, (j + 1) * TILE_SIZE);
             Shaku.gfx!.drawSprite(wall_sprite);
         }
     });
+    state.singleUseFloors.forEach(floor => {
+        if (floor.used) {
+            wall_sprite.position.copy(floor.pos.add(1, 1).mul(TILE_SIZE));
+            Shaku.gfx!.drawSprite(wall_sprite);
+        } else {
+            Shaku.gfx!.outlineRect(
+                new Rectangle(
+                    (floor.pos.x + .5) * TILE_SIZE,
+                    (floor.pos.y + .5) * TILE_SIZE,
+                    TILE_SIZE,
+                    TILE_SIZE
+                ),
+                Shaku.utils.Color.green
+            )
+        }
+    })
     state.crates.forEach(crate => {
         crate_sprite.position.set((crate.x + 1) * TILE_SIZE, (crate.y + 1) * TILE_SIZE);
         Shaku.gfx!.drawSprite(crate_sprite);
@@ -208,18 +262,34 @@ function drawGameState(state: GameState) {
             TILE_SIZE,
             TILE_SIZE
         ),
-        Shaku.utils.Color.white,
-        null, 0
+        Shaku.utils.Color.white
     )
+    // todo: single use floors
 }
 
 function drawGameStateLerp(stateA: GameState, stateB: GameState, t: number) {
-    forEachTile(walls, (isWall, i, j) => {
+    forEachTile(stateA.walls, (isWall, i, j) => {
         if (isWall) {
             wall_sprite.position.set((i + 1) * TILE_SIZE, (j + 1) * TILE_SIZE);
             Shaku.gfx!.drawSprite(wall_sprite);
         }
     });
+    stateA.singleUseFloors.forEach(floor => {
+        if (floor.used) {
+            wall_sprite.position.copy(floor.pos.add(1, 1).mul(TILE_SIZE));
+            Shaku.gfx!.drawSprite(wall_sprite);
+        } else {
+            Shaku.gfx!.outlineRect(
+                new Rectangle(
+                    (floor.pos.x + .5) * TILE_SIZE,
+                    (floor.pos.y + .5) * TILE_SIZE,
+                    TILE_SIZE,
+                    TILE_SIZE
+                ),
+                Shaku.utils.Color.green
+            )
+        }
+    })
     for (let k = 0; k < stateA.crates.length; k++) {
         const crateA = stateA.crates[k];
         const crateB = stateB.crates[k];
@@ -252,8 +322,7 @@ function drawGameStateLerp(stateA: GameState, stateB: GameState, t: number) {
             TILE_SIZE,
             TILE_SIZE
         ),
-        Shaku.utils.Color.white,
-        null, 0
+        Shaku.utils.Color.white
     )
 }
 
@@ -307,7 +376,7 @@ const TILE_SIZE = 30;
 // async function runGame() {
 // init shaku
 Shaku!.input!.setTargetElement(() => Shaku.gfx!.canvas);
-await Shaku.init(null);
+await Shaku.init();
 
 // add shaku's canvas to document and set resolution to 800x600
 document.body.appendChild(Shaku!.gfx!.canvas);
@@ -438,11 +507,10 @@ function update() {
             TILE_SIZE,
             TILE_SIZE
         ),
-        Shaku.utils.Color.white,
-        null, 0
+        Shaku.utils.Color.white
     )
     if (Shaku.input?.mousePressed(MouseButtons.left)) {
-        walls[mouse_tile.y][mouse_tile.x] = !walls[mouse_tile.y][mouse_tile.x];
+        initial_state.walls[mouse_tile.y][mouse_tile.x] = !initial_state.walls[mouse_tile.y][mouse_tile.x];
         [all_states, all_deltas] = gameLogic(initial_state, robot_tape);
     }
     if (Shaku.input?.mousePressed(MouseButtons.right)) {
@@ -459,6 +527,17 @@ function update() {
         robot_delay = Math.max(1, robot_delay);
         [all_states, all_deltas] = gameLogic(initial_state, robot_tape);
     }
+    if (Shaku.input!.keyPressed(KeyboardKeys.n1)) {
+        if (initial_state.singleUseFloors.some(f => f.pos.equals(mouse_tile))) {
+            initial_state.singleUseFloors = initial_state.singleUseFloors.filter(f => !f.pos.equals(mouse_tile));
+        } else {
+            initial_state.singleUseFloors.push({
+                pos: mouse_tile,
+                used: false,
+            })
+        }
+        [all_states, all_deltas] = gameLogic(initial_state, robot_tape);
+    }
 
 
     if (time_offset > 0) {
@@ -471,15 +550,17 @@ function update() {
         drawGameState(all_states[cur_turn]);
     }
 
-
+    Shaku.gfx?.fillRect(
+        new Rectangle((robot_delay + .5) * TILE_SIZE, Shaku.gfx!.canvas!.height - TILE_SIZE * 1.5, TILE_SIZE, TILE_SIZE),
+        Shaku.utils.Color.blue
+    )
     for (let k = 0; k < robot_tape.length; k++) {
         let cur_symbol = robot_tape[k];
-        drawSymbol(cur_symbol, new Vector2((k + 1) * TILE_SIZE, shaku.gfx?.canvas.height - TILE_SIZE));
+        drawSymbol(cur_symbol, new Vector2((k + 1) * TILE_SIZE, Shaku.gfx?.canvas.height - TILE_SIZE));
     }
     Shaku.gfx?.outlineRect(
-        new Rectangle((selected_tape_pos + .5) * TILE_SIZE, shaku.gfx?.canvas.height - TILE_SIZE * 1.5, TILE_SIZE, TILE_SIZE),
-        Shaku.utils.Color.red,
-        null, 0
+        new Rectangle((selected_tape_pos + .5) * TILE_SIZE, Shaku.gfx?.canvas.height - TILE_SIZE * 1.5, TILE_SIZE, TILE_SIZE),
+        Shaku.utils.Color.red
     )
 
 
@@ -495,21 +576,22 @@ update();
 // runGame();
 
 
-async function makeAsciiSprite(ascii: string, colors: (string | Shaku.utils.Color)[]): Promise<Sprite> {
+async function makeAsciiSprite(ascii: string, colors: (string | Color)[]): Promise<Sprite> {
     let texture = await loadAsciiTexture(ascii, colors);
-    let result_sprite = new Shaku.gfx!.Sprite(texture, null);
+    let result_sprite = new Shaku.gfx!.Sprite(texture);
     result_sprite.size.set(TILE_SIZE, TILE_SIZE)
     return result_sprite;
 }
 
 
-async function loadAsciiTexture(ascii: string, colors: (string | Shaku.utils.Color)[]): Promise<TextureAsset> {
+async function loadAsciiTexture(ascii: string, colors: (string | Color)[]): Promise<TextureAsset> {
 
     let rows = ascii.trim().split("\n").map(x => x.trim())
     let height = rows.length
     let width = rows[0].length
 
     // create render target
+    // @ts-ignore
     let renderTarget = await Shaku.assets.createRenderTarget(null, width, height, 4);
 
     // use render target
@@ -534,6 +616,7 @@ async function loadAsciiTexture(ascii: string, colors: (string | Shaku.utils.Col
     }
 
     // reset render target
+    // @ts-ignore
     Shaku.gfx!.setRenderTarget(null, false);
 
     return renderTarget;
