@@ -7,374 +7,6 @@ import Rectangle from "shaku/lib/utils/rectangle";
 import { KeyboardKeys, MouseButtons } from "shaku/lib/input/key_codes";
 import { BlendModes } from "shaku/lib/gfx/blend_modes";
 
-interface Player {
-    pos: Vector2;
-    dir: Vector2;
-    age: number;
-}
-
-interface SingleUseFloor {
-    pos: Vector2;
-    used: boolean;
-}
-
-function copyPlayer(player: Player): Player {
-    return {
-        pos: player.pos.clone(),
-        dir: player.dir.clone(),
-        age: player.age,
-    }
-}
-
-function copySingleUseFloor(floor: SingleUseFloor): SingleUseFloor {
-    return {
-        pos: floor.pos.clone(),
-        used: floor.used,
-    }
-}
-
-// strictly game logic, could be fed to a solver for example
-interface GameState {
-    spawner: Vector2,
-    turn: number,
-    crates: Vector2[];
-    players: Player[];
-    singleUseFloors: SingleUseFloor[];
-    walls: boolean[][];
-}
-
-// includes animation logic, etc; 
-interface DeltaState {
-    prev: GameState,
-    next: GameState,
-    intermediate_states: GameState[], // includes prev and next
-}
-
-// a solver should get a GameState -> GameState function,
-// but the actual game should get a DeltaState -> DeltaState;
-// how to avoid code duplication??
-
-// another option: GameState includes anim info on how it got here
-
-enum TAPE_SYMBOL {
-    LEFT,
-    RIGHT,
-    UP,
-    DOWN,
-    NONE,
-}
-
-
-/*let player_spawn: Player = {
-    pos: new Vector2(8, 8),
-    dir: Vector2.right,
-    age: 0,
-}*/
-
-let miniturn_duration = .05;
-
-let robot_delay = 5;
-
-// instructions for the robot(s)
-let robot_tape: TAPE_SYMBOL[] = [];
-
-let selected_tape_pos = 0;
-
-let cur_turn = 0;
-let time_offset = 0;
-
-let initial_state: GameState = {
-    turn: 0,
-    spawner: new Vector2(8, 8),
-    players: [/*{
-        pos: new Vector2(9, 8),
-        dir: Vector2.right,
-        age: 0,
-    }*/], // oldest first
-    crates: [
-        new Vector2(1, 3),
-        new Vector2(6, 2),
-        new Vector2(3, 8),
-    ],
-    singleUseFloors: [
-        {
-            pos: new Vector2(4, 5),
-            used: true,
-        },
-        {
-            pos: new Vector2(4, 6),
-            used: false,
-        },
-    ],
-    walls: makeRectArray(20, 20, false),
-}
-initial_state.walls[4][4] = true;
-initial_state = singleStep(initial_state)[0];
-
-let [all_states, all_deltas] = gameLogic(initial_state, robot_tape);
-
-function gameLogic(initial_state: GameState, robot_tape: TAPE_SYMBOL[]): [GameState[], DeltaState[]] {
-    let res_all_states: GameState[] = [initial_state];
-    let res_all_deltas: DeltaState[] = [];
-    let cur_state = initial_state;
-    for (let k = 0; k < robot_tape.length; k++) {
-        let [new_state, new_delta] = singleStep(cur_state);
-        res_all_deltas.push(new_delta);
-        res_all_states.push(new_state);
-        cur_state = new_state;
-    }
-    return [res_all_states, res_all_deltas];
-}
-
-function singleStep(state: GameState): [GameState, DeltaState] {
-    let new_state = copyState(state);
-    let intermediate_states = [copyState(new_state)];
-    for (let k = 0; k < new_state.players.length; k++) {
-        let floor_had_something_above = new_state.singleUseFloors.map(floor => {
-            if (floor.used) return false;
-            return new_state.crates.some(crate => crate.equals(floor.pos))
-                || new_state.players.some(player => player.pos.equals(floor.pos))
-                || new_state.spawner.equals(floor.pos);
-        });
-        let action = robot_tape[new_state.players[k].age];
-        let direction = selectFromEnum([
-            [TAPE_SYMBOL.LEFT, Vector2.left],
-            [TAPE_SYMBOL.RIGHT, Vector2.right],
-            [TAPE_SYMBOL.UP, Vector2.up],
-            [TAPE_SYMBOL.DOWN, Vector2.down],
-        ], action)
-        if (direction !== null) {
-            moveThing(new_state, new_state.players[k].pos, direction);
-            new_state.players[k].dir = direction;
-        }
-        new_state.singleUseFloors.forEach((floor, i) => {
-            if (floor_had_something_above[i]) {
-                if (!new_state.crates.some(crate => crate.equals(floor.pos))
-                    && !new_state.players.some(player => player.pos.equals(floor.pos))
-                    && !new_state.spawner.equals(floor.pos)) {
-                    floor.used = true;
-                }
-            }
-        });
-        intermediate_states.push(copyState(new_state));
-        new_state.players[k].age += 1;
-    }
-    if (new_state.turn % robot_delay === 0) {
-        if (moveThing(new_state, new_state.spawner.add(Vector2.right), Vector2.right)) {
-            new_state.players.push({
-                pos: new_state.spawner.add(Vector2.right),
-                dir: Vector2.right,
-                age: 0,
-            });
-            intermediate_states.push(copyState(new_state));
-        }
-    }
-    new_state.turn += 1;
-
-    return [new_state, {
-        prev: state,
-        next: new_state,
-        intermediate_states: intermediate_states
-    }]
-}
-
-// recursive
-function moveThing(new_state: GameState, pos: Vector2, direction: Vector2): boolean {
-    let new_pos = pos.add(direction);
-    let crate_to_move_index = indexOfTrue(new_state.crates, (crate) => crate.equals(pos));
-    let player_to_move_index = indexOfTrue(new_state.players, (player) => player.pos.equals(pos));
-    let spawner_to_move = new_state.spawner.equals(pos);
-    if (!validPos(pos, new_state)) return false;
-    if (crate_to_move_index === -1 && player_to_move_index === -1 && !spawner_to_move) return true;
-    if (!validPos(new_pos, new_state)) return false;
-    if (moveThing(new_state, new_pos, direction)) {
-        if (crate_to_move_index !== -1) {
-            new_state.crates[crate_to_move_index].addSelf(direction);
-        }
-        if (player_to_move_index !== -1) {
-            new_state.players[player_to_move_index].pos.addSelf(direction);
-        }
-        if (spawner_to_move) {
-            new_state.spawner.addSelf(direction);
-        }
-        return true
-    } else {
-        return false
-    }
-}
-
-function validPos(coords: Vector2, state: GameState) {
-    return coords.x >= 0 && coords.x < state.walls[0].length
-        && coords.y >= 0 && coords.y < state.walls.length
-        && !state.walls[coords.y][coords.x]
-        && !state.singleUseFloors.some(floor => floor.used && floor.pos.equals(coords));
-}
-
-function copyState(state: GameState): GameState {
-    return {
-        turn: state.turn,
-        spawner: state.spawner.clone(),
-        players: state.players.map(copyPlayer),
-        crates: state.crates.map(x => x.clone()),
-        singleUseFloors: state.singleUseFloors.map(copySingleUseFloor),
-        walls: state.walls,
-    }
-}
-
-function drawGameState(state: GameState) {
-    forEachTile(state.walls, (isWall, i, j) => {
-        if (isWall) {
-            wall_sprite.position.set((i + 1) * TILE_SIZE, (j + 1) * TILE_SIZE);
-            Shaku.gfx!.drawSprite(wall_sprite);
-        }
-    });
-    state.singleUseFloors.forEach(floor => {
-        if (floor.used) {
-            wall_sprite.position.copy(floor.pos.add(1, 1).mul(TILE_SIZE));
-            Shaku.gfx!.drawSprite(wall_sprite);
-        } else {
-            Shaku.gfx!.outlineRect(
-                new Rectangle(
-                    (floor.pos.x + .5) * TILE_SIZE,
-                    (floor.pos.y + .5) * TILE_SIZE,
-                    TILE_SIZE,
-                    TILE_SIZE
-                ),
-                Shaku.utils.Color.green
-            )
-        }
-    })
-    state.crates.forEach(crate => {
-        crate_sprite.position.set((crate.x + 1) * TILE_SIZE, (crate.y + 1) * TILE_SIZE);
-        Shaku.gfx!.drawSprite(crate_sprite);
-    });
-    let brightColor = new Color(1.5, 1.5, 1.5, 1);
-    state.players.forEach((player, index) => {
-        player_sprite.position.set((player.pos.x + 1) * TILE_SIZE, (player.pos.y + 1) * TILE_SIZE);
-        player_sprite.rotation = player.dir.getRadians() + Math.PI / 2;
-        player_sprite.color = (index === 0) ? brightColor : Shaku.utils.Color.white;
-        Shaku.gfx!.drawSprite(player_sprite);
-    });
-    Shaku.gfx!.outlineRect(
-        new Rectangle(
-            (state.spawner.x + .5) * TILE_SIZE,
-            (state.spawner.y + .5) * TILE_SIZE,
-            TILE_SIZE,
-            TILE_SIZE
-        ),
-        Shaku.utils.Color.white
-    )
-    // todo: single use floors
-}
-
-function drawGameStateLerp(stateA: GameState, stateB: GameState, t: number) {
-    forEachTile(stateA.walls, (isWall, i, j) => {
-        if (isWall) {
-            wall_sprite.position.set((i + 1) * TILE_SIZE, (j + 1) * TILE_SIZE);
-            Shaku.gfx!.drawSprite(wall_sprite);
-        }
-    });
-    stateA.singleUseFloors.forEach(floor => {
-        if (floor.used) {
-            wall_sprite.position.copy(floor.pos.add(1, 1).mul(TILE_SIZE));
-            Shaku.gfx!.drawSprite(wall_sprite);
-        } else {
-            Shaku.gfx!.outlineRect(
-                new Rectangle(
-                    (floor.pos.x + .5) * TILE_SIZE,
-                    (floor.pos.y + .5) * TILE_SIZE,
-                    TILE_SIZE,
-                    TILE_SIZE
-                ),
-                Shaku.utils.Color.green
-            )
-        }
-    })
-    for (let k = 0; k < stateA.crates.length; k++) {
-        const crateA = stateA.crates[k];
-        const crateB = stateB.crates[k];
-        crate_sprite.position.copy(Vector2.lerp(crateA, crateB, t).add(1, 1).mul(TILE_SIZE));
-        Shaku.gfx!.drawSprite(crate_sprite);
-    }
-
-    let brightColor = new Color(1.5, 1.5, 1.5, 1);
-    for (let k = 0; k < stateA.players.length; k++) {
-        const playerA = stateA.players[k];
-        const playerB = stateB.players[k];
-        player_sprite.position.copy(Vector2.lerp(playerA.pos, playerB.pos, t).add(1, 1).mul(TILE_SIZE));
-        player_sprite.rotation = playerB.dir.getRadians() + Math.PI / 2;
-        player_sprite.color = (k === 0) ? brightColor : Shaku.utils.Color.white;
-        Shaku.gfx!.drawSprite(player_sprite);
-    }
-
-    if (stateA.players.length < stateB.players.length) {
-        let new_player = stateB.players[stateB.players.length - 1];
-        player_sprite.position.copy(Vector2.lerp(stateA.spawner, new_player.pos, t).add(1, 1).mul(TILE_SIZE));
-        player_sprite.rotation = new_player.dir.getRadians() + Math.PI / 2;
-        Shaku.gfx!.drawSprite(player_sprite);
-    }
-
-    let lerp_spawner = Vector2.lerp(stateA.spawner, stateB.spawner, t)
-    Shaku.gfx!.outlineRect(
-        new Rectangle(
-            (lerp_spawner.x + .5) * TILE_SIZE,
-            (lerp_spawner.y + .5) * TILE_SIZE,
-            TILE_SIZE,
-            TILE_SIZE
-        ),
-        Shaku.utils.Color.white
-    )
-}
-
-// t in 0..1
-function drawDeltaState(delta: DeltaState, t: number) {
-    // drawGameState(delta.prev);
-    if (t >= 1) {
-        console.log("11111")
-    }
-    t *= (delta.intermediate_states.length - 1);
-    let turn = Math.floor(t);
-    drawGameStateLerp(delta.intermediate_states[turn], delta.intermediate_states[turn + 1], t % 1);
-    // drawGameStateLerp(delta.prev, delta.next, t);
-}
-
-function drawSymbol(symbol: TAPE_SYMBOL, pos: Vector2) {
-    switch (symbol) {
-        case TAPE_SYMBOL.LEFT:
-            left_arrow.rotation = 0;
-            left_arrow.position.copy(pos);
-            Shaku.gfx?.drawSprite(left_arrow);
-            break;
-        case TAPE_SYMBOL.UP:
-            left_arrow.rotation = Math.PI * 0.5;
-            left_arrow.position.copy(pos);
-            Shaku.gfx?.drawSprite(left_arrow);
-            break;
-        case TAPE_SYMBOL.RIGHT:
-            left_arrow.rotation = Math.PI;
-            left_arrow.position.copy(pos);
-            Shaku.gfx?.drawSprite(left_arrow);
-            break;
-        case TAPE_SYMBOL.DOWN:
-            left_arrow.rotation = Math.PI * 1.5;
-            left_arrow.position.copy(pos);
-            Shaku.gfx?.drawSprite(left_arrow);
-            break;
-        case TAPE_SYMBOL.NONE:
-            none_sprite.position.copy(pos);
-            Shaku.gfx?.drawSprite(none_sprite);
-            break;
-        default:
-            break;
-    }
-}
-
-const TILE_SIZE = 30;
-
-// function
-
-// async function runGame() {
-// init shaku
 Shaku!.input!.setTargetElement(() => Shaku.gfx!.canvas);
 await Shaku.init();
 
@@ -384,13 +16,7 @@ Shaku.gfx!.setResolution(800, 600, true);
 Shaku.gfx!.centerCanvas();
 // Shaku.gfx!.maximizeCanvasSize(false, false);
 
-// TODO: INIT STUFF AND LOAD ASSETS HERE
-// let soundAsset = await Shaku.assets.loadSound('../sounds/example_sound.wav');
-// let soundInstance = Shaku.sfx!.createSound(soundAsset);
-
-// let texture = await Shaku.assets.loadTexture('../imgs/example_image.png', null);
-// let sprite = new Shaku.gfx!.Sprite(texture, null);
-// sprite.position.set(Shaku.gfx!.canvas.width / 2, Shaku.gfx!.canvas.height / 2);
+const TILE_SIZE = 30;
 
 const player_sprite = await makeAsciiSprite(`
         .000.
@@ -426,6 +52,26 @@ const crate_sprite = await makeAsciiSprite(`
     Shaku.utils.Color.orange,
 ]);
 
+const target_sprite = await makeAsciiSprite(`
+        .....
+        .000.
+        .0.0.
+        .000.
+        .....
+    `, [
+    Shaku.utils.Color.darkblue,
+]);
+
+const spawner_sprite = await makeAsciiSprite(`
+        .0000
+        0000.
+        000..
+        0000.
+        .0000
+    `, [
+    Shaku.utils.Color.darkblue,
+]);
+
 const left_arrow = await makeAsciiSprite(`
         ..0..
         .0...
@@ -445,6 +91,379 @@ const none_sprite = await makeAsciiSprite(`
     `, [
     Shaku.utils.Color.orange,
 ]);
+
+class GameState {
+    public spawned_player: boolean;
+    constructor(
+        public major_turn: number,
+        public minor_turn: number,
+        public things: GameObject[],
+    ) {
+        this.spawned_player = false;
+    }
+
+    draw(turn_time: number) {
+        this.things.forEach(x => x.draw(turn_time));
+    }
+
+    public get wall(): Walls {
+        let res = this.things.filter(x => x instanceof Walls);
+        if (res.length === 0) throw new Error("no walls!");
+        if (res.length > 1) throw new Error("too many walls!");
+        return res[0] as Walls;
+    }
+
+    public get spawner(): Spawner {
+        let res = this.things.filter(x => x instanceof Spawner);
+        if (res.length === 0) throw new Error("no Spawner!");
+        if (res.length > 1) throw new Error("too many Spawner!");
+        return res[0] as Spawner;
+    }
+
+    public get players(): Player[] {
+        return this.things.filter(x => x instanceof Player) as Player[];
+    }
+
+    nextState(): GameState {
+        let players = this.players;
+
+        if (this.minor_turn < players.length) {
+            // move player of index minor_turn
+            let new_state = new GameState(this.major_turn, this.minor_turn + 1, this.things.map(x => x.clone()));
+            let new_player = new_state.players[this.minor_turn];
+            if (new_player.index !== this.minor_turn) {
+                console.log("new_state.players:", new_state.players);
+                console.log("new_player.index:", new_player.index);
+                console.log("this.minor_turn:", this.minor_turn);
+                throw new Error("new_player index is wrong! time to use the other way");
+            }
+            let action = robot_tape[new_player.age];
+            let direction = selectFromEnum([
+                [TAPE_SYMBOL.LEFT, Vector2.left],
+                [TAPE_SYMBOL.RIGHT, Vector2.right],
+                [TAPE_SYMBOL.UP, Vector2.up],
+                [TAPE_SYMBOL.DOWN, Vector2.down],
+            ], action)
+            if (direction !== null) {
+                new_state.move(new_player.pos, direction);
+                new_player.dir = direction;
+            }
+            new_player.age += 1;
+            return new_state;
+        } else if (!this.spawned_player && (this.major_turn + 1) % robot_delay === 0) {
+            // spawn a new player
+            let new_state = new GameState(this.major_turn, this.minor_turn + 1, this.things.map(x => x.clone()));
+            let spawn_dir = new_state.spawner.dir;
+            let spawn_pos = new_state.spawner.pos.add(spawn_dir);
+            if (new_state.move(spawn_pos, spawn_dir)) {
+                new_state.things.push(new Player(
+                    spawn_pos,
+                    spawn_dir.clone(),
+                    new_state.minor_turn - 1,
+                    0,
+                    new_state.spawner as Player // hacky
+                ));
+            }
+            new_state.spawned_player = true;
+            return new_state;
+        } else {
+            let new_state = new GameState(this.major_turn + 1, 0, this.things.map(x => x.clone()));
+            return new_state;
+        }
+
+        /*if (this.minor_turn === 2) {
+            let new_state = new GameState(this.major_turn + 1, 0, this.things.map(x => x.clone()));
+            return new_state;
+        } else {
+            console.log("this minor turn", this.minor_turn);
+            let new_state = new GameState(this.major_turn, this.minor_turn + 1, this.things.map(x => x.clone()));
+            new_state.move((new_state.things[1] as Player).pos, Vector2.up);
+            return new_state;
+        }*/
+    }
+
+    move(pos: Vector2, dir: Vector2): boolean {
+        return this.things.every(x => x.move(this, pos, dir));
+    }
+}
+
+/*
+function singleStep(state: GameState): GameState {
+    let new_state = copyState(state);
+    let intermediate_states = [copyState(new_state)];
+    let floor_had_something_above = new_state.singleUseFloors.map(floor => {
+        if (floor.used) return false;
+        return new_state.crates.some(crate => crate.equals(floor.pos))
+            || new_state.players.some(player => player.pos.equals(floor.pos))
+            || new_state.spawner.equals(floor.pos);
+    });
+    for (let k = 0; k < new_state.players.length; k++) {
+        let action = robot_tape[new_state.players[k].age];
+        let direction = selectFromEnum([
+            [TAPE_SYMBOL.LEFT, Vector2.left],
+            [TAPE_SYMBOL.RIGHT, Vector2.right],
+            [TAPE_SYMBOL.UP, Vector2.up],
+            [TAPE_SYMBOL.DOWN, Vector2.down],
+        ], action)
+        if (direction !== null) {
+            moveThing(new_state, new_state.players[k].pos, direction);
+            new_state.players[k].dir = direction;
+        }
+        if (FLOORS_UPDATE_EVERY_STEP) {
+            new_state.singleUseFloors.forEach((floor, i) => {
+                if (floor_had_something_above[i]) {
+                    if (!new_state.crates.some(crate => crate.equals(floor.pos))
+                        && !new_state.players.some(player => player.pos.equals(floor.pos))
+                        && !new_state.spawner.equals(floor.pos)) {
+                        floor.used = true;
+                    }
+                }
+            });
+
+            floor_had_something_above = new_state.singleUseFloors.map(floor => {
+                if (floor.used) return false;
+                return new_state.crates.some(crate => crate.equals(floor.pos))
+                    || new_state.players.some(player => player.pos.equals(floor.pos))
+                    || new_state.spawner.equals(floor.pos);
+            });
+        }
+        intermediate_states.push(copyState(new_state));
+        new_state.players[k].age += 1;
+    }
+    if (new_state.turn % robot_delay === 0) {
+        if (moveThing(new_state, new_state.spawner.add(Vector2.right), Vector2.right)) {
+            new_state.players.push({
+                pos: new_state.spawner.add(Vector2.right),
+                dir: Vector2.right,
+                age: 0,
+            });
+            intermediate_states.push(copyState(new_state));
+        }
+    }
+
+    new_state.singleUseFloors.forEach((floor, i) => {
+        if (floor_had_something_above[i]) {
+            if (!new_state.crates.some(crate => crate.equals(floor.pos))
+                && !new_state.players.some(player => player.pos.equals(floor.pos))
+                && !new_state.spawner.equals(floor.pos)) {
+                floor.used = true;
+            }
+        }
+    });
+
+    new_state.turn += 1;
+
+    return [new_state, {
+        prev: state,
+        next: new_state,
+        intermediate_states: intermediate_states
+    }]
+}
+*/
+
+abstract class GameObject {
+    public abstract previous: GameObject | null;
+    /** turn time goes between 0 (previous turn) and 1 (current turn) */
+    abstract draw(turn_time: number): void;
+    /** return true if this object has no issue with whatever is at pos being moved in direction */
+    abstract move(state: GameState, pos: Vector2, direction: Vector2): boolean;
+    abstract clone(): GameObject;
+}
+
+
+class Walls extends GameObject {
+    public previous = null;
+    public data: boolean[][];
+    // todo: all
+    constructor(
+        public w: number,
+        public h: number,
+    ) {
+        super();
+        this.data = makeRectArray(20, 20, false);
+    }
+    draw(turn_time: number): void {
+        forEachTile(this.data, (isWall, i, j) => {
+            if (isWall) {
+                wall_sprite.position.set((i + 1) * TILE_SIZE, (j + 1) * TILE_SIZE);
+                Shaku.gfx!.drawSprite(wall_sprite);
+            }
+        });
+    }
+    move(state: GameState, pos: Vector2, direction: Vector2): boolean {
+        if (pos.x < 0 || pos.x >= this.w || pos.y < 0 || pos.y >= this.h) return false;
+        if (this.data[pos.y][pos.x]) return false;
+        return true;
+    }
+    clone(): Walls {
+        return this;
+    }
+    toggleAt(pos: Vector2) {
+        if (pos.x < 0 || pos.x >= this.w || pos.y < 0 || pos.y >= this.h) return;
+        this.data[pos.y][pos.x] = !this.data[pos.y][pos.x];
+    }
+}
+
+abstract class Pushable extends GameObject {
+    public abstract sprite: Sprite;
+    constructor(
+        public pos: Vector2,
+        public previous: Pushable | null,
+    ) {
+        super();
+    };
+
+    draw(turn_time: number) {
+        if (turn_time !== 1 && this.previous) {
+            this.sprite.position.copy(Vector2.lerp(this.previous.pos, this.pos, turn_time).add(1, 1).mul(TILE_SIZE));
+        } else {
+            this.sprite.position.copy(this.pos.add(1, 1).mul(TILE_SIZE));
+        }
+        Shaku.gfx!.drawSprite(this.sprite);
+    }
+
+    // recursive
+    move(state: GameState, pos: Vector2, dir: Vector2): boolean {
+        if (!pos.equals(this.pos)) return true;
+        let new_pos = pos.add(dir);
+        if (state.move(new_pos, dir)) {
+            this.pos.copy(new_pos);
+            return true;
+        }
+        return false;
+    }
+}
+
+class Spawner extends Pushable {
+    sprite = spawner_sprite;
+    constructor(
+        public pos: Vector2,
+        public dir: Vector2,
+        public previous: Spawner | null,
+    ) {
+        super(pos, previous);
+        this.sprite.rotation = this.dir.getRadians();
+    };
+
+    clone(): GameObject {
+        return new Spawner(this.pos.clone(), this.dir.clone(), this);
+    }
+}
+
+class Crate extends Pushable {
+    sprite = crate_sprite;
+    clone(): Crate {
+        return new Crate(this.pos.clone(), this);
+    }
+}
+
+class Player extends Pushable {
+    sprite = player_sprite;
+    constructor(
+        public pos: Vector2,
+        public dir: Vector2,
+        public index: number,
+        public age: number = 0,
+        public previous: Player | null,
+    ) { super(pos, previous); };
+
+    private static _brightColor = new Color(1.5, 1.5, 1.5, 1);
+    draw(turn_time: number): void {
+        this.sprite.rotation = this.dir.getRadians() + Math.PI / 2;
+        this.sprite.color = (this.index === 0) ? Player._brightColor : Shaku.utils.Color.white;
+        super.draw(turn_time);
+    }
+
+    clone(): GameObject {
+        return new Player(this.pos.clone(), this.dir.clone(), this.index, this.age, this);
+    }
+}
+
+enum TAPE_SYMBOL {
+    LEFT,
+    RIGHT,
+    UP,
+    DOWN,
+    NONE,
+}
+
+let miniturn_duration = .05;
+
+let robot_delay = 5;
+
+// instructions for the robot(s)
+let robot_tape: TAPE_SYMBOL[] = [];
+
+let selected_tape_pos = 0;
+
+let cur_turn = 0;
+let time_offset = 0;
+
+let initial_state = new GameState(
+    -1, 0,
+    [
+        new Walls(20, 20),
+        new Spawner(new Vector2(6, 6), Vector2.right, null),
+        // new Player(new Vector2(8, 8), Vector2.right, 0, 0, null),
+        new Crate(new Vector2(1, 3), null),
+        new Crate(new Vector2(6, 2), null),
+    ],
+)
+while (initial_state.major_turn < 0) {
+    initial_state = initial_state.nextState();
+}
+console.log(initial_state);
+// initial_state.[4][4] = true;
+
+let all_states = gameLogic(initial_state, robot_tape);
+
+function gameLogic(initial_state: GameState, robot_tape: TAPE_SYMBOL[]): GameState[] {
+    let res_all_states: GameState[] = [initial_state];
+    let cur_state = initial_state;
+    for (let k = 0; k < robot_tape.length; k++) {
+        while (true) {
+            let new_state = cur_state.nextState();
+            res_all_states.push(new_state);
+            cur_state = new_state;
+            if (cur_state.major_turn !== k) break;
+        }
+    }
+    if (cur_turn > res_all_states.length) {
+        cur_turn = 0;
+    }
+    return res_all_states;
+}
+
+function drawSymbol(symbol: TAPE_SYMBOL, pos: Vector2) {
+    switch (symbol) {
+        case TAPE_SYMBOL.LEFT:
+            left_arrow.rotation = 0;
+            left_arrow.position.copy(pos);
+            Shaku.gfx?.drawSprite(left_arrow);
+            break;
+        case TAPE_SYMBOL.UP:
+            left_arrow.rotation = Math.PI * 0.5;
+            left_arrow.position.copy(pos);
+            Shaku.gfx?.drawSprite(left_arrow);
+            break;
+        case TAPE_SYMBOL.RIGHT:
+            left_arrow.rotation = Math.PI;
+            left_arrow.position.copy(pos);
+            Shaku.gfx?.drawSprite(left_arrow);
+            break;
+        case TAPE_SYMBOL.DOWN:
+            left_arrow.rotation = Math.PI * 1.5;
+            left_arrow.position.copy(pos);
+            Shaku.gfx?.drawSprite(left_arrow);
+            break;
+        case TAPE_SYMBOL.NONE:
+            none_sprite.position.copy(pos);
+            Shaku.gfx?.drawSprite(none_sprite);
+            break;
+        default:
+            break;
+    }
+}
 
 // do a single main loop step and request the next step
 function update() {
@@ -466,19 +485,17 @@ function update() {
         selected_tape_pos = 0;
     }
 
-
-
-    /*if (Shaku.input?.pressed("up")) {
-        cur_turn = Math.max(cur_turn - 1, 0);
-    } else if (Shaku.input?.pressed("down")) {
-        cur_turn = Math.min(cur_turn + 1, robot_tape.length);
-    }*/
-    if (cur_turn !== selected_tape_pos && time_offset === 0) {
-        let dir = Math.sign(selected_tape_pos - cur_turn)
+    if ((all_states[cur_turn].major_turn !== selected_tape_pos || all_states[cur_turn].minor_turn !== 0) && time_offset === 0) {
+        let dir = Math.sign(selected_tape_pos - all_states[cur_turn].major_turn - .5); // -.5 is for minor_turn !== 0
         cur_turn += dir;
         time_offset -= dir * .99;
     }
-    // cur_turn = selected_tape_pos;
+
+    if (Shaku.input?.pressed(["t"])) {
+        console.log("cur_turn: ", cur_turn);
+        console.log("selected_tape_pos: ", selected_tape_pos);
+        console.log("all states: ", all_states);
+    }
 
     let input_symbol = selectFromInput([
         ["w", TAPE_SYMBOL.UP],
@@ -495,10 +512,10 @@ function update() {
             robot_tape[selected_tape_pos] = input_symbol;
         }
         selected_tape_pos += 1;
-        [all_states, all_deltas] = gameLogic(initial_state, robot_tape);
+        all_states = gameLogic(initial_state, robot_tape);
     }
 
-    // editor 
+    // todo: editor
     let mouse_tile = Shaku.input!.mousePosition.div(TILE_SIZE).round().sub(1, 1);
     Shaku.gfx!.outlineRect(
         new Rectangle(
@@ -510,24 +527,24 @@ function update() {
         Shaku.utils.Color.white
     )
     if (Shaku.input?.mousePressed(MouseButtons.left)) {
-        initial_state.walls[mouse_tile.y][mouse_tile.x] = !initial_state.walls[mouse_tile.y][mouse_tile.x];
-        [all_states, all_deltas] = gameLogic(initial_state, robot_tape);
+        initial_state.wall.toggleAt(mouse_tile);
+        all_states = gameLogic(initial_state, robot_tape);
     }
     if (Shaku.input?.mousePressed(MouseButtons.right)) {
-        let crate_index = indexOfTrue(initial_state.crates, c => c.equals(mouse_tile));
+        let crate_index = indexOfTrue(initial_state.things, c => (c instanceof Crate && c.pos.equals(mouse_tile)));
         if (crate_index === -1) {
-            initial_state.crates.push(mouse_tile);
+            initial_state.things.push(new Crate(mouse_tile, null));
         } else {
-            initial_state.crates.splice(crate_index, 1)
+            initial_state.things.splice(crate_index, 1)
         }
-        [all_states, all_deltas] = gameLogic(initial_state, robot_tape);
+        all_states = gameLogic(initial_state, robot_tape);
     }
     if (Shaku.input?.mouseWheelSign !== 0) {
         robot_delay += Shaku.input?.mouseWheelSign;
         robot_delay = Math.max(1, robot_delay);
-        [all_states, all_deltas] = gameLogic(initial_state, robot_tape);
+        all_states = gameLogic(initial_state, robot_tape);
     }
-    if (Shaku.input!.keyPressed(KeyboardKeys.n1)) {
+    /*if (Shaku.input!.keyPressed(KeyboardKeys.n1)) {
         if (initial_state.singleUseFloors.some(f => f.pos.equals(mouse_tile))) {
             initial_state.singleUseFloors = initial_state.singleUseFloors.filter(f => !f.pos.equals(mouse_tile));
         } else {
@@ -537,18 +554,17 @@ function update() {
             })
         }
         [all_states, all_deltas] = gameLogic(initial_state, robot_tape);
-    }
+    }*/
 
 
-    if (time_offset > 0) {
-        drawDeltaState(all_deltas[cur_turn], time_offset);
-        time_offset = Math.max(0, time_offset - Shaku.gameTime.delta! / (miniturn_duration * all_deltas[cur_turn].intermediate_states.length))
-    } else if (time_offset < 0) {
-        drawDeltaState(all_deltas[cur_turn - 1], 1 + time_offset);
-        time_offset = Math.min(0, time_offset + Shaku.gameTime.delta! / (miniturn_duration * all_deltas[cur_turn - 1].intermediate_states.length))
+    if (time_offset < 0) { // going forwards in time
+        all_states[cur_turn].draw(time_offset + 1);
+    } else if (time_offset > 0) { // going backwards in time
+        all_states[cur_turn + 1].draw(time_offset);
     } else {
-        drawGameState(all_states[cur_turn]);
+        all_states[cur_turn].draw(1);
     }
+    time_offset = moveTowards(time_offset, 0, Shaku.gameTime.delta! * (Math.abs(all_states[cur_turn].major_turn - selected_tape_pos) + 1) / miniturn_duration);
 
     Shaku.gfx?.fillRect(
         new Rectangle((robot_delay + .5) * TILE_SIZE, Shaku.gfx!.canvas!.height - TILE_SIZE * 1.5, TILE_SIZE, TILE_SIZE),
@@ -575,6 +591,15 @@ update();
 
 // runGame();
 
+function moveTowards(cur_val: number, target_val: number, max_delta: number): number {
+    if (target_val > cur_val) {
+        return Math.min(cur_val + max_delta, target_val);
+    } else if (target_val < cur_val) {
+        return Math.max(cur_val - max_delta, target_val);
+    } else {
+        return target_val;
+    }
+}
 
 async function makeAsciiSprite(ascii: string, colors: (string | Color)[]): Promise<Sprite> {
     let texture = await loadAsciiTexture(ascii, colors);
