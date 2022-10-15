@@ -8062,6 +8062,14 @@ var GameState = class {
       throw new Error("too many walls!");
     return res[0];
   }
+  get target() {
+    let res = this.things.filter((x) => x instanceof Targets);
+    if (res.length === 0)
+      throw new Error("no Targets!");
+    if (res.length > 1)
+      throw new Error("too many Targets!");
+    return res[0];
+  }
   get spawner() {
     let res = this.things.filter((x) => x instanceof Spawner);
     if (res.length === 0)
@@ -8073,13 +8081,25 @@ var GameState = class {
   get players() {
     return this.things.filter((x) => x instanceof Player);
   }
-  nextState() {
-    let players = this.players;
-    if (this.minor_turn < players.length) {
-      let new_state = new GameState(this.major_turn, this.minor_turn + 1, this.things.map((x) => x.clone()));
-      let new_player = new_state.players[this.minor_turn];
-      if (new_player.index !== this.minor_turn) {
-        console.log("new_state.players:", new_state.players);
+  get crates() {
+    return this.things.filter((x) => x instanceof Crate);
+  }
+  get buttons() {
+    return this.things.filter((x) => x instanceof Button);
+  }
+  get buttonTargets() {
+    return this.things.filter((x) => x instanceof ButtonTarget);
+  }
+  nextStates() {
+    if (this.minor_turn !== 0)
+      throw new Error("this method should only be called on main states");
+    let result = [];
+    let cur_state = this;
+    for (let k = 0; k < cur_state.players.length; k++) {
+      cur_state = new GameState(cur_state.major_turn, k + 1, cur_state.things.map((x) => x.clone()));
+      let new_player = cur_state.players[k];
+      if (new_player.index !== k) {
+        console.log("cur_state.players:", cur_state.players);
         console.log("new_player.index:", new_player.index);
         console.log("this.minor_turn:", this.minor_turn);
         throw new Error("new_player index is wrong! time to use the other way");
@@ -8092,30 +8112,38 @@ var GameState = class {
         [TAPE_SYMBOL.DOWN, import_vector2.default.down]
       ], action);
       if (direction !== null) {
-        new_state.move(new_player.pos, direction);
+        cur_state.move(new_player.pos, direction);
         new_player.dir = direction;
       }
       new_player.age += 1;
-      return new_state;
-    } else if (!this.spawned_player && (this.major_turn + 1) % robot_delay === 0) {
-      let new_state = new GameState(this.major_turn, this.minor_turn + 1, this.things.map((x) => x.clone()));
-      let spawn_dir = new_state.spawner.dir;
-      let spawn_pos = new_state.spawner.pos.add(spawn_dir);
-      if (new_state.move(spawn_pos, spawn_dir)) {
-        new_state.things.push(new Player(
+      result.push(cur_state);
+    }
+    if ((this.major_turn + 1) % robot_delay === 0) {
+      cur_state = new GameState(cur_state.major_turn, cur_state.minor_turn + 1, cur_state.things.map((x) => x.clone()));
+      let spawn_dir = cur_state.spawner.dir;
+      let spawn_pos = cur_state.spawner.pos.add(spawn_dir);
+      if (cur_state.move(spawn_pos, spawn_dir)) {
+        cur_state.things.push(new Player(
           spawn_pos,
           spawn_dir.clone(),
-          new_state.minor_turn - 1,
+          cur_state.minor_turn - 1,
           0,
-          new_state.spawner
+          cur_state.spawner
         ));
       }
-      new_state.spawned_player = true;
-      return new_state;
-    } else {
-      let new_state = new GameState(this.major_turn + 1, 0, this.things.map((x) => x.clone()));
-      return new_state;
+      result.push(cur_state);
     }
+    for (let button_id = 0; button_id < cur_state.buttons.length; button_id++) {
+      let cur_button = cur_state.buttons[button_id];
+      if (cur_button.update(cur_state)) {
+        for (const target_id of cur_button.target_ids) {
+          result = result.concat(cur_state.buttonTargets[target_id].onButtonUpdate(cur_state, cur_button.active));
+          cur_state = result.at(-1);
+        }
+      }
+    }
+    result.push(new GameState(cur_state.major_turn + 1, 0, cur_state.things.map((x) => x.clone())));
+    return result;
   }
   move(pos, dir) {
     return this.things.every((x) => x.move(this, pos, dir));
@@ -8154,6 +8182,132 @@ var Walls = class extends GameObject {
     if (pos.x < 0 || pos.x >= this.w || pos.y < 0 || pos.y >= this.h)
       return;
     this.data[pos.y][pos.x] = !this.data[pos.y][pos.x];
+  }
+};
+var Targets = class extends GameObject {
+  constructor(positions) {
+    super();
+    this.positions = positions;
+  }
+  previous = null;
+  draw(turn_time) {
+    this.positions.forEach((pos) => {
+      target_sprite.position.set((pos.x + 1) * TILE_SIZE, (pos.y + 1) * TILE_SIZE);
+      import_shaku.default.gfx.drawSprite(target_sprite);
+    });
+  }
+  move(state, pos, direction) {
+    return true;
+  }
+  clone() {
+    return this;
+  }
+  toggleAt(pos) {
+    let target_index = indexOfTrue(this.positions, (x) => x.equals(pos));
+    if (target_index === -1) {
+      this.positions.push(pos);
+    } else {
+      this.positions.splice(target_index, 1);
+    }
+  }
+};
+var Button = class extends GameObject {
+  constructor(pos, target_ids, active, previous) {
+    super();
+    this.pos = pos;
+    this.target_ids = target_ids;
+    this.active = active;
+    this.previous = previous;
+  }
+  draw(turn_time) {
+    import_shaku.default.gfx.outlineRect(
+      new import_rectangle.default(
+        (this.pos.x + 0.5) * TILE_SIZE,
+        (this.pos.y + 0.5) * TILE_SIZE,
+        TILE_SIZE,
+        TILE_SIZE
+      ),
+      this.active ? import_shaku.default.utils.Color.red : import_shaku.default.utils.Color.green
+    );
+  }
+  move(state, pos, direction) {
+    return true;
+  }
+  clone() {
+    return new Button(this.pos, this.target_ids, this.active, this);
+  }
+  update(state) {
+    let pressed = state.crates.some((crate) => crate.pos.equals(this.pos)) || state.players.some((player) => player.pos.equals(this.pos)) || state.spawner.pos.equals(this.pos);
+    if (this.active != pressed) {
+      this.active = pressed;
+      return true;
+    } else {
+      return false;
+    }
+  }
+};
+var ButtonTarget = class extends GameObject {
+  remove(state) {
+    let this_index = state.buttonTargets.indexOf(this);
+    if (this_index === -1)
+      throw new Error("removing a button target that doesn't exist");
+    state.buttons.forEach((button) => {
+      button.target_ids = button.target_ids.filter((n) => n !== this_index).map((n) => {
+        if (n < this_index)
+          return n;
+        return n - 1;
+      });
+    });
+    state.things = state.things.filter((x) => x != this);
+  }
+};
+var TwoStateWall = class extends ButtonTarget {
+  constructor(pos, dir, extended, previous) {
+    super();
+    this.pos = pos;
+    this.dir = dir;
+    this.extended = extended;
+    this.previous = previous;
+  }
+  onButtonUpdate(state, button_active) {
+    let new_state = new GameState(state.major_turn, state.minor_turn + 1, state.things.map((x) => x.clone()));
+    if (button_active) {
+      if (new_state.move(this.pos.add(this.dir), this.dir)) {
+        let new_this = new_state.things.find((x) => x instanceof TwoStateWall && x.pos.equals(this.pos));
+        new_this.extended = true;
+        return [new_state];
+      }
+    } else {
+      if (new_state.move(this.pos, this.dir.mul(-1))) {
+        let new_this = new_state.things.find((x) => x instanceof TwoStateWall && x.pos.equals(this.pos));
+        new_this.extended = false;
+        return [new_state];
+      }
+    }
+    return [];
+  }
+  draw(turn_time) {
+    let pos = this.extended ? this.pos.add(this.dir) : this.pos;
+    if (this.previous && this.previous.extended != this.extended) {
+      pos = import_vector2.default.lerp(this.previous.extended ? this.pos.add(this.dir) : this.pos, pos, turn_time);
+    }
+    wall_sprite.position.copy(pos.add(1, 1).mul(TILE_SIZE));
+    import_shaku.default.gfx.drawSprite(wall_sprite);
+    import_shaku.default.gfx.drawLine(
+      this.pos.add(1, 1).mul(TILE_SIZE),
+      this.pos.add(this.dir).add(1, 1).mul(TILE_SIZE),
+      import_color.default.blue
+    );
+  }
+  move(state, pos, direction) {
+    if (this.extended) {
+      return !pos.equals(this.pos.add(this.dir));
+    } else {
+      return !pos.equals(this.pos);
+    }
+  }
+  clone() {
+    return new TwoStateWall(this.pos.clone(), this.dir.clone(), this.extended, this);
   }
 };
 var Pushable = class extends GameObject {
@@ -8240,29 +8394,30 @@ var initial_state = new GameState(
   0,
   [
     new Walls(20, 20),
+    new Targets([
+      new import_vector2.default(2, 2)
+    ]),
     new Spawner(new import_vector2.default(6, 6), import_vector2.default.right, null),
     new Crate(new import_vector2.default(1, 3), null),
-    new Crate(new import_vector2.default(6, 2), null)
+    new Crate(new import_vector2.default(6, 2), null),
+    new Button(new import_vector2.default(4, 4), [0], false, null),
+    new TwoStateWall(new import_vector2.default(3, 3), import_vector2.default.up, false, null)
   ]
-);
-while (initial_state.major_turn < 0) {
-  initial_state = initial_state.nextState();
-}
-console.log(initial_state);
+).nextStates().at(-1);
 var all_states = gameLogic(initial_state, robot_tape);
 function gameLogic(initial_state2, robot_tape2) {
   let res_all_states = [initial_state2];
   let cur_state = initial_state2;
   for (let k = 0; k < robot_tape2.length; k++) {
     while (true) {
-      let new_state = cur_state.nextState();
-      res_all_states.push(new_state);
-      cur_state = new_state;
+      let new_states = cur_state.nextStates();
+      res_all_states = res_all_states.concat(new_states);
+      cur_state = new_states.at(-1);
       if (cur_state.major_turn !== k)
         break;
     }
   }
-  if (cur_turn > res_all_states.length) {
+  if (cur_turn + 1 > res_all_states.length) {
     cur_turn = 0;
   }
   return res_all_states;
@@ -8297,6 +8452,7 @@ function drawSymbol(symbol, pos) {
       break;
   }
 }
+var editor_button_looking_for_target = -1;
 function update() {
   import_shaku.default.startFrame();
   import_shaku.default.gfx.clear(import_shaku.default.utils.Color.cornflowerblue);
@@ -8361,6 +8517,71 @@ function update() {
     robot_delay += import_shaku.default.input?.mouseWheelSign;
     robot_delay = Math.max(1, robot_delay);
     all_states = gameLogic(initial_state, robot_tape);
+  }
+  if (import_shaku.default.input.keyPressed(import_key_codes.KeyboardKeys.n1)) {
+    initial_state.target.toggleAt(mouse_tile);
+  }
+  if (import_shaku.default.input.keyPressed(import_key_codes.KeyboardKeys.n2)) {
+    let two_state_wall_index = indexOfTrue(initial_state.things, (x) => x instanceof TwoStateWall && x.pos.equals(mouse_tile));
+    if (two_state_wall_index === -1) {
+      initial_state.things.push(new TwoStateWall(
+        mouse_tile,
+        mainDir(import_shaku.default.input.mousePosition.div(TILE_SIZE).sub(1, 1).sub(mouse_tile)),
+        false,
+        null
+      ));
+    } else {
+      console.log(two_state_wall_index);
+      initial_state.things[two_state_wall_index].remove(initial_state);
+      console.log(initial_state);
+    }
+    all_states = gameLogic(initial_state, robot_tape);
+  }
+  if (import_shaku.default.input.keyPressed(import_key_codes.KeyboardKeys.n3)) {
+    let button_index = indexOfTrue(initial_state.things, (b) => b instanceof Button && b.pos.equals(mouse_tile));
+    if (button_index === -1) {
+      initial_state.things.push(new Button(mouse_tile, [], false, null));
+    } else {
+      initial_state.things.splice(button_index, 1);
+    }
+    all_states = gameLogic(initial_state, robot_tape);
+  }
+  if (import_shaku.default.input.keyPressed(import_key_codes.KeyboardKeys.n4)) {
+    if (editor_button_looking_for_target === -1) {
+      editor_button_looking_for_target = indexOfTrue(initial_state.things, (b) => b instanceof Button && b.pos.equals(mouse_tile));
+    } else {
+      let button_target_index = initial_state.buttonTargets.findIndex((x) => x instanceof TwoStateWall && x.pos.equals(mouse_tile));
+      if (button_target_index !== -1) {
+        let button = initial_state.things[editor_button_looking_for_target];
+        if (button.target_ids.includes(button_target_index)) {
+          button.target_ids = button.target_ids.filter((x) => x != button_target_index);
+        } else {
+          button.target_ids.push(button_target_index);
+        }
+      }
+      editor_button_looking_for_target = -1;
+    }
+    all_states = gameLogic(initial_state, robot_tape);
+  }
+  if (import_shaku.default.input.keyPressed(import_key_codes.KeyboardKeys.n5)) {
+    initial_state.spawner.pos = mouse_tile;
+    initial_state.spawner.dir = mainDir(import_shaku.default.input.mousePosition.div(TILE_SIZE).sub(1, 1).sub(mouse_tile));
+    initial_state.spawner.sprite.rotation = initial_state.spawner.dir.getRadians();
+    initial_state.players[0].pos = initial_state.spawner.pos.add(initial_state.spawner.dir);
+    initial_state.players[0].dir = initial_state.spawner.dir.clone();
+    all_states = gameLogic(initial_state, robot_tape);
+  }
+  if (editor_button_looking_for_target !== -1) {
+    let button = initial_state.things[editor_button_looking_for_target];
+    import_shaku.default.gfx.fillRect(
+      new import_rectangle.default(
+        (button.pos.x + 0.5) * TILE_SIZE,
+        (button.pos.y + 0.5) * TILE_SIZE,
+        TILE_SIZE,
+        TILE_SIZE
+      ),
+      button.active ? import_shaku.default.utils.Color.red : import_shaku.default.utils.Color.green
+    );
   }
   if (time_offset < 0) {
     all_states[cur_turn].draw(time_offset + 1);
@@ -8470,6 +8691,13 @@ function indexOfTrue(array, fn) {
     }
   }
   return -1;
+}
+function mainDir(dir) {
+  if (Math.abs(dir.x) > Math.abs(dir.y)) {
+    return dir.x >= 0 ? import_vector2.default.right : import_vector2.default.left;
+  } else {
+    return dir.y >= 0 ? import_vector2.default.down : import_vector2.default.up;
+  }
 }
 /**
  * A utility to hold gametime.
