@@ -6,71 +6,52 @@ import Color from "shaku/lib/utils/color";
 import Rectangle from "shaku/lib/utils/rectangle";
 import { KeyboardKeys, MouseButtons } from "shaku/lib/input/key_codes";
 import { BlendModes } from "shaku/lib/gfx/blend_modes";
+import { TextureFilterModes } from "shaku/lib/gfx/texture_filter_modes";
 
 Shaku!.input!.setTargetElement(() => Shaku.gfx!.canvas);
 await Shaku.init();
 
 // add shaku's canvas to document and set resolution to 800x600
 document.body.appendChild(Shaku!.gfx!.canvas);
-Shaku.gfx!.setResolution(800, 600, true);
+Shaku.gfx!.setResolution(1152, 648, true);
 Shaku.gfx!.centerCanvas();
 // Shaku.gfx!.maximizeCanvasSize(false, false);
 
-const TILE_SIZE = 30;
+const TILE_SIZE = 50;
 
-const player_sprite = await makeAsciiSprite(`
-        .000.
-        .111.
-        22222
-        .333.
-        .3.3.
-    `, [
-    Shaku.utils.Color.black,
-    Shaku.utils.Color.orange,
-    Shaku.utils.Color.white,
-    Shaku.utils.Color.blue
-]);
+const player_texture = await Shaku.assets.loadTexture("imgs/player.png", { generateMipMaps: true });
+// player_texture.filter = TextureFilterModes.LinearMipmapLinear;
+const player_sprite = new Sprite(player_texture);
+player_sprite.size.set(TILE_SIZE, TILE_SIZE);
 
-const wall_sprite = await makeAsciiSprite(`
-        00010
-        11111
-        01000
-        11111
-        00010
-    `, [
-    Shaku.utils.Color.brown,
-    Shaku.utils.Color.darkgray,
-]);
+const crate_texture = await Shaku.assets.loadTexture("imgs/crate.png", { generateMipMaps: true });
+// crate_texture.filter = TextureFilterModes.LinearMipmapLinear;
+const crate_sprite = new Sprite(crate_texture);
+crate_sprite.size.set(TILE_SIZE, TILE_SIZE);
 
-const crate_sprite = await makeAsciiSprite(`
-        00000
-        0...0
-        0...0
-        0...0
-        00000
-    `, [
-    Shaku.utils.Color.orange,
-]);
+const target_texture = await Shaku.assets.loadTexture("imgs/target.png", { generateMipMaps: true });
+// target_texture.filter = TextureFilterModes.LinearMipmapLinear;
+const target_sprite = new Sprite(target_texture);
+target_sprite.size.set(TILE_SIZE, TILE_SIZE);
 
-const target_sprite = await makeAsciiSprite(`
-        .....
-        .000.
-        .0.0.
-        .000.
-        .....
-    `, [
-    Shaku.utils.Color.darkblue,
-]);
+const button_texture = await Shaku.assets.loadTexture("imgs/button.png", { generateMipMaps: true });
+// button_texture.filter = TextureFilterModes.LinearMipmapLinear;
+const button_sprite = new Sprite(button_texture);
+button_sprite.size.set(TILE_SIZE, TILE_SIZE);
 
-const spawner_sprite = await makeAsciiSprite(`
-        .0000
-        0000.
-        000..
-        0000.
-        .0000
-    `, [
-    Shaku.utils.Color.darkblue,
-]);
+const two_state_wall_texture = await Shaku.assets.loadTexture("imgs/two_state_wall.png", { generateMipMaps: true });
+// two_state_wall_texture.filter = TextureFilterModes.LinearMipmapLinear;
+
+const spawner_texture = await Shaku.assets.loadTexture("imgs/spawner.png", { generateMipMaps: true });
+// spawner_texture.filter = TextureFilterModes.LinearMipmapLinear;
+const spawner_sprite = new Sprite(spawner_texture);
+spawner_sprite.size.set(TILE_SIZE, TILE_SIZE);
+
+
+
+const geo_texture = await Shaku.assets.loadTexture("imgs/geo.png", { generateMipMaps: true });
+// geo_texture.filter = TextureFilterModes.LinearMipmapLinear;
+const geo_sprite = new Sprite(geo_texture, new Rectangle(0, 0, TILE_SIZE, TILE_SIZE));
 
 const left_arrow = await makeAsciiSprite(`
         ..0..
@@ -104,6 +85,7 @@ class GameState {
 
     draw(turn_time: number) {
         this.things.forEach(x => x.draw(turn_time));
+        this.spawner.draw(turn_time); // hacky
     }
 
     public get wall(): Walls {
@@ -306,13 +288,29 @@ class Walls extends GameObject {
         super();
         this.data = makeRectArray(20, 20, false);
     }
+    private static n_to_x = []
     draw(turn_time: number): void {
-        forEachTile(this.data, (isWall, i, j) => {
+        // todo: don't run these calculations every frame
+        for (let i = 0; i <= this.w; i++) {
+            for (let j = 0; j <= this.h; j++) {
+                let n = this.wallAt(i - 1, j - 1) + this.wallAt(i, j - 1) * 2
+                    + this.wallAt(i - 1, j) * 4 + this.wallAt(i, j) * 8;
+                if ((i + j) % 2 === 1) n += 16;
+                geo_sprite.setSourceFromSpritesheet(new Vector2(n % 4, Math.floor(n / 4)), new Vector2(4, 8), 1, true);
+                geo_sprite.position.set((i + .5) * TILE_SIZE, (j + .5) * TILE_SIZE);
+                Shaku.gfx!.drawSprite(geo_sprite);
+            }
+        }
+        /*forEachTile(this.data, (isWall, i, j) => {
             if (isWall) {
                 wall_sprite.position.set((i + 1) * TILE_SIZE, (j + 1) * TILE_SIZE);
                 Shaku.gfx!.drawSprite(wall_sprite);
             }
-        });
+        });*/
+    }
+    private wallAt(i: number, j: number): number {
+        if (i < 0 || i >= this.w || j < 0 || j >= this.h) return 1;
+        return this.data[j][i] ? 1 : 0;
     }
     move(state: GameState, pos: Vector2, direction: Vector2): boolean {
         if (pos.x < 0 || pos.x >= this.w || pos.y < 0 || pos.y >= this.h) return false;
@@ -366,16 +364,16 @@ class Button extends GameObject {
         public previous: Button | null,
     ) { super(); }
 
+    private static ActiveColor = Color.fromHex("#F0A863");
+    private static InactiveColor = Color.fromHex("#4E3116");
     draw(turn_time: number): void {
-        Shaku.gfx!.outlineRect(
-            new Rectangle(
-                (this.pos.x + .5) * TILE_SIZE,
-                (this.pos.y + .5) * TILE_SIZE,
-                TILE_SIZE,
-                TILE_SIZE
-            ),
-            this.active ? Shaku.utils.Color.red : Shaku.utils.Color.green,
-        )
+        button_sprite.position.copy(this.pos.add(1, 1).mul(TILE_SIZE));
+        if (turn_time !== 1 && this.previous && this.previous.active !== this.active) {
+            button_sprite.color = Color.lerp(Button.ActiveColor, Button.InactiveColor, this.active ? turn_time : 1 - turn_time);
+        } else {
+            button_sprite.color = this.active ? Button.ActiveColor : Button.InactiveColor;
+        }
+        Shaku.gfx!.drawSprite(button_sprite);
     }
 
     move(state: GameState, pos: Vector2, direction: Vector2): boolean {
@@ -416,12 +414,22 @@ abstract class ButtonTarget extends GameObject {
 }
 
 class TwoStateWall extends ButtonTarget {
+    private rail_sprite: Sprite;
+    private wall_sprite: Sprite;
     constructor(
         public pos: Vector2,
         public dir: Vector2,
         public extended: boolean,
         public previous: TwoStateWall | null,
-    ) { super(); };
+    ) {
+        super();
+        this.rail_sprite = new Sprite(two_state_wall_texture, new Rectangle(0, 0, TILE_SIZE * 2, TILE_SIZE));
+        this.rail_sprite.position = pos.add(dir.mul(.5)).add(1, 1).mul(TILE_SIZE);
+        this.rail_sprite.rotation = this.dir.getRadians();
+
+        this.wall_sprite = new Sprite(two_state_wall_texture, new Rectangle(TILE_SIZE * 2, 0, TILE_SIZE, TILE_SIZE));
+        this.wall_sprite.rotation = this.dir.getRadians();
+    };
 
     onButtonUpdate(state: GameState, button_active: boolean): GameState[] {
         let new_state = new GameState(state.major_turn, state.minor_turn + 1, state.things.map(x => x.clone()));
@@ -445,18 +453,20 @@ class TwoStateWall extends ButtonTarget {
     }
 
     draw(turn_time: number): void {
+        Shaku.gfx!.drawSprite(this.rail_sprite);
+
         let pos = this.extended ? this.pos.add(this.dir) : this.pos;
         if (this.previous && this.previous.extended != this.extended) {
             pos = Vector2.lerp(this.previous.extended ? this.pos.add(this.dir) : this.pos, pos, turn_time);
         }
-        wall_sprite.position.copy(pos.add(1, 1).mul(TILE_SIZE));
-        Shaku.gfx!.drawSprite(wall_sprite);
+        this.wall_sprite.position.copy(pos.add(1, 1).mul(TILE_SIZE));
+        Shaku.gfx!.drawSprite(this.wall_sprite);
 
-        Shaku.gfx.drawLine(
-            this.pos.add(1, 1).mul(TILE_SIZE),
-            this.pos.add(this.dir).add(1, 1).mul(TILE_SIZE),
-            Color.blue,
-        );
+        // Shaku.gfx.drawLine(
+        //     this.pos.add(1, 1).mul(TILE_SIZE),
+        //     this.pos.add(this.dir).add(1, 1).mul(TILE_SIZE),
+        //     Color.blue,
+        // );
     }
 
     move(state: GameState, pos: Vector2, direction: Vector2): boolean {
@@ -484,6 +494,7 @@ abstract class Pushable extends GameObject {
 
     draw(turn_time: number) {
         if (turn_time !== 1 && this.previous) {
+            // turn_time = clamp(remap(turn_time, .2, 1, 0, 1), 0, 1);
             this.sprite.position.copy(Vector2.lerp(this.previous.pos, this.pos, turn_time).add(1, 1).mul(TILE_SIZE));
         } else {
             this.sprite.position.copy(this.pos.add(1, 1).mul(TILE_SIZE));
@@ -536,7 +547,7 @@ class Player extends Pushable {
         public previous: Player | null,
     ) { super(pos, previous); };
 
-    private static _brightColor = new Color(1.5, 1.5, 1.5, 1);
+    private static _brightColor = new Color(1.3, 1.3, 1.3, 1);
     draw(turn_time: number): void {
         this.sprite.rotation = this.dir.getRadians() + Math.PI / 2;
         this.sprite.color = (this.index === 0) ? Player._brightColor : Shaku.utils.Color.white;
@@ -575,14 +586,14 @@ let initial_state = new GameState(
         new Targets([
             new Vector2(2, 2),
         ]),
-        new Spawner(new Vector2(6, 6), Vector2.right, null),
-        // new Player(new Vector2(8, 8), Vector2.right, 0, 0, null),
-        new Crate(new Vector2(1, 3), null),
-        new Crate(new Vector2(6, 2), null),
 
         new Button(new Vector2(4, 4), [0], false, null),
 
         new TwoStateWall(new Vector2(3, 3), Vector2.up, false, null),
+
+        new Spawner(new Vector2(6, 6), Vector2.right, null),
+        new Crate(new Vector2(1, 3), null),
+        new Crate(new Vector2(6, 2), null),
     ],
 ).nextStates().at(-1)!;
 
@@ -642,7 +653,7 @@ let editor_button_looking_for_target = -1;
 function update() {
     // start a new frame and clear screen
     Shaku.startFrame();
-    Shaku.gfx!.clear(Shaku.utils.Color.cornflowerblue);
+    Shaku.gfx!.clear(Shaku.utils.Color.darkslategray);
 
     // TODO: PUT YOUR GAME UPDATES / RENDERING HERE
 
@@ -688,7 +699,6 @@ function update() {
         all_states = gameLogic(initial_state, robot_tape);
     }
 
-    // todo: editor
     let mouse_tile = Shaku.input!.mousePosition.div(TILE_SIZE).round().sub(1, 1);
     Shaku.gfx!.outlineRect(
         new Rectangle(
@@ -926,4 +936,15 @@ function mainDir(dir: Vector2) {
     } else {
         return dir.y >= 0 ? Vector2.down : Vector2.up;
     }
+}
+
+function remap(value: number, old_a: number, old_b: number, new_a: number, new_b: number) {
+    let t = (value - old_a) / (old_b - old_a);
+    return t * (new_b - new_a) + new_a;
+}
+
+function clamp(value: number, a: number, b: number) {
+    if (value < a) return a;
+    if (value > b) return b;
+    return value;
 }

@@ -1630,8 +1630,8 @@ var require_texture_asset = __commonJS({
   "../Shaku/lib/assets/texture_asset.js"(exports, module) {
     "use strict";
     var Asset = require_asset();
-    var TextureFilterModes = require_texture_filter_modes();
-    var TextureWrapModes = require_texture_wrap_modes();
+    var { TextureFilterMode, TextureFilterModes } = require_texture_filter_modes();
+    var { TextureWrapMode, TextureWrapModes } = require_texture_wrap_modes();
     var Color2 = require_color();
     var Vector22 = require_vector2();
     var _logger = require_logger().getLogger("assets");
@@ -4413,7 +4413,7 @@ var require_sprite = __commonJS({
     var Vector22 = require_vector2();
     var Vector32 = require_vector3();
     var { BlendMode, BlendModes: BlendModes2 } = require_blend_modes();
-    var Sprite = class {
+    var Sprite2 = class {
       constructor(texture, sourceRect) {
         this.texture = texture;
         this.position = new Vector22(0, 0);
@@ -4450,7 +4450,7 @@ var require_sprite = __commonJS({
         }
       }
       clone() {
-        let ret = new Sprite(this.texture, this.sourceRect);
+        let ret = new Sprite2(this.texture, this.sourceRect);
         ret.position = this.position.clone();
         ret.size = this.size.clone();
         ret.blendMode = this.blendMode;
@@ -4482,7 +4482,7 @@ var require_sprite = __commonJS({
         return flip;
       }
     };
-    module.exports = Sprite;
+    module.exports = Sprite2;
   }
 });
 
@@ -4493,7 +4493,7 @@ var require_sprites_group = __commonJS({
     var Color2 = require_color();
     var Vector22 = require_vector2();
     var Matrix = require_matrix();
-    var Sprite = require_sprite();
+    var Sprite2 = require_sprite();
     var SpritesGroup = class {
       constructor() {
         this._sprites = [];
@@ -5241,7 +5241,7 @@ var require_gfx = __commonJS({
     var MeshGenerator = require_mesh_generator();
     var Matrix = require_matrix();
     var Camera = require_camera();
-    var Sprite = require_sprite();
+    var Sprite2 = require_sprite();
     var SpritesGroup = require_sprites_group();
     var Vector22 = require_vector2();
     var FontTextureAsset = require_font_texture_asset();
@@ -5309,7 +5309,7 @@ var require_gfx = __commonJS({
         return MsdfFontEffect;
       }
       get Sprite() {
-        return Sprite;
+        return Sprite2;
       }
       get SpritesGroup() {
         return SpritesGroup;
@@ -5569,7 +5569,7 @@ var require_gfx = __commonJS({
           }
           let size = new Vector22(sourceRect.width * scale, sourceRect.height * scale);
           if (character !== " ") {
-            let sprite = new Sprite(fontTexture.texture, sourceRect);
+            let sprite = new Sprite2(fontTexture.texture, sourceRect);
             sprite.size = size;
             if (fontTexture instanceof MsdfFontTextureAsset) {
               sprite.origin.set(0, 0);
@@ -5616,7 +5616,7 @@ var require_gfx = __commonJS({
         return this.draw(texture, destRect.getCenter(), destRect.getSize(), sourceRect, color, blendMode);
       }
       draw(texture, position, size, sourceRect, color, blendMode, rotation, origin, skew) {
-        let sprite = new Sprite(texture, sourceRect);
+        let sprite = new Sprite2(texture, sourceRect);
         sprite.position = position;
         sprite.size = typeof size === "number" ? new Vector22(size, size) : size;
         if (color) {
@@ -5666,7 +5666,7 @@ var require_gfx = __commonJS({
         }
         let group = new SpritesGroup();
         for (let i = 0; i < destRects.length; ++i) {
-          let sprite = new Sprite(this.whiteTexture);
+          let sprite = new Sprite2(this.whiteTexture);
           sprite.color = colors[i] || colors;
           sprite.rotation = rotation.length ? rotation[i] : rotation;
           sprite.blendMode = blend || BlendModes2.Opaque;
@@ -7965,6 +7965,7 @@ var require_shaku = __commonJS({
 
 // src/main.ts
 var import_shaku = __toESM(require_shaku());
+var import_sprite = __toESM(require_sprite());
 var import_vector2 = __toESM(require_vector2());
 var import_color = __toESM(require_color());
 var import_rectangle = __toESM(require_rectangle());
@@ -7973,58 +7974,27 @@ var import_blend_modes = __toESM(require_blend_modes());
 import_shaku.default.input.setTargetElement(() => import_shaku.default.gfx.canvas);
 await import_shaku.default.init();
 document.body.appendChild(import_shaku.default.gfx.canvas);
-import_shaku.default.gfx.setResolution(800, 600, true);
+import_shaku.default.gfx.setResolution(1152, 648, true);
 import_shaku.default.gfx.centerCanvas();
-var TILE_SIZE = 30;
-var player_sprite = await makeAsciiSprite(`
-        .000.
-        .111.
-        22222
-        .333.
-        .3.3.
-    `, [
-  import_shaku.default.utils.Color.black,
-  import_shaku.default.utils.Color.orange,
-  import_shaku.default.utils.Color.white,
-  import_shaku.default.utils.Color.blue
-]);
-var wall_sprite = await makeAsciiSprite(`
-        00010
-        11111
-        01000
-        11111
-        00010
-    `, [
-  import_shaku.default.utils.Color.brown,
-  import_shaku.default.utils.Color.darkgray
-]);
-var crate_sprite = await makeAsciiSprite(`
-        00000
-        0...0
-        0...0
-        0...0
-        00000
-    `, [
-  import_shaku.default.utils.Color.orange
-]);
-var target_sprite = await makeAsciiSprite(`
-        .....
-        .000.
-        .0.0.
-        .000.
-        .....
-    `, [
-  import_shaku.default.utils.Color.darkblue
-]);
-var spawner_sprite = await makeAsciiSprite(`
-        .0000
-        0000.
-        000..
-        0000.
-        .0000
-    `, [
-  import_shaku.default.utils.Color.darkblue
-]);
+var TILE_SIZE = 50;
+var player_texture = await import_shaku.default.assets.loadTexture("imgs/player.png", { generateMipMaps: true });
+var player_sprite = new import_sprite.default(player_texture);
+player_sprite.size.set(TILE_SIZE, TILE_SIZE);
+var crate_texture = await import_shaku.default.assets.loadTexture("imgs/crate.png", { generateMipMaps: true });
+var crate_sprite = new import_sprite.default(crate_texture);
+crate_sprite.size.set(TILE_SIZE, TILE_SIZE);
+var target_texture = await import_shaku.default.assets.loadTexture("imgs/target.png", { generateMipMaps: true });
+var target_sprite = new import_sprite.default(target_texture);
+target_sprite.size.set(TILE_SIZE, TILE_SIZE);
+var button_texture = await import_shaku.default.assets.loadTexture("imgs/button.png", { generateMipMaps: true });
+var button_sprite = new import_sprite.default(button_texture);
+button_sprite.size.set(TILE_SIZE, TILE_SIZE);
+var two_state_wall_texture = await import_shaku.default.assets.loadTexture("imgs/two_state_wall.png", { generateMipMaps: true });
+var spawner_texture = await import_shaku.default.assets.loadTexture("imgs/spawner.png", { generateMipMaps: true });
+var spawner_sprite = new import_sprite.default(spawner_texture);
+spawner_sprite.size.set(TILE_SIZE, TILE_SIZE);
+var geo_texture = await import_shaku.default.assets.loadTexture("imgs/geo.png", { generateMipMaps: true });
+var geo_sprite = new import_sprite.default(geo_texture, new import_rectangle.default(0, 0, TILE_SIZE, TILE_SIZE));
 var left_arrow = await makeAsciiSprite(`
         ..0..
         .0...
@@ -8053,6 +8023,7 @@ var GameState = class {
   spawned_player;
   draw(turn_time) {
     this.things.forEach((x) => x.draw(turn_time));
+    this.spawner.draw(turn_time);
   }
   get wall() {
     let res = this.things.filter((x) => x instanceof Walls);
@@ -8161,12 +8132,21 @@ var Walls = class extends GameObject {
   previous = null;
   data;
   draw(turn_time) {
-    forEachTile(this.data, (isWall, i, j) => {
-      if (isWall) {
-        wall_sprite.position.set((i + 1) * TILE_SIZE, (j + 1) * TILE_SIZE);
-        import_shaku.default.gfx.drawSprite(wall_sprite);
+    for (let i = 0; i <= this.w; i++) {
+      for (let j = 0; j <= this.h; j++) {
+        let n = this.wallAt(i - 1, j - 1) + this.wallAt(i, j - 1) * 2 + this.wallAt(i - 1, j) * 4 + this.wallAt(i, j) * 8;
+        if ((i + j) % 2 === 1)
+          n += 16;
+        geo_sprite.setSourceFromSpritesheet(new import_vector2.default(n % 4, Math.floor(n / 4)), new import_vector2.default(4, 8), 1, true);
+        geo_sprite.position.set((i + 0.5) * TILE_SIZE, (j + 0.5) * TILE_SIZE);
+        import_shaku.default.gfx.drawSprite(geo_sprite);
       }
-    });
+    }
+  }
+  wallAt(i, j) {
+    if (i < 0 || i >= this.w || j < 0 || j >= this.h)
+      return 1;
+    return this.data[j][i] ? 1 : 0;
   }
   move(state, pos, direction) {
     if (pos.x < 0 || pos.x >= this.w || pos.y < 0 || pos.y >= this.h)
@@ -8184,6 +8164,7 @@ var Walls = class extends GameObject {
     this.data[pos.y][pos.x] = !this.data[pos.y][pos.x];
   }
 };
+__publicField(Walls, "n_to_x", []);
 var Targets = class extends GameObject {
   constructor(positions) {
     super();
@@ -8211,7 +8192,7 @@ var Targets = class extends GameObject {
     }
   }
 };
-var Button = class extends GameObject {
+var _Button = class extends GameObject {
   constructor(pos, target_ids, active, previous) {
     super();
     this.pos = pos;
@@ -8220,21 +8201,19 @@ var Button = class extends GameObject {
     this.previous = previous;
   }
   draw(turn_time) {
-    import_shaku.default.gfx.outlineRect(
-      new import_rectangle.default(
-        (this.pos.x + 0.5) * TILE_SIZE,
-        (this.pos.y + 0.5) * TILE_SIZE,
-        TILE_SIZE,
-        TILE_SIZE
-      ),
-      this.active ? import_shaku.default.utils.Color.red : import_shaku.default.utils.Color.green
-    );
+    button_sprite.position.copy(this.pos.add(1, 1).mul(TILE_SIZE));
+    if (turn_time !== 1 && this.previous && this.previous.active !== this.active) {
+      button_sprite.color = import_color.default.lerp(_Button.ActiveColor, _Button.InactiveColor, this.active ? turn_time : 1 - turn_time);
+    } else {
+      button_sprite.color = this.active ? _Button.ActiveColor : _Button.InactiveColor;
+    }
+    import_shaku.default.gfx.drawSprite(button_sprite);
   }
   move(state, pos, direction) {
     return true;
   }
   clone() {
-    return new Button(this.pos, this.target_ids, this.active, this);
+    return new _Button(this.pos, this.target_ids, this.active, this);
   }
   update(state) {
     let pressed = state.crates.some((crate) => crate.pos.equals(this.pos)) || state.players.some((player) => player.pos.equals(this.pos)) || state.spawner.pos.equals(this.pos);
@@ -8246,6 +8225,9 @@ var Button = class extends GameObject {
     }
   }
 };
+var Button = _Button;
+__publicField(Button, "ActiveColor", import_color.default.fromHex("#F0A863"));
+__publicField(Button, "InactiveColor", import_color.default.fromHex("#4E3116"));
 var ButtonTarget = class extends GameObject {
   remove(state) {
     let this_index = state.buttonTargets.indexOf(this);
@@ -8268,7 +8250,14 @@ var TwoStateWall = class extends ButtonTarget {
     this.dir = dir;
     this.extended = extended;
     this.previous = previous;
+    this.rail_sprite = new import_sprite.default(two_state_wall_texture, new import_rectangle.default(0, 0, TILE_SIZE * 2, TILE_SIZE));
+    this.rail_sprite.position = pos.add(dir.mul(0.5)).add(1, 1).mul(TILE_SIZE);
+    this.rail_sprite.rotation = this.dir.getRadians();
+    this.wall_sprite = new import_sprite.default(two_state_wall_texture, new import_rectangle.default(TILE_SIZE * 2, 0, TILE_SIZE, TILE_SIZE));
+    this.wall_sprite.rotation = this.dir.getRadians();
   }
+  rail_sprite;
+  wall_sprite;
   onButtonUpdate(state, button_active) {
     let new_state = new GameState(state.major_turn, state.minor_turn + 1, state.things.map((x) => x.clone()));
     if (button_active) {
@@ -8287,17 +8276,13 @@ var TwoStateWall = class extends ButtonTarget {
     return [];
   }
   draw(turn_time) {
+    import_shaku.default.gfx.drawSprite(this.rail_sprite);
     let pos = this.extended ? this.pos.add(this.dir) : this.pos;
     if (this.previous && this.previous.extended != this.extended) {
       pos = import_vector2.default.lerp(this.previous.extended ? this.pos.add(this.dir) : this.pos, pos, turn_time);
     }
-    wall_sprite.position.copy(pos.add(1, 1).mul(TILE_SIZE));
-    import_shaku.default.gfx.drawSprite(wall_sprite);
-    import_shaku.default.gfx.drawLine(
-      this.pos.add(1, 1).mul(TILE_SIZE),
-      this.pos.add(this.dir).add(1, 1).mul(TILE_SIZE),
-      import_color.default.blue
-    );
+    this.wall_sprite.position.copy(pos.add(1, 1).mul(TILE_SIZE));
+    import_shaku.default.gfx.drawSprite(this.wall_sprite);
   }
   move(state, pos, direction) {
     if (this.extended) {
@@ -8374,7 +8359,7 @@ var _Player = class extends Pushable {
   }
 };
 var Player = _Player;
-__publicField(Player, "_brightColor", new import_color.default(1.5, 1.5, 1.5, 1));
+__publicField(Player, "_brightColor", new import_color.default(1.3, 1.3, 1.3, 1));
 var TAPE_SYMBOL = /* @__PURE__ */ ((TAPE_SYMBOL2) => {
   TAPE_SYMBOL2[TAPE_SYMBOL2["LEFT"] = 0] = "LEFT";
   TAPE_SYMBOL2[TAPE_SYMBOL2["RIGHT"] = 1] = "RIGHT";
@@ -8397,11 +8382,11 @@ var initial_state = new GameState(
     new Targets([
       new import_vector2.default(2, 2)
     ]),
+    new Button(new import_vector2.default(4, 4), [0], false, null),
+    new TwoStateWall(new import_vector2.default(3, 3), import_vector2.default.up, false, null),
     new Spawner(new import_vector2.default(6, 6), import_vector2.default.right, null),
     new Crate(new import_vector2.default(1, 3), null),
-    new Crate(new import_vector2.default(6, 2), null),
-    new Button(new import_vector2.default(4, 4), [0], false, null),
-    new TwoStateWall(new import_vector2.default(3, 3), import_vector2.default.up, false, null)
+    new Crate(new import_vector2.default(6, 2), null)
   ]
 ).nextStates().at(-1);
 var all_states = gameLogic(initial_state, robot_tape);
@@ -8455,7 +8440,7 @@ function drawSymbol(symbol, pos) {
 var editor_button_looking_for_target = -1;
 function update() {
   import_shaku.default.startFrame();
-  import_shaku.default.gfx.clear(import_shaku.default.utils.Color.cornflowerblue);
+  import_shaku.default.gfx.clear(import_shaku.default.utils.Color.darkslategray);
   if (import_shaku.default.input?.pressed(["left", "q"]) && selected_tape_pos > 0) {
     selected_tape_pos -= 1;
   } else if (import_shaku.default.input?.pressed(["right", "e"]) && selected_tape_pos < robot_tape.length) {
@@ -8659,14 +8644,6 @@ function makeRectArray(width, height, fill) {
     result.push(cur_row);
   }
   return result;
-}
-function forEachTile(map, func) {
-  for (let j = 0; j < map.length; j++) {
-    let cur_row = map[j];
-    for (let i = 0; i < map[0].length; i++) {
-      func(cur_row[i], i, j);
-    }
-  }
 }
 function selectFromEnum(options, value) {
   for (const [option, result] of options) {
