@@ -8069,13 +8069,13 @@ void main(void) {
     // Normalized pixel coordinates (from 0 to 1)
     vec2 uv = v_texCoord;
     
-    uv *= 1. + .32 * sin(u_time * .21 + .2);
+    uv *= 1. + .09 * sin(u_time * .11 + .2);
     float a = .21 * sin(u_time * 0.08 + .32) + .43;
     float ca = cos(a);
     float sa = sin(a);
     uv = mat2(ca,sa,-sa,ca) * uv;
 
-    uv = pong(uv, .3 + sin(u_time * .1) * .1);
+    uv = pong(uv, .3 + sin(u_time * .1) * .07);
     uv.x += sin(u_time * .17 + .3) * .1;
 
     //float noise = texture(iChannel0, uv).x;
