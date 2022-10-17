@@ -7,6 +7,7 @@ import Rectangle from "shaku/lib/utils/rectangle";
 import { KeyboardKeys, MouseButtons } from "shaku/lib/input/key_codes";
 import { BlendModes } from "shaku/lib/gfx/blend_modes";
 import { TextureFilterModes } from "shaku/lib/gfx/texture_filter_modes";
+import { BackgroundEffect } from "./background_effect";
 
 Shaku!.input!.setTargetElement(() => Shaku.gfx!.canvas);
 await Shaku.init();
@@ -52,6 +53,10 @@ spawner_sprite.size.set(TILE_SIZE, TILE_SIZE);
 const geo_texture = await Shaku.assets.loadTexture("imgs/geo.png", { generateMipMaps: true });
 // geo_texture.filter = TextureFilterModes.LinearMipmapLinear;
 const geo_sprite = new Sprite(geo_texture, new Rectangle(0, 0, TILE_SIZE, TILE_SIZE));
+
+const floors_texture = await Shaku.assets.loadTexture("imgs/floors.png", { generateMipMaps: true });
+// floors_texture.filter = TextureFilterModes.LinearMipmapLinear;
+
 
 const left_arrow = await makeAsciiSprite(`
         ..0..
@@ -281,12 +286,33 @@ abstract class GameObject {
 class Walls extends GameObject {
     public previous = null;
     public data: boolean[][];
+    public floor_data: boolean[][];
+    private floor_spr_1: Sprite;
+    private floor_spr_2: Sprite;
     constructor(
         public w: number,
         public h: number,
     ) {
         super();
-        this.data = makeRectArray(20, 20, false);
+        this.data = makeRectArray(w, h, false);
+        this.floor_data = makeRectArray(w, h, false);
+
+        this.floor_spr_1 = new Sprite(floors_texture, new Rectangle(0, 0, TILE_SIZE, TILE_SIZE));
+        this.floor_spr_2 = new Sprite(floors_texture, new Rectangle(TILE_SIZE, 0, TILE_SIZE, TILE_SIZE));
+    }
+    static fromString(ascii: string): Walls {
+        let rows = ascii.trim().split("\n").map(x => x.trim())
+        let height = rows.length
+        let width = rows[0].length
+
+        let result = new Walls(width, height);
+        for (let j = 0; j < height; j++) {
+            for (let i = 0; i < width; i++) {
+                let val = rows[j][i];
+                result.data[j][i] = val === '#';
+            }
+        }
+        return result;
     }
     private static n_to_x = []
     draw(turn_time: number): void {
@@ -295,7 +321,19 @@ class Walls extends GameObject {
             for (let j = 0; j <= this.h; j++) {
                 let n = this.wallAt(i - 1, j - 1) + this.wallAt(i, j - 1) * 2
                     + this.wallAt(i - 1, j) * 4 + this.wallAt(i, j) * 8;
-                if ((i + j) % 2 === 1) n += 16;
+                if ((i + j) % 2 === 1) {
+                    n += 16;
+                }
+                if (this.floorAt(i - 1, j - 1) || this.floorAt(i, j - 1)
+                    || this.floorAt(i - 1, j) || this.floorAt(i, j)) {
+                    if ((i + j) % 2 === 1) {
+                        this.floor_spr_1.position.set((i + .5) * TILE_SIZE, (j + .5) * TILE_SIZE);
+                        Shaku.gfx!.drawSprite(this.floor_spr_1);
+                    } else {
+                        this.floor_spr_2.position.set((i + .5) * TILE_SIZE, (j + .5) * TILE_SIZE);
+                        Shaku.gfx!.drawSprite(this.floor_spr_2);
+                    }
+                }
                 geo_sprite.setSourceFromSpritesheet(new Vector2(n % 4, Math.floor(n / 4)), new Vector2(4, 8), 1, true);
                 geo_sprite.position.set((i + .5) * TILE_SIZE, (j + .5) * TILE_SIZE);
                 Shaku.gfx!.drawSprite(geo_sprite);
@@ -308,14 +346,34 @@ class Walls extends GameObject {
             }
         });*/
     }
+    private wallAtPos(pos: Vector2): boolean {
+        if (pos.x < 0 || pos.x >= this.w || pos.y < 0 || pos.y >= this.h) return true;
+        if (this.data[pos.y][pos.x]) return true;
+        return false;
+    }
     private wallAt(i: number, j: number): number {
         if (i < 0 || i >= this.w || j < 0 || j >= this.h) return 1;
         return this.data[j][i] ? 1 : 0;
     }
+    private floorAt(i: number, j: number): boolean {
+        if (i < 0 || i >= this.w || j < 0 || j >= this.h) return false;
+        return this.floor_data[j][i];
+    }
+    recalcFloors(pos: Vector2) {
+        this.floor_data = makeRectArray(this.w, this.h, false);
+        let pending: Vector2[] = [pos];
+        while (pending.length > 0) {
+            let cur = pending.pop()!;
+            this.floor_data[cur.y][cur.x] = true;
+            for (const dir of [Vector2.up, Vector2.down, Vector2.right, Vector2.left]) {
+                let next = cur.add(dir);
+                if (this.wallAtPos(next) || this.floorAt(next.x, next.y)) continue;
+                pending.push(next);
+            }
+        }
+    }
     move(state: GameState, pos: Vector2, direction: Vector2): boolean {
-        if (pos.x < 0 || pos.x >= this.w || pos.y < 0 || pos.y >= this.h) return false;
-        if (this.data[pos.y][pos.x]) return false;
-        return true;
+        return !this.wallAtPos(pos);
     }
     clone(): Walls {
         return this;
@@ -323,6 +381,10 @@ class Walls extends GameObject {
     toggleAt(pos: Vector2) { // editor
         if (pos.x < 0 || pos.x >= this.w || pos.y < 0 || pos.y >= this.h) return;
         this.data[pos.y][pos.x] = !this.data[pos.y][pos.x];
+    }
+    toggleFloorAt(pos: Vector2) { // editor
+        if (pos.x < 0 || pos.x >= this.w || pos.y < 0 || pos.y >= this.h) return;
+        this.floor_data[pos.y][pos.x] = !this.floor_data[pos.y][pos.x];
     }
 }
 
@@ -582,7 +644,20 @@ let time_offset = 0;
 let initial_state = new GameState(
     -1, 0,
     [
-        new Walls(20, 20),
+        Walls.fromString(`
+......................
+.....###########......
+.....#.........#......
+.....#.........#......
+.....#.........#......
+..####.........#......
+..#............#......
+..#............#......
+..#............#......
+..#............#......
+..##############......
+......................
+        `),
         new Targets([
             new Vector2(2, 2),
         ]),
@@ -596,6 +671,7 @@ let initial_state = new GameState(
         new Crate(new Vector2(6, 2), null),
     ],
 ).nextStates().at(-1)!;
+initial_state.wall.recalcFloors(initial_state.spawner.pos);
 
 let all_states = gameLogic(initial_state, robot_tape);
 
@@ -647,13 +723,31 @@ function drawSymbol(symbol: TAPE_SYMBOL, pos: Vector2) {
     }
 }
 
-let editor_button_looking_for_target = -1;
+const FULL_SCREEN_SPRITE = new Sprite(Shaku.gfx.whiteTexture);
+FULL_SCREEN_SPRITE.origin = Vector2.zero;
+FULL_SCREEN_SPRITE.size = Shaku.gfx.getCanvasSize();
+const background_effect = Shaku.gfx.createEffect(BackgroundEffect);
+Shaku.gfx.useEffect(background_effect);
+// @ts-ignore
+background_effect.uniforms["u_aspect_ratio"](FULL_SCREEN_SPRITE.size.x / FULL_SCREEN_SPRITE.size.y);
+// @ts-ignore
+Shaku.gfx.useEffect(null);
 
+let editor_button_looking_for_target = -1;
 // do a single main loop step and request the next step
 function update() {
     // start a new frame and clear screen
     Shaku.startFrame();
     Shaku.gfx!.clear(Shaku.utils.Color.darkslategray);
+
+    Shaku.gfx.useEffect(background_effect);
+    // @ts-ignore
+    background_effect.uniforms["u_time"](Shaku.gameTime.elapsed);
+    // background_effect.uniforms["u_time"](cur_turn + time_offset);
+    Shaku.gfx.drawSprite(FULL_SCREEN_SPRITE);
+    // @ts-ignore
+    Shaku.gfx.useEffect(null);
+    // console.log(background_effect.uniforms["u_aspect_ratio"]);
 
     // TODO: PUT YOUR GAME UPDATES / RENDERING HERE
 
@@ -711,6 +805,7 @@ function update() {
     )
     if (Shaku.input?.mousePressed(MouseButtons.left)) {
         initial_state.wall.toggleAt(mouse_tile);
+        initial_state.wall.recalcFloors(initial_state.spawner.pos);
         all_states = gameLogic(initial_state, robot_tape);
     }
     if (Shaku.input?.mousePressed(MouseButtons.right)) {
@@ -789,6 +884,9 @@ function update() {
             button.active ? Shaku.utils.Color.red : Shaku.utils.Color.green,
         )
     }
+    if (Shaku.input?.keyPressed(KeyboardKeys.n6)) {
+        initial_state.wall.toggleFloorAt(mouse_tile);
+    }
 
 
     if (time_offset < 0) { // going forwards in time
@@ -824,6 +922,8 @@ update();
 // };
 
 // runGame();
+
+
 
 function moveTowards(cur_val: number, target_val: number, max_delta: number): number {
     if (target_val > cur_val) {

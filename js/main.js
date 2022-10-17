@@ -3766,7 +3766,7 @@ var require_effect = __commonJS({
     var { TextureWrapMode, TextureWrapModes } = require_texture_wrap_modes();
     var Matrix = require_matrix();
     var _logger = require_logger().getLogger("gfx-effect");
-    var Effect = class {
+    var Effect2 = class {
       _build(gl) {
         let program = gl.createProgram();
         {
@@ -3919,7 +3919,7 @@ var require_effect = __commonJS({
         if (texture === this._cachedValues.texture) {
           return false;
         }
-        let uniform = this._uniformBinds[Effect.UniformBinds.MainTexture];
+        let uniform = this._uniformBinds[Effect2.UniformBinds.MainTexture];
         if (uniform) {
           this._cachedValues.texture = texture;
           let glTexture = texture.texture || texture;
@@ -3931,7 +3931,7 @@ var require_effect = __commonJS({
         return false;
       }
       setColor(color) {
-        let uniform = this._uniformBinds[Effect.UniformBinds.Color];
+        let uniform = this._uniformBinds[Effect2.UniformBinds.Color];
         if (uniform) {
           if (color.equals(this._cachedValues.color)) {
             return;
@@ -3954,17 +3954,17 @@ var require_effect = __commonJS({
         if (!sourceRect) {
           sourceRect = new Rectangle2(0, 0, texture.width, texture.height);
         }
-        let uvOffset = this._uniformBinds[Effect.UniformBinds.UvOffset];
+        let uvOffset = this._uniformBinds[Effect2.UniformBinds.UvOffset];
         if (uvOffset) {
           this.uniforms[uvOffset](sourceRect.x / texture.width, sourceRect.y / texture.height);
         }
-        let uvScale = this._uniformBinds[Effect.UniformBinds.UvScale];
+        let uvScale = this._uniformBinds[Effect2.UniformBinds.UvScale];
         if (uvScale) {
           this.uniforms[uvScale](sourceRect.width / texture.width, sourceRect.height / texture.height);
         }
       }
       setProjectionMatrix(matrix) {
-        let uniform = this._uniformBinds[Effect.UniformBinds.Projection];
+        let uniform = this._uniformBinds[Effect2.UniformBinds.Projection];
         if (uniform) {
           if (matrix.equals(this._cachedValues.projection)) {
             return;
@@ -3974,13 +3974,13 @@ var require_effect = __commonJS({
         }
       }
       setWorldMatrix(matrix) {
-        let uniform = this._uniformBinds[Effect.UniformBinds.World];
+        let uniform = this._uniformBinds[Effect2.UniformBinds.World];
         if (uniform) {
           this.uniforms[uniform](matrix.values);
         }
       }
       setPositionsAttribute(buffer) {
-        let attr = this._attributeBinds[Effect.AttributeBinds.Position];
+        let attr = this._attributeBinds[Effect2.AttributeBinds.Position];
         if (attr) {
           if (buffer === this._cachedValues.positions) {
             return;
@@ -3990,7 +3990,7 @@ var require_effect = __commonJS({
         }
       }
       setTextureCoordsAttribute(buffer) {
-        let attr = this._attributeBinds[Effect.AttributeBinds.TextureCoords];
+        let attr = this._attributeBinds[Effect2.AttributeBinds.TextureCoords];
         if (attr) {
           if (buffer === this._cachedValues.coords) {
             return;
@@ -4000,7 +4000,7 @@ var require_effect = __commonJS({
         }
       }
       setColorsAttribute(buffer) {
-        let attr = this._attributeBinds[Effect.AttributeBinds.Colors];
+        let attr = this._attributeBinds[Effect2.AttributeBinds.Colors];
         if (attr) {
           if (buffer === this._cachedValues.colors) {
             return;
@@ -4047,8 +4047,8 @@ var require_effect = __commonJS({
       writable: false
     });
     Object.freeze(UniformTypes);
-    Effect.UniformTypes = UniformTypes;
-    Effect.UniformBinds = {
+    Effect2.UniformTypes = UniformTypes;
+    Effect2.UniformBinds = {
       MainTexture: "texture",
       Color: "color",
       Projection: "projection",
@@ -4056,8 +4056,8 @@ var require_effect = __commonJS({
       UvOffset: "uvOffset",
       UvScale: "uvScale"
     };
-    Object.freeze(Effect.UniformBinds);
-    Effect.AttributeTypes = {
+    Object.freeze(Effect2.UniformBinds);
+    Effect2.AttributeTypes = {
       Byte: "BYTE",
       Short: "SHORT",
       UByte: "UNSIGNED_BYTE",
@@ -4065,13 +4065,13 @@ var require_effect = __commonJS({
       Float: "FLOAT",
       HalfFloat: "HALF_FLOAT"
     };
-    Object.freeze(Effect.AttributeTypes);
-    Effect.AttributeBinds = {
+    Object.freeze(Effect2.AttributeTypes);
+    Effect2.AttributeBinds = {
       Position: "position",
       TextureCoords: "uvs",
       Colors: "colors"
     };
-    Object.freeze(Effect.AttributeBinds);
+    Object.freeze(Effect2.AttributeBinds);
     function _setTextureFilter(gl, filter) {
       if (!TextureFilterModes._values.has(filter)) {
         throw new Error("Invalid texture filter mode! Please pick a value from 'TextureFilterModes'.");
@@ -4093,7 +4093,7 @@ var require_effect = __commonJS({
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl[wrapX]);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl[wrapY]);
     }
-    module.exports = Effect;
+    module.exports = Effect2;
   }
 });
 
@@ -4101,8 +4101,8 @@ var require_effect = __commonJS({
 var require_basic = __commonJS({
   "../Shaku/lib/gfx/effects/basic.js"(exports, module) {
     "use strict";
-    var Effect = require_effect();
-    var vertexShader = `
+    var Effect2 = require_effect();
+    var vertexShader2 = `
 attribute vec3 position;
 attribute vec2 coord;
 attribute vec4 color;
@@ -4120,7 +4120,7 @@ void main(void) {
     v_color = color;
 }
     `;
-    var fragmentShader = `  
+    var fragmentShader2 = `  
 #ifdef GL_ES
     precision highp float;
 #endif
@@ -4135,25 +4135,25 @@ void main(void) {
     gl_FragColor.rgb *= gl_FragColor.a;
 }
     `;
-    var BasicEffect = class extends Effect {
+    var BasicEffect = class extends Effect2 {
       get vertexCode() {
-        return vertexShader;
+        return vertexShader2;
       }
       get fragmentCode() {
-        return fragmentShader;
+        return fragmentShader2;
       }
       get uniformTypes() {
         return {
-          "texture": { type: Effect.UniformTypes.Texture, bind: Effect.UniformBinds.MainTexture },
-          "projection": { type: Effect.UniformTypes.Matrix, bind: Effect.UniformBinds.Projection },
-          "world": { type: Effect.UniformTypes.Matrix, bind: Effect.UniformBinds.World }
+          "texture": { type: Effect2.UniformTypes.Texture, bind: Effect2.UniformBinds.MainTexture },
+          "projection": { type: Effect2.UniformTypes.Matrix, bind: Effect2.UniformBinds.Projection },
+          "world": { type: Effect2.UniformTypes.Matrix, bind: Effect2.UniformBinds.World }
         };
       }
       get attributeTypes() {
         return {
-          "position": { size: 3, type: Effect.AttributeTypes.Float, normalize: false, bind: Effect.AttributeBinds.Position },
-          "coord": { size: 2, type: Effect.AttributeTypes.Float, normalize: false, bind: Effect.AttributeBinds.TextureCoords },
-          "color": { size: 4, type: Effect.AttributeTypes.Float, normalize: false, bind: Effect.AttributeBinds.Colors }
+          "position": { size: 3, type: Effect2.AttributeTypes.Float, normalize: false, bind: Effect2.AttributeBinds.Position },
+          "coord": { size: 2, type: Effect2.AttributeTypes.Float, normalize: false, bind: Effect2.AttributeBinds.TextureCoords },
+          "color": { size: 4, type: Effect2.AttributeTypes.Float, normalize: false, bind: Effect2.AttributeBinds.Colors }
         };
       }
     };
@@ -4165,8 +4165,8 @@ void main(void) {
 var require_msdf_font = __commonJS({
   "../Shaku/lib/gfx/effects/msdf_font.js"(exports, module) {
     "use strict";
-    var Effect = require_effect();
-    var vertexShader = `#version 300 es
+    var Effect2 = require_effect();
+    var vertexShader2 = `#version 300 es
 in vec3 a_position;
 in vec2 a_coord;
 in vec4 a_color;
@@ -4183,7 +4183,7 @@ void main(void) {
     v_texCoord = a_coord;
     v_color = a_color;
 }`;
-    var fragmentShader = `#version 300 es
+    var fragmentShader2 = `#version 300 es
 precision highp float;
 
 uniform sampler2D u_texture;
@@ -4206,25 +4206,25 @@ void main(void) {
   vec3 color = v_color.rgb * alpha;
   FragColor = vec4(color, alpha) * v_color.a;
 }`;
-    var MsdfFontEffect = class extends Effect {
+    var MsdfFontEffect = class extends Effect2 {
       get vertexCode() {
-        return vertexShader;
+        return vertexShader2;
       }
       get fragmentCode() {
-        return fragmentShader;
+        return fragmentShader2;
       }
       get uniformTypes() {
         return {
-          "u_texture": { type: Effect.UniformTypes.Texture, bind: Effect.UniformBinds.MainTexture },
-          "u_projection": { type: Effect.UniformTypes.Matrix, bind: Effect.UniformBinds.Projection },
-          "u_world": { type: Effect.UniformTypes.Matrix, bind: Effect.UniformBinds.World }
+          "u_texture": { type: Effect2.UniformTypes.Texture, bind: Effect2.UniformBinds.MainTexture },
+          "u_projection": { type: Effect2.UniformTypes.Matrix, bind: Effect2.UniformBinds.Projection },
+          "u_world": { type: Effect2.UniformTypes.Matrix, bind: Effect2.UniformBinds.World }
         };
       }
       get attributeTypes() {
         return {
-          "a_position": { size: 3, type: Effect.AttributeTypes.Float, normalize: false, bind: Effect.AttributeBinds.Position },
-          "a_coord": { size: 2, type: Effect.AttributeTypes.Float, normalize: false, bind: Effect.AttributeBinds.TextureCoords },
-          "a_color": { size: 4, type: Effect.AttributeTypes.Float, normalize: false, bind: Effect.AttributeBinds.Colors }
+          "a_position": { size: 3, type: Effect2.AttributeTypes.Float, normalize: false, bind: Effect2.AttributeBinds.Position },
+          "a_coord": { size: 2, type: Effect2.AttributeTypes.Float, normalize: false, bind: Effect2.AttributeBinds.TextureCoords },
+          "a_color": { size: 4, type: Effect2.AttributeTypes.Float, normalize: false, bind: Effect2.AttributeBinds.Colors }
         };
       }
     };
@@ -5234,7 +5234,7 @@ var require_gfx = __commonJS({
     var Color2 = require_color();
     var { BlendMode, BlendModes: BlendModes2 } = require_blend_modes();
     var Rectangle2 = require_rectangle();
-    var { Effect, BasicEffect, MsdfFontEffect } = require_effects();
+    var { Effect: Effect2, BasicEffect, MsdfFontEffect } = require_effects();
     var TextureAsset = require_texture_asset();
     var { TextureFilterMode, TextureFilterModes } = require_texture_filter_modes();
     var { TextureWrapMode, TextureWrapModes } = require_texture_wrap_modes();
@@ -5300,7 +5300,7 @@ var require_gfx = __commonJS({
         return this._canvas;
       }
       get Effect() {
-        return Effect;
+        return Effect2;
       }
       get BasicEffect() {
         return BasicEffect;
@@ -5337,7 +5337,7 @@ var require_gfx = __commonJS({
         return camera;
       }
       createEffect(type) {
-        if (!(type.prototype instanceof Effect)) {
+        if (!(type.prototype instanceof Effect2)) {
           throw new Error("'type' must be a class type that inherits from 'Effect'.");
         }
         let effect = new type();
@@ -5641,8 +5641,6 @@ var require_gfx = __commonJS({
           return;
         }
         this.__startDrawingSprites(this._activeEffect, null);
-        console.log("in problematic line, blendMode is: ", blendMode);
-        console.log("in problematic line, BlendModes.AlphaBlend is: ", BlendModes2.AlphaBlend);
         this._setBlendMode(blendMode || BlendModes2.AlphaBlend);
         this.spritesBatch.setTexture(texture);
         this.spritesBatch.pushVertices(vertices);
@@ -7971,6 +7969,145 @@ var import_color = __toESM(require_color());
 var import_rectangle = __toESM(require_rectangle());
 var import_key_codes = __toESM(require_key_codes());
 var import_blend_modes = __toESM(require_blend_modes());
+
+// src/background_effect.ts
+var import_effect = __toESM(require_effect());
+var vertexShader = `#version 300 es
+in vec3 a_position;
+in vec2 a_coord;
+
+uniform mat4 u_projection;
+uniform mat4 u_world;
+uniform float u_aspect_ratio;
+
+out vec2 v_texCoord;
+
+void main(void) {
+    gl_Position = u_projection * u_world * vec4(a_position, 1.0);
+    gl_PointSize = 1.0;
+    v_texCoord = a_coord * vec2(u_aspect_ratio * 2.0, 2.0) - vec2(u_aspect_ratio, 1.0);
+}`;
+var fragmentShader = `#version 300 es
+precision highp float;
+
+uniform float u_time;
+
+in vec2 v_texCoord;
+out vec4 FragColor;
+
+/* discontinuous pseudorandom uniformly distributed in [-0.5, +0.5]^3 */
+vec3 random3(vec3 c) {
+	float j = 4096.0*sin(dot(c,vec3(17.0, 59.4, 15.0)));
+	vec3 r;
+	r.z = fract(512.0*j);
+	j *= .125;
+	r.x = fract(512.0*j);
+	j *= .125;
+	r.y = fract(512.0*j);
+	return r-0.5;
+}
+
+/* skew constants for 3d simplex functions */
+const float F3 =  0.3333333;
+const float G3 =  0.1666667;
+
+/* 3d simplex noise */
+float simplex3d(vec3 p) {
+	 /* 1. find current tetrahedron T and it's four vertices */
+	 /* s, s+i1, s+i2, s+1.0 - absolute skewed (integer) coordinates of T vertices */
+	 /* x, x1, x2, x3 - unskewed coordinates of p relative to each of T vertices*/
+	 
+	 /* calculate s and x */
+	 vec3 s = floor(p + dot(p, vec3(F3)));
+	 vec3 x = p - s + dot(s, vec3(G3));
+	 
+	 /* calculate i1 and i2 */
+	 vec3 e = step(vec3(0.0), x - x.yzx);
+	 vec3 i1 = e*(1.0 - e.zxy);
+	 vec3 i2 = 1.0 - e.zxy*(1.0 - e);
+	 	
+	 /* x1, x2, x3 */
+	 vec3 x1 = x - i1 + G3;
+	 vec3 x2 = x - i2 + 2.0*G3;
+	 vec3 x3 = x - 1.0 + 3.0*G3;
+	 
+	 /* 2. find four surflets and store them in d */
+	 vec4 w, d;
+	 
+	 /* calculate surflet weights */
+	 w.x = dot(x, x);
+	 w.y = dot(x1, x1);
+	 w.z = dot(x2, x2);
+	 w.w = dot(x3, x3);
+	 
+	 /* w fades from 0.6 at the center of the surflet to 0.0 at the margin */
+	 w = max(0.6 - w, 0.0);
+	 
+	 /* calculate surflet components */
+	 d.x = dot(random3(s), x);
+	 d.y = dot(random3(s + i1), x1);
+	 d.z = dot(random3(s + i2), x2);
+	 d.w = dot(random3(s + 1.0), x3);
+	 
+	 /* multiply d by w^4 */
+	 w *= w;
+	 w *= w;
+	 d *= w;
+	 
+	 /* 3. return the sum of the four surflets */
+	 return dot(d, vec4(52.0)) + .25;
+}
+
+
+vec2 pong(vec2 value, float pong_value) {
+    vec2 v = mod(value, pong_value * 2.0);
+    return min(v, pong_value * 2.0 - v);
+}
+
+void main(void) {
+
+    // Normalized pixel coordinates (from 0 to 1)
+    vec2 uv = v_texCoord;
+    
+    uv *= 1. + .32 * sin(u_time * .21 + .2);
+    float a = .21 * sin(u_time * 0.08 + .32) + .43;
+    float ca = cos(a);
+    float sa = sin(a);
+    uv = mat2(ca,sa,-sa,ca) * uv;
+
+    uv = pong(uv, .3 + sin(u_time * .1) * .1);
+    uv.x += sin(u_time * .17 + .3) * .1;
+
+    //float noise = texture(iChannel0, uv).x;
+    float noise = simplex3d(vec3(uv * 10.0, u_time*0.02));
+
+    // Output to screen
+    FragColor = vec4(mix(vec3(.1843, .3098, .3098), vec3(.149, .2471, .2471), noise), 1.0);
+}`;
+var BackgroundEffect = class extends import_effect.default {
+  get vertexCode() {
+    return vertexShader;
+  }
+  get fragmentCode() {
+    return fragmentShader;
+  }
+  get uniformTypes() {
+    return {
+      "u_projection": { type: import_effect.default.UniformTypes.Matrix, bind: import_effect.default.UniformBinds.Projection },
+      "u_world": { type: import_effect.default.UniformTypes.Matrix, bind: import_effect.default.UniformBinds.World },
+      "u_time": { type: import_effect.default.UniformTypes.Float, bind: "u_time" },
+      "u_aspect_ratio": { type: import_effect.default.UniformTypes.Float, bind: "u_aspect_ratio" }
+    };
+  }
+  get attributeTypes() {
+    return {
+      "a_position": { size: 3, type: import_effect.default.AttributeTypes.Float, normalize: false, bind: import_effect.default.AttributeBinds.Position },
+      "a_coord": { size: 2, type: import_effect.default.AttributeTypes.Float, normalize: false, bind: import_effect.default.AttributeBinds.TextureCoords }
+    };
+  }
+};
+
+// src/main.ts
 import_shaku.default.input.setTargetElement(() => import_shaku.default.gfx.canvas);
 await import_shaku.default.init();
 document.body.appendChild(import_shaku.default.gfx.canvas);
@@ -7995,6 +8132,7 @@ var spawner_sprite = new import_sprite.default(spawner_texture);
 spawner_sprite.size.set(TILE_SIZE, TILE_SIZE);
 var geo_texture = await import_shaku.default.assets.loadTexture("imgs/geo.png", { generateMipMaps: true });
 var geo_sprite = new import_sprite.default(geo_texture, new import_rectangle.default(0, 0, TILE_SIZE, TILE_SIZE));
+var floors_texture = await import_shaku.default.assets.loadTexture("imgs/floors.png", { generateMipMaps: true });
 var left_arrow = await makeAsciiSprite(`
         ..0..
         .0...
@@ -8122,38 +8260,89 @@ var GameState = class {
 };
 var GameObject = class {
 };
-var Walls = class extends GameObject {
+var _Walls = class extends GameObject {
   constructor(w, h) {
     super();
     this.w = w;
     this.h = h;
-    this.data = makeRectArray(20, 20, false);
+    this.data = makeRectArray(w, h, false);
+    this.floor_data = makeRectArray(w, h, false);
+    this.floor_spr_1 = new import_sprite.default(floors_texture, new import_rectangle.default(0, 0, TILE_SIZE, TILE_SIZE));
+    this.floor_spr_2 = new import_sprite.default(floors_texture, new import_rectangle.default(TILE_SIZE, 0, TILE_SIZE, TILE_SIZE));
   }
   previous = null;
   data;
+  floor_data;
+  floor_spr_1;
+  floor_spr_2;
+  static fromString(ascii) {
+    let rows = ascii.trim().split("\n").map((x) => x.trim());
+    let height = rows.length;
+    let width = rows[0].length;
+    let result = new _Walls(width, height);
+    for (let j = 0; j < height; j++) {
+      for (let i = 0; i < width; i++) {
+        let val = rows[j][i];
+        result.data[j][i] = val === "#";
+      }
+    }
+    return result;
+  }
   draw(turn_time) {
     for (let i = 0; i <= this.w; i++) {
       for (let j = 0; j <= this.h; j++) {
         let n = this.wallAt(i - 1, j - 1) + this.wallAt(i, j - 1) * 2 + this.wallAt(i - 1, j) * 4 + this.wallAt(i, j) * 8;
-        if ((i + j) % 2 === 1)
+        if ((i + j) % 2 === 1) {
           n += 16;
+        }
+        if (this.floorAt(i - 1, j - 1) || this.floorAt(i, j - 1) || this.floorAt(i - 1, j) || this.floorAt(i, j)) {
+          if ((i + j) % 2 === 1) {
+            this.floor_spr_1.position.set((i + 0.5) * TILE_SIZE, (j + 0.5) * TILE_SIZE);
+            import_shaku.default.gfx.drawSprite(this.floor_spr_1);
+          } else {
+            this.floor_spr_2.position.set((i + 0.5) * TILE_SIZE, (j + 0.5) * TILE_SIZE);
+            import_shaku.default.gfx.drawSprite(this.floor_spr_2);
+          }
+        }
         geo_sprite.setSourceFromSpritesheet(new import_vector2.default(n % 4, Math.floor(n / 4)), new import_vector2.default(4, 8), 1, true);
         geo_sprite.position.set((i + 0.5) * TILE_SIZE, (j + 0.5) * TILE_SIZE);
         import_shaku.default.gfx.drawSprite(geo_sprite);
       }
     }
   }
+  wallAtPos(pos) {
+    if (pos.x < 0 || pos.x >= this.w || pos.y < 0 || pos.y >= this.h)
+      return true;
+    if (this.data[pos.y][pos.x])
+      return true;
+    return false;
+  }
   wallAt(i, j) {
     if (i < 0 || i >= this.w || j < 0 || j >= this.h)
       return 1;
     return this.data[j][i] ? 1 : 0;
   }
+  floorAt(i, j) {
+    if (i < 0 || i >= this.w || j < 0 || j >= this.h)
+      return false;
+    return this.floor_data[j][i];
+  }
+  recalcFloors(pos) {
+    this.floor_data = makeRectArray(this.w, this.h, false);
+    let pending = [pos];
+    while (pending.length > 0) {
+      let cur = pending.pop();
+      this.floor_data[cur.y][cur.x] = true;
+      for (const dir of [import_vector2.default.up, import_vector2.default.down, import_vector2.default.right, import_vector2.default.left]) {
+        let next = cur.add(dir);
+        if (this.wallAtPos(next) || this.floorAt(next.x, next.y))
+          continue;
+        pending.push(next);
+      }
+    }
+  }
   move(state, pos, direction) {
-    if (pos.x < 0 || pos.x >= this.w || pos.y < 0 || pos.y >= this.h)
-      return false;
-    if (this.data[pos.y][pos.x])
-      return false;
-    return true;
+    return !this.wallAtPos(pos);
   }
   clone() {
     return this;
@@ -8163,7 +8352,13 @@ var Walls = class extends GameObject {
       return;
     this.data[pos.y][pos.x] = !this.data[pos.y][pos.x];
   }
+  toggleFloorAt(pos) {
+    if (pos.x < 0 || pos.x >= this.w || pos.y < 0 || pos.y >= this.h)
+      return;
+    this.floor_data[pos.y][pos.x] = !this.floor_data[pos.y][pos.x];
+  }
 };
+var Walls = _Walls;
 __publicField(Walls, "n_to_x", []);
 var Targets = class extends GameObject {
   constructor(positions) {
@@ -8378,7 +8573,20 @@ var initial_state = new GameState(
   -1,
   0,
   [
-    new Walls(20, 20),
+    Walls.fromString(`
+......................
+.....###########......
+.....#.........#......
+.....#.........#......
+.....#.........#......
+..####.........#......
+..#............#......
+..#............#......
+..#............#......
+..#............#......
+..##############......
+......................
+        `),
     new Targets([
       new import_vector2.default(2, 2)
     ]),
@@ -8389,6 +8597,7 @@ var initial_state = new GameState(
     new Crate(new import_vector2.default(6, 2), null)
   ]
 ).nextStates().at(-1);
+initial_state.wall.recalcFloors(initial_state.spawner.pos);
 var all_states = gameLogic(initial_state, robot_tape);
 function gameLogic(initial_state2, robot_tape2) {
   let res_all_states = [initial_state2];
@@ -8437,10 +8646,21 @@ function drawSymbol(symbol, pos) {
       break;
   }
 }
+var FULL_SCREEN_SPRITE = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
+FULL_SCREEN_SPRITE.origin = import_vector2.default.zero;
+FULL_SCREEN_SPRITE.size = import_shaku.default.gfx.getCanvasSize();
+var background_effect = import_shaku.default.gfx.createEffect(BackgroundEffect);
+import_shaku.default.gfx.useEffect(background_effect);
+background_effect.uniforms["u_aspect_ratio"](FULL_SCREEN_SPRITE.size.x / FULL_SCREEN_SPRITE.size.y);
+import_shaku.default.gfx.useEffect(null);
 var editor_button_looking_for_target = -1;
 function update() {
   import_shaku.default.startFrame();
   import_shaku.default.gfx.clear(import_shaku.default.utils.Color.darkslategray);
+  import_shaku.default.gfx.useEffect(background_effect);
+  background_effect.uniforms["u_time"](import_shaku.default.gameTime.elapsed);
+  import_shaku.default.gfx.drawSprite(FULL_SCREEN_SPRITE);
+  import_shaku.default.gfx.useEffect(null);
   if (import_shaku.default.input?.pressed(["left", "q"]) && selected_tape_pos > 0) {
     selected_tape_pos -= 1;
   } else if (import_shaku.default.input?.pressed(["right", "e"]) && selected_tape_pos < robot_tape.length) {
@@ -8487,6 +8707,7 @@ function update() {
   );
   if (import_shaku.default.input?.mousePressed(import_key_codes.MouseButtons.left)) {
     initial_state.wall.toggleAt(mouse_tile);
+    initial_state.wall.recalcFloors(initial_state.spawner.pos);
     all_states = gameLogic(initial_state, robot_tape);
   }
   if (import_shaku.default.input?.mousePressed(import_key_codes.MouseButtons.right)) {
@@ -8567,6 +8788,9 @@ function update() {
       ),
       button.active ? import_shaku.default.utils.Color.red : import_shaku.default.utils.Color.green
     );
+  }
+  if (import_shaku.default.input?.keyPressed(import_key_codes.KeyboardKeys.n6)) {
+    initial_state.wall.toggleFloorAt(mouse_tile);
   }
   if (time_offset < 0) {
     all_states[cur_turn].draw(time_offset + 1);
