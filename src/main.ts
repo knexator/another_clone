@@ -378,13 +378,9 @@ class Walls extends GameObject {
     clone(): Walls {
         return this;
     }
-    toggleAt(pos: Vector2) { // editor
+    setAt(pos: Vector2, value: boolean) { // editor
         if (pos.x < 0 || pos.x >= this.w || pos.y < 0 || pos.y >= this.h) return;
-        this.data[pos.y][pos.x] = !this.data[pos.y][pos.x];
-    }
-    toggleFloorAt(pos: Vector2) { // editor
-        if (pos.x < 0 || pos.x >= this.w || pos.y < 0 || pos.y >= this.h) return;
-        this.floor_data[pos.y][pos.x] = !this.floor_data[pos.y][pos.x];
+        this.data[pos.y][pos.x] = value;
     }
 }
 
@@ -803,18 +799,14 @@ function update() {
         ),
         Shaku.utils.Color.white
     )
-    if (Shaku.input?.mousePressed(MouseButtons.left)) {
-        initial_state.wall.toggleAt(mouse_tile);
+    if (Shaku.input?.mouseDown(MouseButtons.left)) {
+        initial_state.wall.setAt(mouse_tile, true);
         initial_state.wall.recalcFloors(initial_state.spawner.pos);
         all_states = gameLogic(initial_state, robot_tape);
     }
-    if (Shaku.input?.mousePressed(MouseButtons.right)) {
-        let crate_index = indexOfTrue(initial_state.things, c => (c instanceof Crate && c.pos.equals(mouse_tile)));
-        if (crate_index === -1) {
-            initial_state.things.push(new Crate(mouse_tile, null));
-        } else {
-            initial_state.things.splice(crate_index, 1)
-        }
+    if (Shaku.input?.mouseDown(MouseButtons.right)) {
+        initial_state.wall.setAt(mouse_tile, false);
+        initial_state.wall.recalcFloors(initial_state.spawner.pos);
         all_states = gameLogic(initial_state, robot_tape);
     }
     if (Shaku.input?.mouseWheelSign !== 0) {
@@ -823,9 +815,26 @@ function update() {
         all_states = gameLogic(initial_state, robot_tape);
     }
     if (Shaku.input!.keyPressed(KeyboardKeys.n1)) {
-        initial_state.target.toggleAt(mouse_tile);
+        let crate_index = indexOfTrue(initial_state.things, c => (c instanceof Crate && c.pos.equals(mouse_tile)));
+        if (crate_index === -1) {
+            initial_state.things.push(new Crate(mouse_tile, null));
+        } else {
+            initial_state.things.splice(crate_index, 1)
+        }
+        all_states = gameLogic(initial_state, robot_tape);
     }
     if (Shaku.input!.keyPressed(KeyboardKeys.n2)) {
+        initial_state.target.toggleAt(mouse_tile);
+    }
+    if (Shaku.input!.keyPressed(KeyboardKeys.n3)) {
+        initial_state.spawner.pos = mouse_tile;
+        initial_state.spawner.dir = mainDir(Shaku.input!.mousePosition.div(TILE_SIZE).sub(1, 1).sub(mouse_tile));
+        initial_state.spawner.sprite.rotation = initial_state.spawner.dir.getRadians(); // hacky
+        initial_state.players[0].pos = initial_state.spawner.pos.add(initial_state.spawner.dir); // hacky
+        initial_state.players[0].dir = initial_state.spawner.dir.clone(); // hacky
+        all_states = gameLogic(initial_state, robot_tape);
+    }
+    if (Shaku.input!.keyPressed(KeyboardKeys.n4)) {
         let two_state_wall_index = indexOfTrue(initial_state.things, x => (x instanceof TwoStateWall && x.pos.equals(mouse_tile)));
         if (two_state_wall_index === -1) {
             initial_state.things.push(new TwoStateWall(
@@ -837,7 +846,7 @@ function update() {
         }
         all_states = gameLogic(initial_state, robot_tape);
     }
-    if (Shaku.input!.keyPressed(KeyboardKeys.n3)) {
+    if (Shaku.input!.keyPressed(KeyboardKeys.n5)) {
         let button_index = indexOfTrue(initial_state.things, b => (b instanceof Button && b.pos.equals(mouse_tile)));
         if (button_index === -1) {
             initial_state.things.push(new Button(mouse_tile, [], false, null));
@@ -846,7 +855,7 @@ function update() {
         }
         all_states = gameLogic(initial_state, robot_tape);
     }
-    if (Shaku.input!.keyPressed(KeyboardKeys.n4)) {
+    if (Shaku.input!.keyPressed(KeyboardKeys.n6)) {
         if (editor_button_looking_for_target === -1) {
             editor_button_looking_for_target = indexOfTrue(initial_state.things, b => (b instanceof Button && b.pos.equals(mouse_tile)));
         } else {
@@ -864,14 +873,6 @@ function update() {
         }
         all_states = gameLogic(initial_state, robot_tape);
     }
-    if (Shaku.input!.keyPressed(KeyboardKeys.n5)) {
-        initial_state.spawner.pos = mouse_tile;
-        initial_state.spawner.dir = mainDir(Shaku.input!.mousePosition.div(TILE_SIZE).sub(1, 1).sub(mouse_tile));
-        initial_state.spawner.sprite.rotation = initial_state.spawner.dir.getRadians(); // hacky
-        initial_state.players[0].pos = initial_state.spawner.pos.add(initial_state.spawner.dir); // hacky
-        initial_state.players[0].dir = initial_state.spawner.dir.clone(); // hacky
-        all_states = gameLogic(initial_state, robot_tape);
-    }
     if (editor_button_looking_for_target !== -1) {
         let button = initial_state.things[editor_button_looking_for_target] as Button;
         Shaku.gfx!.fillRect(
@@ -884,10 +885,6 @@ function update() {
             button.active ? Shaku.utils.Color.red : Shaku.utils.Color.green,
         )
     }
-    if (Shaku.input?.keyPressed(KeyboardKeys.n6)) {
-        initial_state.wall.toggleFloorAt(mouse_tile);
-    }
-
 
     if (time_offset < 0) { // going forwards in time
         all_states[cur_turn].draw(time_offset + 1);

@@ -4882,9 +4882,9 @@ var require_msdf_font_texture_asset = __commonJS({
   }
 });
 
-// ../Shaku/lib/gfx/text_alignment.js
-var require_text_alignment = __commonJS({
-  "../Shaku/lib/gfx/text_alignment.js"(exports, module) {
+// ../Shaku/lib/gfx/text_alignments.js
+var require_text_alignments = __commonJS({
+  "../Shaku/lib/gfx/text_alignments.js"(exports, module) {
     "use strict";
     var TextAlignments = {
       Left: "left",
@@ -5246,7 +5246,7 @@ var require_gfx = __commonJS({
     var Vector22 = require_vector2();
     var FontTextureAsset = require_font_texture_asset();
     var MsdfFontTextureAsset = require_msdf_font_texture_asset();
-    var { TextAlignment, TextAlignments } = require_text_alignment();
+    var { TextAlignment, TextAlignments } = require_text_alignments();
     var Mesh = require_mesh();
     var Circle = require_circle();
     var SpriteBatch = require_sprite_batch();
@@ -5321,6 +5321,13 @@ var require_gfx = __commonJS({
         return Vertex;
       }
       get TextAlignments() {
+        return TextAlignments;
+      }
+      get TextAlignment() {
+        if (!this._TextAlignment_dep) {
+          console.warn(`'gfx.TextAlignment' is deprecated and will be removed in future versions. Please use 'gfx.TextAlignments' instead.`);
+          this._TextAlignment_dep = true;
+        }
         return TextAlignments;
       }
       createCamera(withViewport) {
@@ -7814,7 +7821,7 @@ var require_shaku = __commonJS({
     var _startFrameTime = 0;
     var _frameTimeMeasuresCount = 0;
     var _totalFrameTimes = 0;
-    var version = "1.6.0";
+    var version = "1.6.1";
     var Shaku2 = class {
       constructor() {
         this.utils = utils;
@@ -8068,18 +8075,20 @@ void main(void) {
 
     // Normalized pixel coordinates (from 0 to 1)
     vec2 uv = v_texCoord;
-    
-    uv *= 1. + .09 * sin(u_time * .11 + .2);
-    float a = .21 * sin(u_time * 0.08 + .32) + .43;
+
+    uv *= 1. + .05 * sin(u_time * .03 + .2);
+    float a = .06 * sin(u_time * 0.08 + .32) + .43;
     float ca = cos(a);
     float sa = sin(a);
     uv = mat2(ca,sa,-sa,ca) * uv;
 
-    uv = pong(uv, .3 + sin(u_time * .1) * .07);
-    uv.x += sin(u_time * .17 + .3) * .1;
+    uv = pong(uv, .3 + sin(u_time * .02) * .03);
+    // uv.x += sin(u_time * .17 + .3) * .1;
 
+    uv.x += u_time * 0.01 * cos(log(u_time) + .4);
+    uv.y += u_time * 0.01 * sin(log(u_time) + .4);
     //float noise = texture(iChannel0, uv).x;
-    float noise = simplex3d(vec3(uv * 10.0, u_time*0.02));
+    float noise = simplex3d(vec3(uv * 10.0, u_time*0.21));
 
     // Output to screen
     FragColor = vec4(mix(vec3(.1843, .3098, .3098), vec3(.149, .2471, .2471), noise), 1.0);
@@ -8347,15 +8356,10 @@ var _Walls = class extends GameObject {
   clone() {
     return this;
   }
-  toggleAt(pos) {
+  setAt(pos, value) {
     if (pos.x < 0 || pos.x >= this.w || pos.y < 0 || pos.y >= this.h)
       return;
-    this.data[pos.y][pos.x] = !this.data[pos.y][pos.x];
-  }
-  toggleFloorAt(pos) {
-    if (pos.x < 0 || pos.x >= this.w || pos.y < 0 || pos.y >= this.h)
-      return;
-    this.floor_data[pos.y][pos.x] = !this.floor_data[pos.y][pos.x];
+    this.data[pos.y][pos.x] = value;
   }
 };
 var Walls = _Walls;
@@ -8705,18 +8709,14 @@ function update() {
     ),
     import_shaku.default.utils.Color.white
   );
-  if (import_shaku.default.input?.mousePressed(import_key_codes.MouseButtons.left)) {
-    initial_state.wall.toggleAt(mouse_tile);
+  if (import_shaku.default.input?.mouseDown(import_key_codes.MouseButtons.left)) {
+    initial_state.wall.setAt(mouse_tile, true);
     initial_state.wall.recalcFloors(initial_state.spawner.pos);
     all_states = gameLogic(initial_state, robot_tape);
   }
-  if (import_shaku.default.input?.mousePressed(import_key_codes.MouseButtons.right)) {
-    let crate_index = indexOfTrue(initial_state.things, (c) => c instanceof Crate && c.pos.equals(mouse_tile));
-    if (crate_index === -1) {
-      initial_state.things.push(new Crate(mouse_tile, null));
-    } else {
-      initial_state.things.splice(crate_index, 1);
-    }
+  if (import_shaku.default.input?.mouseDown(import_key_codes.MouseButtons.right)) {
+    initial_state.wall.setAt(mouse_tile, false);
+    initial_state.wall.recalcFloors(initial_state.spawner.pos);
     all_states = gameLogic(initial_state, robot_tape);
   }
   if (import_shaku.default.input?.mouseWheelSign !== 0) {
@@ -8725,9 +8725,26 @@ function update() {
     all_states = gameLogic(initial_state, robot_tape);
   }
   if (import_shaku.default.input.keyPressed(import_key_codes.KeyboardKeys.n1)) {
-    initial_state.target.toggleAt(mouse_tile);
+    let crate_index = indexOfTrue(initial_state.things, (c) => c instanceof Crate && c.pos.equals(mouse_tile));
+    if (crate_index === -1) {
+      initial_state.things.push(new Crate(mouse_tile, null));
+    } else {
+      initial_state.things.splice(crate_index, 1);
+    }
+    all_states = gameLogic(initial_state, robot_tape);
   }
   if (import_shaku.default.input.keyPressed(import_key_codes.KeyboardKeys.n2)) {
+    initial_state.target.toggleAt(mouse_tile);
+  }
+  if (import_shaku.default.input.keyPressed(import_key_codes.KeyboardKeys.n3)) {
+    initial_state.spawner.pos = mouse_tile;
+    initial_state.spawner.dir = mainDir(import_shaku.default.input.mousePosition.div(TILE_SIZE).sub(1, 1).sub(mouse_tile));
+    initial_state.spawner.sprite.rotation = initial_state.spawner.dir.getRadians();
+    initial_state.players[0].pos = initial_state.spawner.pos.add(initial_state.spawner.dir);
+    initial_state.players[0].dir = initial_state.spawner.dir.clone();
+    all_states = gameLogic(initial_state, robot_tape);
+  }
+  if (import_shaku.default.input.keyPressed(import_key_codes.KeyboardKeys.n4)) {
     let two_state_wall_index = indexOfTrue(initial_state.things, (x) => x instanceof TwoStateWall && x.pos.equals(mouse_tile));
     if (two_state_wall_index === -1) {
       initial_state.things.push(new TwoStateWall(
@@ -8743,7 +8760,7 @@ function update() {
     }
     all_states = gameLogic(initial_state, robot_tape);
   }
-  if (import_shaku.default.input.keyPressed(import_key_codes.KeyboardKeys.n3)) {
+  if (import_shaku.default.input.keyPressed(import_key_codes.KeyboardKeys.n5)) {
     let button_index = indexOfTrue(initial_state.things, (b) => b instanceof Button && b.pos.equals(mouse_tile));
     if (button_index === -1) {
       initial_state.things.push(new Button(mouse_tile, [], false, null));
@@ -8752,7 +8769,7 @@ function update() {
     }
     all_states = gameLogic(initial_state, robot_tape);
   }
-  if (import_shaku.default.input.keyPressed(import_key_codes.KeyboardKeys.n4)) {
+  if (import_shaku.default.input.keyPressed(import_key_codes.KeyboardKeys.n6)) {
     if (editor_button_looking_for_target === -1) {
       editor_button_looking_for_target = indexOfTrue(initial_state.things, (b) => b instanceof Button && b.pos.equals(mouse_tile));
     } else {
@@ -8769,14 +8786,6 @@ function update() {
     }
     all_states = gameLogic(initial_state, robot_tape);
   }
-  if (import_shaku.default.input.keyPressed(import_key_codes.KeyboardKeys.n5)) {
-    initial_state.spawner.pos = mouse_tile;
-    initial_state.spawner.dir = mainDir(import_shaku.default.input.mousePosition.div(TILE_SIZE).sub(1, 1).sub(mouse_tile));
-    initial_state.spawner.sprite.rotation = initial_state.spawner.dir.getRadians();
-    initial_state.players[0].pos = initial_state.spawner.pos.add(initial_state.spawner.dir);
-    initial_state.players[0].dir = initial_state.spawner.dir.clone();
-    all_states = gameLogic(initial_state, robot_tape);
-  }
   if (editor_button_looking_for_target !== -1) {
     let button = initial_state.things[editor_button_looking_for_target];
     import_shaku.default.gfx.fillRect(
@@ -8788,9 +8797,6 @@ function update() {
       ),
       button.active ? import_shaku.default.utils.Color.red : import_shaku.default.utils.Color.green
     );
-  }
-  if (import_shaku.default.input?.keyPressed(import_key_codes.KeyboardKeys.n6)) {
-    initial_state.wall.toggleFloorAt(mouse_tile);
   }
   if (time_offset < 0) {
     all_states[cur_turn].draw(time_offset + 1);

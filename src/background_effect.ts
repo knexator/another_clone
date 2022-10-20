@@ -99,18 +99,20 @@ void main(void) {
 
     // Normalized pixel coordinates (from 0 to 1)
     vec2 uv = v_texCoord;
-    
-    uv *= 1. + .09 * sin(u_time * .11 + .2);
-    float a = .21 * sin(u_time * 0.08 + .32) + .43;
+
+    uv *= 1. + .05 * sin(u_time * .03 + .2);
+    float a = .06 * sin(u_time * 0.08 + .32) + .43;
     float ca = cos(a);
     float sa = sin(a);
     uv = mat2(ca,sa,-sa,ca) * uv;
 
-    uv = pong(uv, .3 + sin(u_time * .1) * .07);
-    uv.x += sin(u_time * .17 + .3) * .1;
+    uv = pong(uv, .3 + sin(u_time * .02) * .03);
+    // uv.x += sin(u_time * .17 + .3) * .1;
 
+    uv.x += u_time * 0.01 * cos(log(u_time) + .4);
+    uv.y += u_time * 0.01 * sin(log(u_time) + .4);
     //float noise = texture(iChannel0, uv).x;
-    float noise = simplex3d(vec3(uv * 10.0, u_time*0.02));
+    float noise = simplex3d(vec3(uv * 10.0, u_time*0.21));
 
     // Output to screen
     FragColor = vec4(mix(vec3(.1843, .3098, .3098), vec3(.149, .2471, .2471), noise), 1.0);
