@@ -8120,7 +8120,7 @@ var BackgroundEffect = class extends import_effect.default {
 import_shaku.default.input.setTargetElement(() => import_shaku.default.gfx.canvas);
 await import_shaku.default.init();
 document.body.appendChild(import_shaku.default.gfx.canvas);
-import_shaku.default.gfx.setResolution(1152, 648, true);
+import_shaku.default.gfx.setResolution(800, 600, true);
 import_shaku.default.gfx.centerCanvas();
 var TILE_SIZE = 50;
 var player_texture = await import_shaku.default.assets.loadTexture("imgs/player.png", { generateMipMaps: true });
@@ -8160,6 +8160,15 @@ var none_sprite = await makeAsciiSprite(`
     `, [
   import_shaku.default.utils.Color.orange
 ]);
+var Level = class {
+  constructor(dev_name, n_moves, n_delay, initial_state2) {
+    this.dev_name = dev_name;
+    this.n_moves = n_moves;
+    this.n_delay = n_delay;
+    this.initial_state = initial_state2;
+    initial_state2.wall.recalcFloors(initial_state2.spawner.pos);
+  }
+};
 var GameState = class {
   constructor(major_turn, minor_turn, things) {
     this.major_turn = major_turn;
@@ -8313,7 +8322,7 @@ var _Walls = class extends GameObject {
             import_shaku.default.gfx.drawSprite(this.floor_spr_2);
           }
         }
-        geo_sprite.setSourceFromSpritesheet(new import_vector2.default(n % 4, Math.floor(n / 4)), new import_vector2.default(4, 8), 1, true);
+        geo_sprite.setSourceFromSpritesheet(new import_vector2.default(n % 4, Math.floor(n / 4)), new import_vector2.default(4, 8), 1, false);
         geo_sprite.position.set((i + 0.5) * TILE_SIZE, (j + 0.5) * TILE_SIZE);
         import_shaku.default.gfx.drawSprite(geo_sprite);
       }
@@ -8328,7 +8337,7 @@ var _Walls = class extends GameObject {
   }
   wallAt(i, j) {
     if (i < 0 || i >= this.w || j < 0 || j >= this.h)
-      return 1;
+      return 0;
     return this.data[j][i] ? 1 : 0;
   }
   floorAt(i, j) {
@@ -8559,6 +8568,44 @@ var _Player = class extends Pushable {
 };
 var Player = _Player;
 __publicField(Player, "_brightColor", new import_color.default(1.3, 1.3, 1.3, 1));
+var level_1 = new Level("basic", 10, 5, new GameState(
+  -1,
+  0,
+  [
+    Walls.fromString(`
+..###..
+###.###
+#.....#
+#.#...#
+#.#..##
+######.
+        `),
+    new Targets([
+      new import_vector2.default(3, 4)
+    ]),
+    new Spawner(new import_vector2.default(1, 4), import_vector2.default.up, null),
+    new Crate(new import_vector2.default(4, 2), null)
+  ]
+));
+var level_2 = new Level("twice", 20, 7, new GameState(
+  -1,
+  0,
+  [
+    Walls.fromString(`
+..###..
+###.###
+#.....#
+#.#...#
+#....##
+######.
+        `),
+    new Targets([
+      new import_vector2.default(4, 4)
+    ]),
+    new Spawner(new import_vector2.default(1, 4), import_vector2.default.up, null),
+    new Crate(new import_vector2.default(4, 2), null)
+  ]
+));
 var TAPE_SYMBOL = /* @__PURE__ */ ((TAPE_SYMBOL2) => {
   TAPE_SYMBOL2[TAPE_SYMBOL2["LEFT"] = 0] = "LEFT";
   TAPE_SYMBOL2[TAPE_SYMBOL2["RIGHT"] = 1] = "RIGHT";
@@ -8603,6 +8650,20 @@ var initial_state = new GameState(
 ).nextStates().at(-1);
 initial_state.wall.recalcFloors(initial_state.spawner.pos);
 var all_states = gameLogic(initial_state, robot_tape);
+var level_offset = import_vector2.default.zero;
+var cur_level;
+load_level(level_1);
+function load_level(level) {
+  cur_level = level;
+  robot_tape = Array(level.n_moves).fill(4 /* NONE */);
+  robot_delay = level.n_delay;
+  initial_state = level.initial_state.nextStates().at(-1);
+  all_states = gameLogic(initial_state, robot_tape);
+  selected_tape_pos = 0;
+  cur_turn = 0;
+  time_offset = 0;
+  level_offset = new import_vector2.default(initial_state.wall.w, initial_state.wall.h).mul(TILE_SIZE).sub(import_shaku.default.gfx.getCanvasSize()).add(TILE_SIZE, TILE_SIZE).mul(0.5);
+}
 function gameLogic(initial_state2, robot_tape2) {
   let res_all_states = [initial_state2];
   let cur_state = initial_state2;
@@ -8699,7 +8760,8 @@ function update() {
     selected_tape_pos += 1;
     all_states = gameLogic(initial_state, robot_tape);
   }
-  let mouse_tile = import_shaku.default.input.mousePosition.div(TILE_SIZE).round().sub(1, 1);
+  import_shaku.default.gfx.setCameraOrthographic(level_offset);
+  let mouse_tile = import_shaku.default.input.mousePosition.add(level_offset).div(TILE_SIZE).round().sub(1, 1);
   import_shaku.default.gfx.outlineRect(
     new import_rectangle.default(
       (mouse_tile.x + 0.5) * TILE_SIZE,
@@ -8738,7 +8800,7 @@ function update() {
   }
   if (import_shaku.default.input.keyPressed(import_key_codes.KeyboardKeys.n3)) {
     initial_state.spawner.pos = mouse_tile;
-    initial_state.spawner.dir = mainDir(import_shaku.default.input.mousePosition.div(TILE_SIZE).sub(1, 1).sub(mouse_tile));
+    initial_state.spawner.dir = mainDir(import_shaku.default.input.mousePosition.add(level_offset).div(TILE_SIZE).sub(1, 1).sub(mouse_tile));
     initial_state.spawner.sprite.rotation = initial_state.spawner.dir.getRadians();
     initial_state.players[0].pos = initial_state.spawner.pos.add(initial_state.spawner.dir);
     initial_state.players[0].dir = initial_state.spawner.dir.clone();
@@ -8749,7 +8811,7 @@ function update() {
     if (two_state_wall_index === -1) {
       initial_state.things.push(new TwoStateWall(
         mouse_tile,
-        mainDir(import_shaku.default.input.mousePosition.div(TILE_SIZE).sub(1, 1).sub(mouse_tile)),
+        mainDir(import_shaku.default.input.mousePosition.add(level_offset).div(TILE_SIZE).sub(1, 1).sub(mouse_tile)),
         false,
         null
       ));
@@ -8805,6 +8867,7 @@ function update() {
   } else {
     all_states[cur_turn].draw(1);
   }
+  import_shaku.default.gfx.resetCamera();
   time_offset = moveTowards(time_offset, 0, import_shaku.default.gameTime.delta * (Math.abs(all_states[cur_turn].major_turn - selected_tape_pos) + 1) / miniturn_duration);
   import_shaku.default.gfx?.fillRect(
     new import_rectangle.default((robot_delay + 0.5) * TILE_SIZE, import_shaku.default.gfx.canvas.height - TILE_SIZE * 1.5, TILE_SIZE, TILE_SIZE),
@@ -8814,10 +8877,12 @@ function update() {
     let cur_symbol = robot_tape[k];
     drawSymbol(cur_symbol, new import_vector2.default((k + 1) * TILE_SIZE, import_shaku.default.gfx?.canvas.height - TILE_SIZE));
   }
-  import_shaku.default.gfx?.outlineRect(
-    new import_rectangle.default((selected_tape_pos + 0.5) * TILE_SIZE, import_shaku.default.gfx?.canvas.height - TILE_SIZE * 1.5, TILE_SIZE, TILE_SIZE),
-    import_shaku.default.utils.Color.red
-  );
+  for (let k = selected_tape_pos; k >= 0; k -= robot_delay) {
+    import_shaku.default.gfx?.outlineRect(
+      new import_rectangle.default((k + 0.5) * TILE_SIZE, import_shaku.default.gfx?.canvas.height - TILE_SIZE * 1.5, TILE_SIZE, TILE_SIZE),
+      import_shaku.default.utils.Color.red
+    );
+  }
   import_shaku.default.endFrame();
   import_shaku.default.requestAnimationFrame(update);
 }
