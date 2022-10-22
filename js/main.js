@@ -8850,6 +8850,13 @@ function update() {
     }
   }
   import_shaku.default.gfx.setCameraOrthographic(level_offset);
+  if (time_offset < 0) {
+    all_states[cur_turn].draw(time_offset + 1);
+  } else if (time_offset > 0) {
+    all_states[cur_turn + 1].draw(time_offset);
+  } else {
+    all_states[cur_turn].draw(1);
+  }
   if (EDITOR) {
     let mouse_tile = import_shaku.default.input.mousePosition.add(level_offset).div(TILE_SIZE).round().sub(1, 1);
     import_shaku.default.gfx.outlineRect(
@@ -8950,13 +8957,6 @@ function update() {
         button.active ? import_shaku.default.utils.Color.red : import_shaku.default.utils.Color.green
       );
     }
-  }
-  if (time_offset < 0) {
-    all_states[cur_turn].draw(time_offset + 1);
-  } else if (time_offset > 0) {
-    all_states[cur_turn + 1].draw(time_offset);
-  } else {
-    all_states[cur_turn].draw(1);
   }
   import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * robot_tape.length * SYMBOL_SIZE, -450));
   import_shaku.default.gfx?.fillRect(

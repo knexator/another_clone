@@ -873,6 +873,15 @@ function update() {
     }
 
     Shaku.gfx.setCameraOrthographic(level_offset);
+
+    if (time_offset < 0) { // going forwards in time
+        all_states[cur_turn].draw(time_offset + 1);
+    } else if (time_offset > 0) { // going backwards in time
+        all_states[cur_turn + 1].draw(time_offset);
+    } else {
+        all_states[cur_turn].draw(1);
+    }
+
     // editor
     if (EDITOR) {
         let mouse_tile = Shaku.input!.mousePosition.add(level_offset).div(TILE_SIZE).round().sub(1, 1);
@@ -971,14 +980,6 @@ function update() {
                 button.active ? Shaku.utils.Color.red : Shaku.utils.Color.green,
             )
         }
-    }
-
-    if (time_offset < 0) { // going forwards in time
-        all_states[cur_turn].draw(time_offset + 1);
-    } else if (time_offset > 0) { // going backwards in time
-        all_states[cur_turn + 1].draw(time_offset);
-    } else {
-        all_states[cur_turn].draw(1);
     }
 
     Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * robot_tape.length * SYMBOL_SIZE, -450));
