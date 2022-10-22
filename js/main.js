@@ -8307,20 +8307,18 @@ var tape_border = new import_sprite.default(tape_borders_texture, new import_rec
 tape_border.origin.set(0, 0);
 var tape_border_right = new import_sprite.default(tape_borders_texture, new import_rectangle.default(SYMBOL_SIZE * 1.5, 0, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
 tape_border_right.origin.set(0, 0);
-var tape_border_left_high = new import_sprite.default(tape_borders_texture, new import_rectangle.default(0, SYMBOL_SIZE * 1.5, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
-tape_border_left_high.origin.set(0, 0);
-tape_border_left_high.position.set(-SYMBOL_SIZE / 2, 0);
-var tape_border_high = new import_sprite.default(tape_borders_texture, new import_rectangle.default(SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5, SYMBOL_SIZE, SYMBOL_SIZE * 1.5));
-tape_border_high.origin.set(0, 0);
-var tape_border_right_high = new import_sprite.default(tape_borders_texture, new import_rectangle.default(SYMBOL_SIZE * 1.5, SYMBOL_SIZE * 1.5, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
-tape_border_right_high.origin.set(0, 0);
-var tape_border_left_low = new import_sprite.default(tape_borders_texture, new import_rectangle.default(0, SYMBOL_SIZE * 3, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
-tape_border_left_low.origin.set(0, 0);
-tape_border_left_low.position.set(-SYMBOL_SIZE / 2, 0);
-var tape_border_low = new import_sprite.default(tape_borders_texture, new import_rectangle.default(SYMBOL_SIZE / 2, SYMBOL_SIZE * 3, SYMBOL_SIZE, SYMBOL_SIZE * 1.5));
-tape_border_low.origin.set(0, 0);
-var tape_border_right_low = new import_sprite.default(tape_borders_texture, new import_rectangle.default(SYMBOL_SIZE * 1.5, SYMBOL_SIZE * 3, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
-tape_border_right_low.origin.set(0, 0);
+var COLOR_TAPE = import_color.default.fromHex("#E5B35B");
+var COLOR_HIGH = import_color.default.fromHex("#99F3ED");
+var COLOR_LOW = import_color.default.fromHex("#6AC2BC");
+var COLOR_SYMBOL = import_color.default.fromHex("#B84B4B");
+var tape_high = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
+tape_high.origin = new import_vector2.default(0, -8 / (SYMBOL_SIZE * 1.5));
+tape_high.size.set(SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16);
+tape_high.color = COLOR_HIGH;
+var tape_low = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
+tape_low.origin = new import_vector2.default(0, -8 / (SYMBOL_SIZE * 1.5));
+tape_low.size.set(SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16);
+tape_low.color = COLOR_LOW;
 var Level = class {
   constructor(dev_name, n_moves, n_delay, initial_state2) {
     this.dev_name = dev_name;
@@ -8885,6 +8883,27 @@ LOWER_SCREEN_SPRITE.origin = import_vector2.default.zero;
 LOWER_SCREEN_SPRITE.size.set(800, 600 - game_size.y);
 LOWER_SCREEN_SPRITE.position.set(0, game_size.y);
 LOWER_SCREEN_SPRITE.color = import_color.default.fromHex("#2B849C");
+var changing_rects = [];
+function setSymbolChanging(n) {
+  const rect_spr = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
+  rect_spr.origin = new import_vector2.default(0, -8 / (SYMBOL_SIZE * 1.5));
+  rect_spr.size.set(SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16);
+  rect_spr.position.set(n * SYMBOL_SIZE, 0);
+  rect_spr.color = COLOR_SYMBOL;
+  changing_rects.push([rect_spr, 0.2]);
+}
+function drawSymbolsChanging(dt) {
+  for (var i = changing_rects.length - 1; i >= 0; i--) {
+    let [r, t] = changing_rects[i];
+    import_shaku.default.gfx.drawSprite(r);
+    t -= dt;
+    if (t <= 0) {
+      changing_rects.splice(i, 1);
+    } else {
+      changing_rects[i][1] = t;
+    }
+  }
+}
 var editor_button_looking_for_target = -1;
 function update() {
   import_shaku.default.startFrame();
@@ -8913,6 +8932,7 @@ function update() {
   if (import_shaku.default.input?.pressed(["t"])) {
     console.log("cur_turn: ", cur_turn);
     console.log("selected_turn: ", selected_turn);
+    console.log("cur_state: ", all_states[cur_turn]);
     console.log("all states: ", all_states);
   }
   let input_symbol = selectFromInput([
@@ -8925,6 +8945,7 @@ function update() {
   if (input_symbol !== null) {
     if (selected_turn < robot_tape.length) {
       robot_tape[selected_turn] = input_symbol;
+      setSymbolChanging(selected_turn);
       selected_turn += 1;
       all_states = gameLogic(initial_state, robot_tape);
     }
@@ -9037,25 +9058,30 @@ function update() {
     all_states[cur_turn].draw(1);
   }
   import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * robot_tape.length * SYMBOL_SIZE, -450));
-  import_shaku.default.gfx.drawSprite(tape_border_left);
-  if (selected_turn === robot_tape.length) {
-    tape_border_right_high.position.set(robot_tape.length * SYMBOL_SIZE, 0);
-    import_shaku.default.gfx.drawSprite(tape_border_right_high);
-  } else {
-    tape_border_right.position.set(robot_tape.length * SYMBOL_SIZE, 0);
-    import_shaku.default.gfx.drawSprite(tape_border_right);
-  }
-  for (let k = 0; k < robot_tape.length; k++) {
+  import_shaku.default.gfx?.fillRect(
+    new import_rectangle.default(-SYMBOL_SIZE * 0.5 + 8, 8, SYMBOL_SIZE * (robot_tape.length + 1) - 16, SYMBOL_SIZE * 1.5 - 16),
+    COLOR_TAPE
+  );
+  for (let k = selected_turn; k >= 0; k -= robot_delay) {
+    if (k >= robot_tape.length)
+      continue;
     if (k === selected_turn) {
-      tape_border_high.position.set(k * SYMBOL_SIZE, 0);
-      import_shaku.default.gfx.drawSprite(tape_border_high);
-    } else if (k < selected_turn && (selected_turn - k) % robot_delay === 0) {
-      tape_border_low.position.set(k * SYMBOL_SIZE, 0);
-      import_shaku.default.gfx.drawSprite(tape_border_low);
+      if (changing_rects.length === 0) {
+        tape_high.position.set(k * SYMBOL_SIZE, 0);
+        import_shaku.default.gfx.drawSprite(tape_high);
+      }
     } else {
-      tape_border.position.set(k * SYMBOL_SIZE, 0);
-      import_shaku.default.gfx.drawSprite(tape_border);
+      tape_low.position.set(k * SYMBOL_SIZE, 0);
+      import_shaku.default.gfx.drawSprite(tape_low);
     }
+  }
+  drawSymbolsChanging(import_shaku.default.gameTime.delta);
+  import_shaku.default.gfx.drawSprite(tape_border_left);
+  tape_border_right.position.set(robot_tape.length * SYMBOL_SIZE, 0);
+  import_shaku.default.gfx.drawSprite(tape_border_right);
+  for (let k = 0; k < robot_tape.length; k++) {
+    tape_border.position.set(k * SYMBOL_SIZE, 0);
+    import_shaku.default.gfx.drawSprite(tape_border);
     let cur_symbol = robot_tape[k];
     drawSymbol(cur_symbol, new import_vector2.default((k + 0.5) * SYMBOL_SIZE, SYMBOL_SIZE * 0.75));
   }

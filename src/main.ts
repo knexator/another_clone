@@ -85,22 +85,20 @@ tape_border.origin.set(0, 0);
 const tape_border_right = new Sprite(tape_borders_texture, new Rectangle(SYMBOL_SIZE * 1.5, 0, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
 tape_border_right.origin.set(0, 0);
 
-const tape_border_left_high = new Sprite(tape_borders_texture, new Rectangle(0, SYMBOL_SIZE * 1.5, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
-tape_border_left_high.origin.set(0, 0);
-tape_border_left_high.position.set(-SYMBOL_SIZE / 2, 0);
-const tape_border_high = new Sprite(tape_borders_texture, new Rectangle(SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5, SYMBOL_SIZE, SYMBOL_SIZE * 1.5));
-tape_border_high.origin.set(0, 0);
-const tape_border_right_high = new Sprite(tape_borders_texture, new Rectangle(SYMBOL_SIZE * 1.5, SYMBOL_SIZE * 1.5, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
-tape_border_right_high.origin.set(0, 0);
+const COLOR_TAPE = Color.fromHex("#E5B35B");
+const COLOR_HIGH = Color.fromHex("#99F3ED");
+const COLOR_LOW = Color.fromHex("#6AC2BC");
+const COLOR_SYMBOL = Color.fromHex("#B84B4B");
 
-const tape_border_left_low = new Sprite(tape_borders_texture, new Rectangle(0, SYMBOL_SIZE * 3, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
-tape_border_left_low.origin.set(0, 0);
-tape_border_left_low.position.set(-SYMBOL_SIZE / 2, 0);
-const tape_border_low = new Sprite(tape_borders_texture, new Rectangle(SYMBOL_SIZE / 2, SYMBOL_SIZE * 3, SYMBOL_SIZE, SYMBOL_SIZE * 1.5));
-tape_border_low.origin.set(0, 0);
-const tape_border_right_low = new Sprite(tape_borders_texture, new Rectangle(SYMBOL_SIZE * 1.5, SYMBOL_SIZE * 3, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
-tape_border_right_low.origin.set(0, 0);
+const tape_high = new Sprite(Shaku.gfx.whiteTexture);
+tape_high.origin = new Vector2(0, -8 / (SYMBOL_SIZE * 1.5));
+tape_high.size.set(SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16);
+tape_high.color = COLOR_HIGH;
 
+const tape_low = new Sprite(Shaku.gfx.whiteTexture);
+tape_low.origin = new Vector2(0, -8 / (SYMBOL_SIZE * 1.5));
+tape_low.size.set(SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16);
+tape_low.color = COLOR_LOW;
 
 class Level {
     constructor(
@@ -759,6 +757,30 @@ LOWER_SCREEN_SPRITE.size.set(800, 600 - game_size.y);
 LOWER_SCREEN_SPRITE.position.set(0, game_size.y);
 LOWER_SCREEN_SPRITE.color = Color.fromHex("#2B849C")
 
+let changing_rects: [Sprite, number][] = [];
+function setSymbolChanging(n: number) {
+    const rect_spr = new Sprite(Shaku.gfx.whiteTexture);
+    rect_spr.origin = new Vector2(0, -8 / (SYMBOL_SIZE * 1.5));
+    rect_spr.size.set(SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16);
+    rect_spr.position.set(n * SYMBOL_SIZE, 0);
+    rect_spr.color = COLOR_SYMBOL;
+
+    changing_rects.push([rect_spr, .2]);
+}
+
+function drawSymbolsChanging(dt: number) {
+    for (var i = changing_rects.length - 1; i >= 0; i--) {
+        let [r, t] = changing_rects[i];
+        Shaku.gfx.drawSprite(r);
+        t -= dt;
+        if (t <= 0) {
+            changing_rects.splice(i, 1);
+        } else {
+            changing_rects[i][1] = t;
+        }
+    }
+}
+
 let editor_button_looking_for_target = -1;
 // do a single main loop step and request the next step
 function update() {
@@ -777,8 +799,6 @@ function update() {
     Shaku.gfx.drawSprite(LOWER_SCREEN_SPRITE);
 
 
-
-    // if (Shaku.input?.pressed(["q", "z"]) && selected_turn > 0) {
     if (pressed_throttled(["q", "z"], Shaku.gameTime.delta) && selected_turn > 0) {
         selected_turn -= 1;
     } else if (pressed_throttled(["e", "x"], Shaku.gameTime.delta)) {
@@ -801,6 +821,7 @@ function update() {
     if (Shaku.input?.pressed(["t"])) {
         console.log("cur_turn: ", cur_turn);
         console.log("selected_turn: ", selected_turn);
+        console.log("cur_state: ", all_states[cur_turn]);
         console.log("all states: ", all_states);
     }
 
@@ -811,10 +832,11 @@ function update() {
         [["a", "left"], TAPE_SYMBOL.LEFT],
         ["space", TAPE_SYMBOL.NONE],
     ], Shaku.gameTime.delta)
+    // if (input_symbol !== null && time_offset === 0) {
     if (input_symbol !== null) {
         if (selected_turn < robot_tape.length) {
             robot_tape[selected_turn] = input_symbol;
-            // tape_border_high.color = Color.fromHex("#B84B4B");
+            setSymbolChanging(selected_turn);
             selected_turn += 1;
             all_states = gameLogic(initial_state, robot_tape);
         }
@@ -932,25 +954,29 @@ function update() {
         new Rectangle(robot_delay * SYMBOL_SIZE, 0, SYMBOL_SIZE, SYMBOL_SIZE),
         Shaku.utils.Color.blue
     )*/
-    Shaku.gfx.drawSprite(tape_border_left);
-    if (selected_turn === robot_tape.length) {
-        tape_border_right_high.position.set(robot_tape.length * SYMBOL_SIZE, 0);
-        Shaku.gfx.drawSprite(tape_border_right_high);
-    } else {
-        tape_border_right.position.set(robot_tape.length * SYMBOL_SIZE, 0);
-        Shaku.gfx.drawSprite(tape_border_right);
-    }
-    for (let k = 0; k < robot_tape.length; k++) {
+    Shaku.gfx?.fillRect(
+        new Rectangle(-SYMBOL_SIZE * .5 + 8, 8, SYMBOL_SIZE * (robot_tape.length + 1) - 16, SYMBOL_SIZE * 1.5 - 16),
+        COLOR_TAPE
+    )
+    for (let k = selected_turn; k >= 0; k -= robot_delay) {
+        if (k >= robot_tape.length) continue;
         if (k === selected_turn) {
-            tape_border_high.position.set(k * SYMBOL_SIZE, 0);
-            Shaku.gfx.drawSprite(tape_border_high);
-        } else if (k < selected_turn && (selected_turn - k) % robot_delay === 0) {
-            tape_border_low.position.set(k * SYMBOL_SIZE, 0);
-            Shaku.gfx.drawSprite(tape_border_low);
+            if (changing_rects.length === 0) {
+                tape_high.position.set(k * SYMBOL_SIZE, 0);
+                Shaku.gfx.drawSprite(tape_high);
+            }
         } else {
-            tape_border.position.set(k * SYMBOL_SIZE, 0);
-            Shaku.gfx.drawSprite(tape_border);
+            tape_low.position.set(k * SYMBOL_SIZE, 0);
+            Shaku.gfx.drawSprite(tape_low);
         }
+    }
+    drawSymbolsChanging(Shaku.gameTime.delta);
+    Shaku.gfx.drawSprite(tape_border_left);
+    tape_border_right.position.set(robot_tape.length * SYMBOL_SIZE, 0);
+    Shaku.gfx.drawSprite(tape_border_right);
+    for (let k = 0; k < robot_tape.length; k++) {
+        tape_border.position.set(k * SYMBOL_SIZE, 0);
+        Shaku.gfx.drawSprite(tape_border);
         let cur_symbol = robot_tape[k];
         drawSymbol(cur_symbol, new Vector2((k + .5) * SYMBOL_SIZE, SYMBOL_SIZE * .75));
     }
