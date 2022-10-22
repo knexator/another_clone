@@ -9,9 +9,7 @@ import { BlendModes } from "shaku/lib/gfx/blend_modes";
 import { TextureFilterModes } from "shaku/lib/gfx/texture_filter_modes";
 import { BackgroundEffect } from "./background_effect";
 // import { level_1 } from "./levels";
-let throttle = require('lodash.throttle');
-
-console.log(throttle);
+import { kalbakUpdate, doOnceOnTrue, doEveryFrameUntilTrue } from "./kalbak";
 
 Shaku!.input!.setTargetElement(() => Shaku.gfx!.canvas);
 await Shaku.init();
@@ -230,6 +228,12 @@ class GameState {
     move(pos: Vector2, dir: Vector2): boolean {
         return this.things.every(x => x.move(this, pos, dir));
     }
+
+    isWon(): boolean {
+        let crates = this.crates;
+        let target = this.target;
+        return crates.every(c => target.posAt(c.pos));
+    }
 }
 
 abstract class GameObject {
@@ -369,6 +373,9 @@ class Targets extends GameObject {
         } else {
             this.positions.splice(target_index, 1);
         }
+    }
+    posAt(pos: Vector2): boolean {
+        return this.positions.some(p => p.equals(pos));
     }
 }
 
@@ -576,46 +583,95 @@ class Player extends Pushable {
     }
 }
 
-
-let level_1 = new Level("basic", 10, 5, new GameState(
+let level_editor = new Level("editor", 16, 5, new GameState(
     -1, 0,
     [
         Walls.fromString(`
-..###..
-###.###
-#.....#
-#.#...#
-#.#..##
-######.
+#...###########.
+....#.........#.
+....#.........#.
+.####.........#.
+.#............#.
+.#............#.
+.#............#.
+.#............#.
+.##############.
         `),
         new Targets([
-            new Vector2(3, 4),
+            new Vector2(6, 2),
         ]),
 
-        new Spawner(new Vector2(1, 4), Vector2.up, null),
-        new Crate(new Vector2(4, 2), null),
+        new Button(new Vector2(8, 4), [0], false, null),
+
+        new TwoStateWall(new Vector2(7, 3), Vector2.up, false, null),
+
+        new Spawner(new Vector2(6, 6), Vector2.right, null),
+        new Crate(new Vector2(5, 3), null),
+        new Crate(new Vector2(10, 2), null),
     ],
 ));
 
-let level_2 = new Level("twice", 20, 7, new GameState(
-    -1, 0,
-    [
-        Walls.fromString(`
-..###..
-###.###
-#.....#
-#.#...#
-#....##
-######.
-        `),
-        new Targets([
-            new Vector2(4, 4),
-        ]),
+let levels = [
+    new Level("first", 12, 4, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                #######
+                #.....#
+                #.###.#
+                #.#...#
+                #.#####
+                #.....#
+                #######
+            `),
+            new Targets([
+                new Vector2(5, 5),
+            ]),
 
-        new Spawner(new Vector2(1, 4), Vector2.up, null),
-        new Crate(new Vector2(4, 2), null),
-    ],
-));
+            new Spawner(new Vector2(3, 3), Vector2.right, null),
+            new Crate(new Vector2(2, 5), null),
+        ],
+    )),
+    new Level("basic", 10, 5, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ..###..
+                ###.###
+                #.....#
+                #.#...#
+                #.#..##
+                ######.
+            `),
+            new Targets([
+                new Vector2(3, 4),
+            ]),
+
+            new Spawner(new Vector2(1, 4), Vector2.up, null),
+            new Crate(new Vector2(4, 2), null),
+        ],
+    )),
+    new Level("twice", 19, 7, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ..###..
+                ###.###
+                #.....#
+                #.#...#
+                #....##
+                ######.
+            `),
+            new Targets([
+                new Vector2(4, 4),
+            ]),
+
+            new Spawner(new Vector2(1, 4), Vector2.up, null),
+            new Crate(new Vector2(4, 2), null),
+        ],
+    )),
+]
+
 
 enum TAPE_SYMBOL {
     LEFT,
@@ -638,50 +694,21 @@ let selected_turn = 0;
 let cur_turn = 0;
 let time_offset = 0;
 
-let initial_state = new GameState(
-    -1, 0,
-    [
-        Walls.fromString(`
-......................
-.....###########......
-.....#.........#......
-.....#.........#......
-.....#.........#......
-..####.........#......
-..#............#......
-..#............#......
-..#............#......
-..#............#......
-..##############......
-......................
-        `),
-        new Targets([
-            new Vector2(2, 2),
-        ]),
+let initial_state: GameState;
 
-        new Button(new Vector2(4, 4), [0], false, null),
-
-        new TwoStateWall(new Vector2(3, 3), Vector2.up, false, null),
-
-        new Spawner(new Vector2(6, 6), Vector2.right, null),
-        new Crate(new Vector2(1, 3), null),
-        new Crate(new Vector2(6, 2), null),
-    ],
-).nextStates().at(-1)!;
-initial_state.wall.recalcFloors(initial_state.spawner.pos);
-
-let all_states = gameLogic(initial_state, robot_tape);
+let all_states: GameState[]; // = gameLogic(initial_state, robot_tape);
 
 let level_offset = Vector2.zero;
 
 // let game_size = new Vector2(800, 400);
 let game_size = new Vector2(800, 450);
 
-let cur_level: Level;
-load_level(level_1);
+let cur_level_n = 0;
+// let cur_level: Level;
+load_level(levels[cur_level_n]);
 
 function load_level(level: Level) {
-    cur_level = level;
+    // cur_level = level;
     robot_tape = Array(level.n_moves).fill(TAPE_SYMBOL.NONE);
     robot_delay = level.n_delay;
     initial_state = level.initial_state.nextStates().at(-1)!;
@@ -781,6 +808,9 @@ function drawSymbolsChanging(dt: number) {
     }
 }
 
+let changing_level = false;
+
+let EDITOR = false;
 let editor_button_looking_for_target = -1;
 // do a single main loop step and request the next step
 function update() {
@@ -808,7 +838,7 @@ function update() {
         }
     }
 
-    if (Shaku.input?.pressed(["r"])) {
+    if (!changing_level && Shaku.input?.pressed(["r"])) {
         selected_turn = 0;
     }
 
@@ -844,101 +874,103 @@ function update() {
 
     Shaku.gfx.setCameraOrthographic(level_offset);
     // editor
-    let mouse_tile = Shaku.input!.mousePosition.add(level_offset).div(TILE_SIZE).round().sub(1, 1);
-    Shaku.gfx!.outlineRect(
-        new Rectangle(
-            (mouse_tile.x + .5) * TILE_SIZE,
-            (mouse_tile.y + .5) * TILE_SIZE,
-            TILE_SIZE,
-            TILE_SIZE
-        ),
-        Shaku.utils.Color.white
-    )
-    if (Shaku.input?.mouseDown(MouseButtons.left)) {
-        initial_state.wall.setAt(mouse_tile, true);
-        initial_state.wall.recalcFloors(initial_state.spawner.pos);
-        all_states = gameLogic(initial_state, robot_tape);
-    }
-    if (Shaku.input?.mouseDown(MouseButtons.right)) {
-        initial_state.wall.setAt(mouse_tile, false);
-        initial_state.wall.recalcFloors(initial_state.spawner.pos);
-        all_states = gameLogic(initial_state, robot_tape);
-    }
-    if (Shaku.input?.mouseWheelSign !== 0) {
-        robot_delay += Shaku.input?.mouseWheelSign;
-        robot_delay = Math.max(1, robot_delay);
-        all_states = gameLogic(initial_state, robot_tape);
-    }
-    if (Shaku.input!.keyPressed(KeyboardKeys.n1)) {
-        let crate_index = indexOfTrue(initial_state.things, c => (c instanceof Crate && c.pos.equals(mouse_tile)));
-        if (crate_index === -1) {
-            initial_state.things.push(new Crate(mouse_tile, null));
-        } else {
-            initial_state.things.splice(crate_index, 1)
-        }
-        all_states = gameLogic(initial_state, robot_tape);
-    }
-    if (Shaku.input!.keyPressed(KeyboardKeys.n2)) {
-        initial_state.target.toggleAt(mouse_tile);
-    }
-    if (Shaku.input!.keyPressed(KeyboardKeys.n3)) {
-        initial_state.spawner.pos = mouse_tile;
-        initial_state.spawner.dir = mainDir(Shaku.input!.mousePosition.add(level_offset).div(TILE_SIZE).sub(1, 1).sub(mouse_tile));
-        initial_state.spawner.sprite.rotation = initial_state.spawner.dir.getRadians(); // hacky
-        initial_state.players[0].pos = initial_state.spawner.pos.add(initial_state.spawner.dir); // hacky
-        initial_state.players[0].dir = initial_state.spawner.dir.clone(); // hacky
-        all_states = gameLogic(initial_state, robot_tape);
-    }
-    if (Shaku.input!.keyPressed(KeyboardKeys.n4)) {
-        let two_state_wall_index = indexOfTrue(initial_state.things, x => (x instanceof TwoStateWall && x.pos.equals(mouse_tile)));
-        if (two_state_wall_index === -1) {
-            initial_state.things.push(new TwoStateWall(
-                mouse_tile, mainDir(Shaku.input!.mousePosition.add(level_offset).div(TILE_SIZE).sub(1, 1).sub(mouse_tile)), false, null));
-        } else {
-            console.log(two_state_wall_index);
-            (initial_state.things[two_state_wall_index] as ButtonTarget).remove(initial_state);
-            console.log(initial_state);
-        }
-        all_states = gameLogic(initial_state, robot_tape);
-    }
-    if (Shaku.input!.keyPressed(KeyboardKeys.n5)) {
-        let button_index = indexOfTrue(initial_state.things, b => (b instanceof Button && b.pos.equals(mouse_tile)));
-        if (button_index === -1) {
-            initial_state.things.push(new Button(mouse_tile, [], false, null));
-        } else {
-            initial_state.things.splice(button_index, 1)
-        }
-        all_states = gameLogic(initial_state, robot_tape);
-    }
-    if (Shaku.input!.keyPressed(KeyboardKeys.n6)) {
-        if (editor_button_looking_for_target === -1) {
-            editor_button_looking_for_target = indexOfTrue(initial_state.things, b => (b instanceof Button && b.pos.equals(mouse_tile)));
-        } else {
-            // editor_looking_for_button_target
-            let button_target_index = initial_state.buttonTargets.findIndex(x => x instanceof TwoStateWall && x.pos.equals(mouse_tile));
-            if (button_target_index !== -1) {
-                let button = initial_state.things[editor_button_looking_for_target] as Button;
-                if (button.target_ids.includes(button_target_index)) {
-                    button.target_ids = button.target_ids.filter(x => x != button_target_index);
-                } else {
-                    button.target_ids.push(button_target_index);
-                }
-            }
-            editor_button_looking_for_target = -1;
-        }
-        all_states = gameLogic(initial_state, robot_tape);
-    }
-    if (editor_button_looking_for_target !== -1) {
-        let button = initial_state.things[editor_button_looking_for_target] as Button;
-        Shaku.gfx!.fillRect(
+    if (EDITOR) {
+        let mouse_tile = Shaku.input!.mousePosition.add(level_offset).div(TILE_SIZE).round().sub(1, 1);
+        Shaku.gfx!.outlineRect(
             new Rectangle(
-                (button.pos.x + .5) * TILE_SIZE,
-                (button.pos.y + .5) * TILE_SIZE,
+                (mouse_tile.x + .5) * TILE_SIZE,
+                (mouse_tile.y + .5) * TILE_SIZE,
                 TILE_SIZE,
                 TILE_SIZE
             ),
-            button.active ? Shaku.utils.Color.red : Shaku.utils.Color.green,
+            Shaku.utils.Color.white
         )
+        if (Shaku.input?.mouseDown(MouseButtons.left)) {
+            initial_state.wall.setAt(mouse_tile, true);
+            initial_state.wall.recalcFloors(initial_state.spawner.pos);
+            all_states = gameLogic(initial_state, robot_tape);
+        }
+        if (Shaku.input?.mouseDown(MouseButtons.right)) {
+            initial_state.wall.setAt(mouse_tile, false);
+            initial_state.wall.recalcFloors(initial_state.spawner.pos);
+            all_states = gameLogic(initial_state, robot_tape);
+        }
+        if (Shaku.input?.mouseWheelSign !== 0) {
+            robot_delay += Shaku.input?.mouseWheelSign;
+            robot_delay = Math.max(1, robot_delay);
+            all_states = gameLogic(initial_state, robot_tape);
+        }
+        if (Shaku.input!.keyPressed(KeyboardKeys.n1)) {
+            let crate_index = indexOfTrue(initial_state.things, c => (c instanceof Crate && c.pos.equals(mouse_tile)));
+            if (crate_index === -1) {
+                initial_state.things.push(new Crate(mouse_tile, null));
+            } else {
+                initial_state.things.splice(crate_index, 1)
+            }
+            all_states = gameLogic(initial_state, robot_tape);
+        }
+        if (Shaku.input!.keyPressed(KeyboardKeys.n2)) {
+            initial_state.target.toggleAt(mouse_tile);
+        }
+        if (Shaku.input!.keyPressed(KeyboardKeys.n3)) {
+            initial_state.spawner.pos = mouse_tile;
+            initial_state.spawner.dir = mainDir(Shaku.input!.mousePosition.add(level_offset).div(TILE_SIZE).sub(1, 1).sub(mouse_tile));
+            initial_state.spawner.sprite.rotation = initial_state.spawner.dir.getRadians(); // hacky
+            initial_state.players[0].pos = initial_state.spawner.pos.add(initial_state.spawner.dir); // hacky
+            initial_state.players[0].dir = initial_state.spawner.dir.clone(); // hacky
+            all_states = gameLogic(initial_state, robot_tape);
+        }
+        if (Shaku.input!.keyPressed(KeyboardKeys.n4)) {
+            let two_state_wall_index = indexOfTrue(initial_state.things, x => (x instanceof TwoStateWall && x.pos.equals(mouse_tile)));
+            if (two_state_wall_index === -1) {
+                initial_state.things.push(new TwoStateWall(
+                    mouse_tile, mainDir(Shaku.input!.mousePosition.add(level_offset).div(TILE_SIZE).sub(1, 1).sub(mouse_tile)), false, null));
+            } else {
+                console.log(two_state_wall_index);
+                (initial_state.things[two_state_wall_index] as ButtonTarget).remove(initial_state);
+                console.log(initial_state);
+            }
+            all_states = gameLogic(initial_state, robot_tape);
+        }
+        if (Shaku.input!.keyPressed(KeyboardKeys.n5)) {
+            let button_index = indexOfTrue(initial_state.things, b => (b instanceof Button && b.pos.equals(mouse_tile)));
+            if (button_index === -1) {
+                initial_state.things.push(new Button(mouse_tile, [], false, null));
+            } else {
+                initial_state.things.splice(button_index, 1)
+            }
+            all_states = gameLogic(initial_state, robot_tape);
+        }
+        if (Shaku.input!.keyPressed(KeyboardKeys.n6)) {
+            if (editor_button_looking_for_target === -1) {
+                editor_button_looking_for_target = indexOfTrue(initial_state.things, b => (b instanceof Button && b.pos.equals(mouse_tile)));
+            } else {
+                // editor_looking_for_button_target
+                let button_target_index = initial_state.buttonTargets.findIndex(x => x instanceof TwoStateWall && x.pos.equals(mouse_tile));
+                if (button_target_index !== -1) {
+                    let button = initial_state.things[editor_button_looking_for_target] as Button;
+                    if (button.target_ids.includes(button_target_index)) {
+                        button.target_ids = button.target_ids.filter(x => x != button_target_index);
+                    } else {
+                        button.target_ids.push(button_target_index);
+                    }
+                }
+                editor_button_looking_for_target = -1;
+            }
+            all_states = gameLogic(initial_state, robot_tape);
+        }
+        if (editor_button_looking_for_target !== -1) {
+            let button = initial_state.things[editor_button_looking_for_target] as Button;
+            Shaku.gfx!.fillRect(
+                new Rectangle(
+                    (button.pos.x + .5) * TILE_SIZE,
+                    (button.pos.y + .5) * TILE_SIZE,
+                    TILE_SIZE,
+                    TILE_SIZE
+                ),
+                button.active ? Shaku.utils.Color.red : Shaku.utils.Color.green,
+            )
+        }
     }
 
     if (time_offset < 0) { // going forwards in time
@@ -985,15 +1017,45 @@ function update() {
 
     time_offset = moveTowards(time_offset, 0, Shaku.gameTime.delta! * (Math.abs(all_states[cur_turn].major_turn - selected_turn) + 1) / miniturn_duration);
 
+    if (!changing_level && !EDITOR && Shaku.input.pressed("dash")) {
+        load_level(level_editor);
+        EDITOR = true;
+    }
+
+    if (!changing_level && time_offset === 0 && all_states[cur_turn].isWon()) {
+        if (cur_level_n < levels.length - 1) {
+            initTransitionToLevel(cur_level_n + 1);
+        }
+    }
+
+    kalbakUpdate();
+
     // end frame and request next step
     Shaku.endFrame();
     Shaku.requestAnimationFrame(update);
 }
 
+function initTransitionToLevel(n: number) {
+    /** -1 to 1; -1 to 0 is exiting prev level, 0 to 1 is entering new one */
+    let changing_level_time = -1;
+    changing_level = true;
+    doEveryFrameUntilTrue(() => {
+        // todo: cooler transition
+        let prev = changing_level_time;
+        changing_level_time = moveTowards(prev, 1, Shaku.gameTime.delta * 4);
+        if (prev < 0 && changing_level_time >= 0) {
+            changing_level = false;
+            cur_level_n = n;
+            load_level(levels[n]);
+        }
+        return changing_level_time >= 1;
+    })
+}
 
 let _cooling_time_left: Record<string, number> = {};
 let _press_count: Record<string, number> = {};
 function pressed_throttled(code: string | string[], dt: number): boolean {
+    if (changing_level) return false;
     let key = Array.isArray(code) ? code.join('') : code;
     if (!(key in _cooling_time_left)) {
         _cooling_time_left[key] = 0;
