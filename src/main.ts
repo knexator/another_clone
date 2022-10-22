@@ -639,6 +639,28 @@ let levels = [
             new Crate(new Vector2(2, 5), null),
         ],
     )),
+    new Level("wait_tut", 11, 5, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ...###.....
+                ####.######
+                #.........#
+                ######.####
+                .....###...
+            `),
+            new Targets([
+                new Vector2(9, 2),
+            ]),
+
+            new Button(new Vector2(4, 1), [0], false, null),
+
+            new TwoStateWall(new Vector2(6, 2), Vector2.down, false, null),
+
+            new Spawner(new Vector2(1, 2), Vector2.right, null),
+            new Crate(new Vector2(8, 2), null),
+        ],
+    )),
     new Level("basic", 10, 5, new GameState(
         -1, 0,
         [
@@ -927,6 +949,14 @@ let row_2 = 0;
 // let game_size = new Vector2(800, 400);
 let game_size = new Vector2(800, 450);
 
+let row_1_background = new Sprite(Shaku.gfx.whiteTexture);
+row_1_background.origin = Vector2.zero;
+row_1_background.color = COLOR_TAPE;
+
+let row_2_background = new Sprite(Shaku.gfx.whiteTexture);
+row_2_background.origin = Vector2.zero;
+row_2_background.color = COLOR_TAPE;
+
 let cur_level_n = 0;
 // let cur_level: Level;
 load_level(levels[cur_level_n]);
@@ -943,6 +973,13 @@ function load_level(level: Level) {
     } else {
         row_1 = Math.ceil(level.n_moves / 2);
         row_2 = level.n_moves - row_1;
+    }
+    row_1_background.position.set(-SYMBOL_SIZE * .5 + 8, 8)
+    row_1_background.size.set(SYMBOL_SIZE * (row_1 + 1) - 16, SYMBOL_SIZE * 1.5 - 16);
+
+    if (row_2 > 0) {
+        row_2_background.position.set(-SYMBOL_SIZE * .5 + 8, 8)
+        row_2_background.size.set(SYMBOL_SIZE * (row_2 + 1) - 16, SYMBOL_SIZE * 1.5 - 16);
     }
 
     selected_turn = 0;
@@ -1168,6 +1205,26 @@ function update() {
                 setSymbolChanging(selected_turn);
                 selected_turn += 1;
                 all_states = gameLogic(initial_state, robot_tape);
+            } else {
+                let time_left = .1;
+                row_1_background.color = COLOR_SYMBOL;
+                row_2_background.color = COLOR_SYMBOL;
+                doEveryFrameUntilTrue(() => {
+                    Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_1 * SYMBOL_SIZE, -450));
+                    Shaku.gfx.drawSprite(row_1_background);
+                    if (row_2 > 0) {
+                        Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_2 * SYMBOL_SIZE, -525));
+                        Shaku.gfx.drawSprite(row_2_background);
+                    }
+                    Shaku.gfx.resetCamera();
+                    time_left -= Shaku.gameTime.delta;
+                    if (time_left < 0) {
+                        row_1_background.color = COLOR_TAPE;
+                        row_2_background.color = COLOR_TAPE;
+                        return true;
+                    }
+                    return false;
+                })
             }
         }
     }
@@ -1283,10 +1340,7 @@ function update() {
     }
 
     Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_1 * SYMBOL_SIZE, -450));
-    Shaku.gfx?.fillRect(
-        new Rectangle(-SYMBOL_SIZE * .5 + 8, 8, SYMBOL_SIZE * (row_1 + 1) - 16, SYMBOL_SIZE * 1.5 - 16),
-        COLOR_TAPE
-    )
+    Shaku.gfx.drawSprite(row_1_background);
     for (let k = selected_turn; k >= 0; k -= robot_delay) {
         if (k >= row_1) continue;
         if (k === selected_turn) {

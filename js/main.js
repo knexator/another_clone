@@ -8887,6 +8887,26 @@ var levels = [
       new Crate(new import_vector2.default(2, 5), null)
     ]
   )),
+  new Level("wait_tut", 11, 5, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                ...###.....
+                ####.######
+                #.........#
+                ######.####
+                .....###...
+            `),
+      new Targets([
+        new import_vector2.default(9, 2)
+      ]),
+      new Button(new import_vector2.default(4, 1), [0], false, null),
+      new TwoStateWall(new import_vector2.default(6, 2), import_vector2.default.down, false, null),
+      new Spawner(new import_vector2.default(1, 2), import_vector2.default.right, null),
+      new Crate(new import_vector2.default(8, 2), null)
+    ]
+  )),
   new Level("basic", 10, 5, new GameState(
     -1,
     0,
@@ -9153,6 +9173,12 @@ var level_offset = import_vector2.default.zero;
 var row_1 = 0;
 var row_2 = 0;
 var game_size = new import_vector2.default(800, 450);
+var row_1_background = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
+row_1_background.origin = import_vector2.default.zero;
+row_1_background.color = COLOR_TAPE;
+var row_2_background = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
+row_2_background.origin = import_vector2.default.zero;
+row_2_background.color = COLOR_TAPE;
 var cur_level_n = 0;
 load_level(levels[cur_level_n]);
 function load_level(level) {
@@ -9166,6 +9192,12 @@ function load_level(level) {
   } else {
     row_1 = Math.ceil(level.n_moves / 2);
     row_2 = level.n_moves - row_1;
+  }
+  row_1_background.position.set(-SYMBOL_SIZE * 0.5 + 8, 8);
+  row_1_background.size.set(SYMBOL_SIZE * (row_1 + 1) - 16, SYMBOL_SIZE * 1.5 - 16);
+  if (row_2 > 0) {
+    row_2_background.position.set(-SYMBOL_SIZE * 0.5 + 8, 8);
+    row_2_background.size.set(SYMBOL_SIZE * (row_2 + 1) - 16, SYMBOL_SIZE * 1.5 - 16);
   }
   selected_turn = 0;
   cur_turn = 0;
@@ -9351,6 +9383,26 @@ function update() {
         setSymbolChanging(selected_turn);
         selected_turn += 1;
         all_states = gameLogic(initial_state, robot_tape);
+      } else {
+        let time_left = 0.1;
+        row_1_background.color = COLOR_SYMBOL;
+        row_2_background.color = COLOR_SYMBOL;
+        doEveryFrameUntilTrue(() => {
+          import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_1 * SYMBOL_SIZE, -450));
+          import_shaku.default.gfx.drawSprite(row_1_background);
+          if (row_2 > 0) {
+            import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_2 * SYMBOL_SIZE, -525));
+            import_shaku.default.gfx.drawSprite(row_2_background);
+          }
+          import_shaku.default.gfx.resetCamera();
+          time_left -= import_shaku.default.gameTime.delta;
+          if (time_left < 0) {
+            row_1_background.color = COLOR_TAPE;
+            row_2_background.color = COLOR_TAPE;
+            return true;
+          }
+          return false;
+        });
       }
     }
   }
@@ -9464,10 +9516,7 @@ function update() {
     }
   }
   import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_1 * SYMBOL_SIZE, -450));
-  import_shaku.default.gfx?.fillRect(
-    new import_rectangle.default(-SYMBOL_SIZE * 0.5 + 8, 8, SYMBOL_SIZE * (row_1 + 1) - 16, SYMBOL_SIZE * 1.5 - 16),
-    COLOR_TAPE
-  );
+  import_shaku.default.gfx.drawSprite(row_1_background);
   for (let k = selected_turn; k >= 0; k -= robot_delay) {
     if (k >= row_1)
       continue;
