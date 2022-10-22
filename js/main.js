@@ -9304,6 +9304,8 @@ var drawExtra = function() {
   intro_text_left_3.position.set(110, 290);
   let intro_text_right_3 = import_shaku.default.gfx.buildText(instructions_font, "Z/X to\nchange turn", 32, import_color.default.white, import_text_alignments.TextAlignments.Center);
   intro_text_right_3.position.set(690, 290);
+  let use_space_text = import_shaku.default.gfx.buildText(instructions_font, "Space to wait", 32, import_color.default.white, import_text_alignments.TextAlignments.Center);
+  use_space_text.position.set(535, 110);
   return function() {
     if (EDITOR)
       return;
@@ -9313,6 +9315,10 @@ var drawExtra = function() {
       import_shaku.default.gfx.drawGroup(intro_text_right_1, false);
       import_shaku.default.gfx.drawGroup(intro_text_left_3, false);
       import_shaku.default.gfx.drawGroup(intro_text_right_3, false);
+      import_shaku.default.gfx.useEffect(null);
+    } else if (cur_level_n === 1) {
+      import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
+      import_shaku.default.gfx.drawGroup(use_space_text, false);
       import_shaku.default.gfx.useEffect(null);
     }
   };
