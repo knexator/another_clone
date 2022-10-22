@@ -672,6 +672,12 @@ let levels = [
     )),
 ]
 
+enum STATE {
+    GAME,
+    MENU,
+}
+
+let state = STATE.GAME;
 
 enum TAPE_SYMBOL {
     LEFT,
@@ -784,6 +790,10 @@ LOWER_SCREEN_SPRITE.size.set(800, 600 - game_size.y);
 LOWER_SCREEN_SPRITE.position.set(0, game_size.y);
 LOWER_SCREEN_SPRITE.color = Color.fromHex("#2B849C")
 
+const FULL_SCREEN_SPRITE = new Sprite(Shaku.gfx.whiteTexture);
+FULL_SCREEN_SPRITE.origin = Vector2.zero;
+FULL_SCREEN_SPRITE.size = Shaku.gfx.getCanvasSize();
+
 let changing_rects: [Sprite, number][] = [];
 function setSymbolChanging(n: number) {
     const rect_spr = new Sprite(Shaku.gfx.whiteTexture);
@@ -810,6 +820,8 @@ function drawSymbolsChanging(dt: number) {
 
 let changing_level = false;
 
+let menu_selected_level = 0;
+
 let EDITOR = false;
 let editor_button_looking_for_target = -1;
 // do a single main loop step and request the next step
@@ -828,47 +840,69 @@ function update() {
 
     Shaku.gfx.drawSprite(LOWER_SCREEN_SPRITE);
 
+    // changing game state
+    switch (state) {
+        case STATE.GAME:
+            if (time_offset === 0 && !changing_level && Shaku.input.pressed("escape")) {
+                menu_selected_level = cur_level_n;
+                state = STATE.MENU;
+            }
+            break;
 
-    if (pressed_throttled(["q", "z"], Shaku.gameTime.delta) && selected_turn > 0) {
-        selected_turn -= 1;
-    } else if (pressed_throttled(["e", "x"], Shaku.gameTime.delta)) {
-        selected_turn += 1;
-        if (selected_turn >= all_states.at(-1)!.major_turn) {
-            all_states = gameLogic(initial_state, robot_tape);
-        }
+        case STATE.MENU:
+            if (Shaku.input.pressed("escape")) {
+                state = STATE.GAME;
+            } else if (Shaku.input.pressed(["enter", "space"])) {
+                initTransitionToLevel(menu_selected_level);
+            }
+            break;
+
+        default:
+            break;
     }
 
-    if (!changing_level && Shaku.input?.pressed(["r"])) {
-        selected_turn = 0;
-    }
-
-    if ((all_states[cur_turn].major_turn !== selected_turn || all_states[cur_turn].minor_turn !== 0) && time_offset === 0) {
-        let dir = Math.sign(selected_turn - all_states[cur_turn].major_turn - .5); // -.5 is for minor_turn !== 0
-        cur_turn += dir;
-        time_offset -= dir * .99;
-    }
-
-    if (Shaku.input?.pressed(["t"])) {
-        console.log("cur_turn: ", cur_turn);
-        console.log("selected_turn: ", selected_turn);
-        console.log("cur_state: ", all_states[cur_turn]);
-        console.log("all states: ", all_states);
-    }
-
-    let input_symbol = selectFromInput([
-        [["w", "up"], TAPE_SYMBOL.UP],
-        [["s", "down"], TAPE_SYMBOL.DOWN],
-        [["d", "right"], TAPE_SYMBOL.RIGHT],
-        [["a", "left"], TAPE_SYMBOL.LEFT],
-        ["space", TAPE_SYMBOL.NONE],
-    ], Shaku.gameTime.delta)
-    // if (input_symbol !== null && time_offset === 0) {
-    if (input_symbol !== null) {
-        if (selected_turn < robot_tape.length) {
-            robot_tape[selected_turn] = input_symbol;
-            setSymbolChanging(selected_turn);
+    if (state === STATE.GAME) {
+        if (pressed_throttled(["q", "z"], Shaku.gameTime.delta) && selected_turn > 0) {
+            selected_turn -= 1;
+        } else if (pressed_throttled(["e", "x"], Shaku.gameTime.delta)) {
             selected_turn += 1;
-            all_states = gameLogic(initial_state, robot_tape);
+            if (selected_turn >= all_states.at(-1)!.major_turn) {
+                all_states = gameLogic(initial_state, robot_tape);
+            }
+        }
+
+        if (!changing_level && Shaku.input?.pressed(["r"])) {
+            selected_turn = 0;
+        }
+
+        if ((all_states[cur_turn].major_turn !== selected_turn || all_states[cur_turn].minor_turn !== 0) && time_offset === 0) {
+            let dir = Math.sign(selected_turn - all_states[cur_turn].major_turn - .5); // -.5 is for minor_turn !== 0
+            cur_turn += dir;
+            time_offset -= dir * .99;
+        }
+
+        if (Shaku.input?.pressed(["t"])) {
+            console.log("cur_turn: ", cur_turn);
+            console.log("selected_turn: ", selected_turn);
+            console.log("cur_state: ", all_states[cur_turn]);
+            console.log("all states: ", all_states);
+        }
+
+        let input_symbol = selectFromInput([
+            [["w", "up"], TAPE_SYMBOL.UP],
+            [["s", "down"], TAPE_SYMBOL.DOWN],
+            [["d", "right"], TAPE_SYMBOL.RIGHT],
+            [["a", "left"], TAPE_SYMBOL.LEFT],
+            ["space", TAPE_SYMBOL.NONE],
+        ], Shaku.gameTime.delta)
+        // if (input_symbol !== null && time_offset === 0) {
+        if (input_symbol !== null) {
+            if (selected_turn < robot_tape.length) {
+                robot_tape[selected_turn] = input_symbol;
+                setSymbolChanging(selected_turn);
+                selected_turn += 1;
+                all_states = gameLogic(initial_state, robot_tape);
+            }
         }
     }
 
@@ -883,7 +917,7 @@ function update() {
     }
 
     // editor
-    if (EDITOR) {
+    if (state === STATE.GAME && EDITOR) {
         let mouse_tile = Shaku.input!.mousePosition.add(level_offset).div(TILE_SIZE).round().sub(1, 1);
         Shaku.gfx!.outlineRect(
             new Rectangle(
@@ -1016,16 +1050,49 @@ function update() {
 
     Shaku.gfx.resetCamera()
 
-    time_offset = moveTowards(time_offset, 0, Shaku.gameTime.delta! * (Math.abs(all_states[cur_turn].major_turn - selected_turn) + 1) / miniturn_duration);
+    if (state === STATE.GAME) {
+        time_offset = moveTowards(time_offset, 0, Shaku.gameTime.delta! * (Math.abs(all_states[cur_turn].major_turn - selected_turn) + 1) / miniturn_duration);
 
-    if (!changing_level && !EDITOR && Shaku.input.pressed("dash")) {
-        load_level(level_editor);
-        EDITOR = true;
+        if (!changing_level && !EDITOR && Shaku.input.pressed("dash")) {
+            load_level(level_editor);
+            EDITOR = true;
+        }
+
+        if (!changing_level && time_offset === 0 && all_states[cur_turn].isWon()) {
+            if (cur_level_n < levels.length - 1) {
+                initTransitionToLevel(cur_level_n + 1);
+            }
+        }
     }
 
-    if (!changing_level && time_offset === 0 && all_states[cur_turn].isWon()) {
-        if (cur_level_n < levels.length - 1) {
-            initTransitionToLevel(cur_level_n + 1);
+    if (state === STATE.MENU) {
+        FULL_SCREEN_SPRITE.color = new Color(0, 0, 0, .7);
+        Shaku.gfx.drawSprite(FULL_SCREEN_SPRITE);
+        let menu_row_size = 6;
+
+        let delta_level = selectFromInput([
+            [["w", "up"], -menu_row_size],
+            [["s", "down"], menu_row_size],
+            [["d", "right"], 1],
+            [["a", "left"], -1],
+        ], Shaku.gameTime.delta);
+        if (delta_level !== null) {
+            let new_menu_selected_level = menu_selected_level + delta_level;
+            if (new_menu_selected_level >= 0 && new_menu_selected_level < levels.length) {
+                menu_selected_level = new_menu_selected_level;
+            }
+        }
+
+        let menu_button_spacing = 100;
+        let menu_button_size = 75;
+        for (let k = 0; k < levels.length; k++) {
+            Shaku.gfx.fillRect(
+                new Rectangle(
+                    (k % menu_row_size) * menu_button_spacing + menu_button_spacing / 3,
+                    Math.floor(k / menu_row_size) * menu_button_spacing + menu_button_spacing / 3,
+                    menu_button_size, menu_button_size
+                ), k === menu_selected_level ? Color.cyan : Color.darkcyan
+            )
         }
     }
 
@@ -1042,9 +1109,13 @@ function initTransitionToLevel(n: number) {
     changing_level = true;
     doEveryFrameUntilTrue(() => {
         // todo: cooler transition
+        FULL_SCREEN_SPRITE.color = new Color(0, 0, 0, 1 - Math.abs(changing_level_time));
+        Shaku.gfx.drawSprite(FULL_SCREEN_SPRITE);
+
         let prev = changing_level_time;
-        changing_level_time = moveTowards(prev, 1, Shaku.gameTime.delta * 4);
+        changing_level_time = moveTowards(prev, 1, Shaku.gameTime.delta * 3);
         if (prev < 0 && changing_level_time >= 0) {
+            state = STATE.GAME;
             changing_level = false;
             cur_level_n = n;
             load_level(levels[n]);

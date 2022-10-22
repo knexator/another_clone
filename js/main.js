@@ -8394,7 +8394,7 @@ var _Walls = class extends GameObject {
       }
     }
   }
-  move(state, pos, direction) {
+  move(state2, pos, direction) {
     return !this.wallAtPos(pos);
   }
   clone() {
@@ -8420,7 +8420,7 @@ var Targets = class extends GameObject {
       import_shaku.default.gfx.drawSprite(target_sprite);
     });
   }
-  move(state, pos, direction) {
+  move(state2, pos, direction) {
     return true;
   }
   clone() {
@@ -8455,14 +8455,14 @@ var _Button = class extends GameObject {
     }
     import_shaku.default.gfx.drawSprite(button_sprite);
   }
-  move(state, pos, direction) {
+  move(state2, pos, direction) {
     return true;
   }
   clone() {
     return new _Button(this.pos, this.target_ids, this.active, this);
   }
-  update(state) {
-    let pressed = state.crates.some((crate) => crate.pos.equals(this.pos)) || state.players.some((player) => player.pos.equals(this.pos)) || state.spawner.pos.equals(this.pos);
+  update(state2) {
+    let pressed = state2.crates.some((crate) => crate.pos.equals(this.pos)) || state2.players.some((player) => player.pos.equals(this.pos)) || state2.spawner.pos.equals(this.pos);
     if (this.active != pressed) {
       this.active = pressed;
       return true;
@@ -8475,18 +8475,18 @@ var Button = _Button;
 __publicField(Button, "ActiveColor", import_color.default.fromHex("#F0A863"));
 __publicField(Button, "InactiveColor", import_color.default.fromHex("#4E3116"));
 var ButtonTarget = class extends GameObject {
-  remove(state) {
-    let this_index = state.buttonTargets.indexOf(this);
+  remove(state2) {
+    let this_index = state2.buttonTargets.indexOf(this);
     if (this_index === -1)
       throw new Error("removing a button target that doesn't exist");
-    state.buttons.forEach((button) => {
+    state2.buttons.forEach((button) => {
       button.target_ids = button.target_ids.filter((n) => n !== this_index).map((n) => {
         if (n < this_index)
           return n;
         return n - 1;
       });
     });
-    state.things = state.things.filter((x) => x != this);
+    state2.things = state2.things.filter((x) => x != this);
   }
 };
 var TwoStateWall = class extends ButtonTarget {
@@ -8504,8 +8504,8 @@ var TwoStateWall = class extends ButtonTarget {
   }
   rail_sprite;
   wall_sprite;
-  onButtonUpdate(state, button_active) {
-    let new_state = new GameState(state.major_turn, state.minor_turn + 1, state.things.map((x) => x.clone()));
+  onButtonUpdate(state2, button_active) {
+    let new_state = new GameState(state2.major_turn, state2.minor_turn + 1, state2.things.map((x) => x.clone()));
     if (button_active) {
       if (new_state.move(this.pos.add(this.dir), this.dir)) {
         let new_this = new_state.things.find((x) => x instanceof TwoStateWall && x.pos.equals(this.pos));
@@ -8530,7 +8530,7 @@ var TwoStateWall = class extends ButtonTarget {
     this.wall_sprite.position.copy(pos.add(1, 1).mul(TILE_SIZE));
     import_shaku.default.gfx.drawSprite(this.wall_sprite);
   }
-  move(state, pos, direction) {
+  move(state2, pos, direction) {
     if (this.extended) {
       return !pos.equals(this.pos.add(this.dir));
     } else {
@@ -8555,11 +8555,11 @@ var Pushable = class extends GameObject {
     }
     import_shaku.default.gfx.drawSprite(this.sprite);
   }
-  move(state, pos, dir) {
+  move(state2, pos, dir) {
     if (!pos.equals(this.pos))
       return true;
     let new_pos = pos.add(dir);
-    if (state.move(new_pos, dir)) {
+    if (state2.move(new_pos, dir)) {
       this.pos.copy(new_pos);
       return true;
     }
@@ -8691,6 +8691,7 @@ var levels = [
     ]
   ))
 ];
+var state = 0 /* GAME */;
 var TAPE_SYMBOL = /* @__PURE__ */ ((TAPE_SYMBOL2) => {
   TAPE_SYMBOL2[TAPE_SYMBOL2["LEFT"] = 0] = "LEFT";
   TAPE_SYMBOL2[TAPE_SYMBOL2["RIGHT"] = 1] = "RIGHT";
@@ -8780,6 +8781,9 @@ LOWER_SCREEN_SPRITE.origin = import_vector2.default.zero;
 LOWER_SCREEN_SPRITE.size.set(800, 600 - game_size.y);
 LOWER_SCREEN_SPRITE.position.set(0, game_size.y);
 LOWER_SCREEN_SPRITE.color = import_color.default.fromHex("#2B849C");
+var FULL_SCREEN_SPRITE = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
+FULL_SCREEN_SPRITE.origin = import_vector2.default.zero;
+FULL_SCREEN_SPRITE.size = import_shaku.default.gfx.getCanvasSize();
 var changing_rects = [];
 function setSymbolChanging(n) {
   const rect_spr = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
@@ -8802,6 +8806,7 @@ function drawSymbolsChanging(dt) {
   }
 }
 var changing_level = false;
+var menu_selected_level = 0;
 var EDITOR = false;
 var editor_button_looking_for_target = -1;
 function update() {
@@ -8812,41 +8817,60 @@ function update() {
   import_shaku.default.gfx.drawSprite(MAIN_SCREEN_SPRITE);
   import_shaku.default.gfx.useEffect(null);
   import_shaku.default.gfx.drawSprite(LOWER_SCREEN_SPRITE);
-  if (pressed_throttled(["q", "z"], import_shaku.default.gameTime.delta) && selected_turn > 0) {
-    selected_turn -= 1;
-  } else if (pressed_throttled(["e", "x"], import_shaku.default.gameTime.delta)) {
-    selected_turn += 1;
-    if (selected_turn >= all_states.at(-1).major_turn) {
-      all_states = gameLogic(initial_state, robot_tape);
-    }
+  switch (state) {
+    case 0 /* GAME */:
+      if (time_offset === 0 && !changing_level && import_shaku.default.input.pressed("escape")) {
+        menu_selected_level = cur_level_n;
+        state = 1 /* MENU */;
+      }
+      break;
+    case 1 /* MENU */:
+      if (import_shaku.default.input.pressed("escape")) {
+        state = 0 /* GAME */;
+      } else if (import_shaku.default.input.pressed(["enter", "space"])) {
+        initTransitionToLevel(menu_selected_level);
+      }
+      break;
+    default:
+      break;
   }
-  if (!changing_level && import_shaku.default.input?.pressed(["r"])) {
-    selected_turn = 0;
-  }
-  if ((all_states[cur_turn].major_turn !== selected_turn || all_states[cur_turn].minor_turn !== 0) && time_offset === 0) {
-    let dir = Math.sign(selected_turn - all_states[cur_turn].major_turn - 0.5);
-    cur_turn += dir;
-    time_offset -= dir * 0.99;
-  }
-  if (import_shaku.default.input?.pressed(["t"])) {
-    console.log("cur_turn: ", cur_turn);
-    console.log("selected_turn: ", selected_turn);
-    console.log("cur_state: ", all_states[cur_turn]);
-    console.log("all states: ", all_states);
-  }
-  let input_symbol = selectFromInput([
-    [["w", "up"], 2 /* UP */],
-    [["s", "down"], 3 /* DOWN */],
-    [["d", "right"], 1 /* RIGHT */],
-    [["a", "left"], 0 /* LEFT */],
-    ["space", 4 /* NONE */]
-  ], import_shaku.default.gameTime.delta);
-  if (input_symbol !== null) {
-    if (selected_turn < robot_tape.length) {
-      robot_tape[selected_turn] = input_symbol;
-      setSymbolChanging(selected_turn);
+  if (state === 0 /* GAME */) {
+    if (pressed_throttled(["q", "z"], import_shaku.default.gameTime.delta) && selected_turn > 0) {
+      selected_turn -= 1;
+    } else if (pressed_throttled(["e", "x"], import_shaku.default.gameTime.delta)) {
       selected_turn += 1;
-      all_states = gameLogic(initial_state, robot_tape);
+      if (selected_turn >= all_states.at(-1).major_turn) {
+        all_states = gameLogic(initial_state, robot_tape);
+      }
+    }
+    if (!changing_level && import_shaku.default.input?.pressed(["r"])) {
+      selected_turn = 0;
+    }
+    if ((all_states[cur_turn].major_turn !== selected_turn || all_states[cur_turn].minor_turn !== 0) && time_offset === 0) {
+      let dir = Math.sign(selected_turn - all_states[cur_turn].major_turn - 0.5);
+      cur_turn += dir;
+      time_offset -= dir * 0.99;
+    }
+    if (import_shaku.default.input?.pressed(["t"])) {
+      console.log("cur_turn: ", cur_turn);
+      console.log("selected_turn: ", selected_turn);
+      console.log("cur_state: ", all_states[cur_turn]);
+      console.log("all states: ", all_states);
+    }
+    let input_symbol = selectFromInput([
+      [["w", "up"], 2 /* UP */],
+      [["s", "down"], 3 /* DOWN */],
+      [["d", "right"], 1 /* RIGHT */],
+      [["a", "left"], 0 /* LEFT */],
+      ["space", 4 /* NONE */]
+    ], import_shaku.default.gameTime.delta);
+    if (input_symbol !== null) {
+      if (selected_turn < robot_tape.length) {
+        robot_tape[selected_turn] = input_symbol;
+        setSymbolChanging(selected_turn);
+        selected_turn += 1;
+        all_states = gameLogic(initial_state, robot_tape);
+      }
     }
   }
   import_shaku.default.gfx.setCameraOrthographic(level_offset);
@@ -8857,7 +8881,7 @@ function update() {
   } else {
     all_states[cur_turn].draw(1);
   }
-  if (EDITOR) {
+  if (state === 0 /* GAME */ && EDITOR) {
     let mouse_tile = import_shaku.default.input.mousePosition.add(level_offset).div(TILE_SIZE).round().sub(1, 1);
     import_shaku.default.gfx.outlineRect(
       new import_rectangle.default(
@@ -8987,14 +9011,46 @@ function update() {
     drawSymbol(cur_symbol, new import_vector2.default((k + 0.5) * SYMBOL_SIZE, SYMBOL_SIZE * 0.75));
   }
   import_shaku.default.gfx.resetCamera();
-  time_offset = moveTowards(time_offset, 0, import_shaku.default.gameTime.delta * (Math.abs(all_states[cur_turn].major_turn - selected_turn) + 1) / miniturn_duration);
-  if (!changing_level && !EDITOR && import_shaku.default.input.pressed("dash")) {
-    load_level(level_editor);
-    EDITOR = true;
+  if (state === 0 /* GAME */) {
+    time_offset = moveTowards(time_offset, 0, import_shaku.default.gameTime.delta * (Math.abs(all_states[cur_turn].major_turn - selected_turn) + 1) / miniturn_duration);
+    if (!changing_level && !EDITOR && import_shaku.default.input.pressed("dash")) {
+      load_level(level_editor);
+      EDITOR = true;
+    }
+    if (!changing_level && time_offset === 0 && all_states[cur_turn].isWon()) {
+      if (cur_level_n < levels.length - 1) {
+        initTransitionToLevel(cur_level_n + 1);
+      }
+    }
   }
-  if (!changing_level && time_offset === 0 && all_states[cur_turn].isWon()) {
-    if (cur_level_n < levels.length - 1) {
-      initTransitionToLevel(cur_level_n + 1);
+  if (state === 1 /* MENU */) {
+    FULL_SCREEN_SPRITE.color = new import_color.default(0, 0, 0, 0.7);
+    import_shaku.default.gfx.drawSprite(FULL_SCREEN_SPRITE);
+    let menu_row_size = 6;
+    let delta_level = selectFromInput([
+      [["w", "up"], -menu_row_size],
+      [["s", "down"], menu_row_size],
+      [["d", "right"], 1],
+      [["a", "left"], -1]
+    ], import_shaku.default.gameTime.delta);
+    if (delta_level !== null) {
+      let new_menu_selected_level = menu_selected_level + delta_level;
+      if (new_menu_selected_level >= 0 && new_menu_selected_level < levels.length) {
+        menu_selected_level = new_menu_selected_level;
+      }
+    }
+    let menu_button_spacing = 100;
+    let menu_button_size = 75;
+    for (let k = 0; k < levels.length; k++) {
+      import_shaku.default.gfx.fillRect(
+        new import_rectangle.default(
+          k % menu_row_size * menu_button_spacing + menu_button_spacing / 3,
+          Math.floor(k / menu_row_size) * menu_button_spacing + menu_button_spacing / 3,
+          menu_button_size,
+          menu_button_size
+        ),
+        k === menu_selected_level ? import_color.default.cyan : import_color.default.darkcyan
+      );
     }
   }
   kalbakUpdate();
@@ -9005,9 +9061,12 @@ function initTransitionToLevel(n) {
   let changing_level_time = -1;
   changing_level = true;
   doEveryFrameUntilTrue(() => {
+    FULL_SCREEN_SPRITE.color = new import_color.default(0, 0, 0, 1 - Math.abs(changing_level_time));
+    import_shaku.default.gfx.drawSprite(FULL_SCREEN_SPRITE);
     let prev = changing_level_time;
-    changing_level_time = moveTowards(prev, 1, import_shaku.default.gameTime.delta * 4);
+    changing_level_time = moveTowards(prev, 1, import_shaku.default.gameTime.delta * 3);
     if (prev < 0 && changing_level_time >= 0) {
+      state = 0 /* GAME */;
       changing_level = false;
       cur_level_n = n;
       load_level(levels[n]);
