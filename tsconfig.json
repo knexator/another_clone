@@ -11,6 +11,7 @@
     "baseUrl": ".",
     "paths": {
       "shaku/lib/*": ["./node_modules/shaku/types/*"]
-    }
+    },
+    "moduleResolution": "node"
   }
 }

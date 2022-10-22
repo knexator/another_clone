@@ -1,3 +1,6 @@
+// todo:
+//  - bump against walls
+
 import Shaku from "shaku/lib/shaku";
 import TextureAsset from "shaku/lib/assets/texture_asset";
 import Sprite from "shaku/lib/gfx/sprite";
@@ -11,6 +14,7 @@ import { TextAlignments } from "shaku/lib/gfx/text_alignments";
 import { BackgroundEffect } from "./background_effect";
 // import { level_1 } from "./levels";
 import { kalbakUpdate, doOnceOnTrue, doEveryFrameUntilTrue } from "./kalbak";
+import memoize from "lodash.memoize";
 
 Shaku!.input!.setTargetElement(() => Shaku.gfx!.canvas);
 await Shaku.init();
@@ -716,6 +720,26 @@ let levels = [
             new Crate(new Vector2(8, 4), null),
         ],
     )),
+    new Level("microban", 8, 5, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ####..
+                #..#..
+                #..###
+                #....#
+                #....#
+                #..###
+                ####..
+            `),
+            new Targets([
+                new Vector2(2, 1),
+            ]),
+
+            new Spawner(new Vector2(1, 3), Vector2.right, null),
+            new Crate(new Vector2(3, 4), null),
+        ],
+    )),
     new Level("gaps", 8, 3, new GameState(
         -1, 0,
         [
@@ -781,6 +805,28 @@ let levels = [
             new Crate(new Vector2(8, 4), null),
         ],
     )),
+    new Level("bistable", 8, 3, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ..#########.
+                ..#.......#.
+                ###.#######.
+                #....#......
+                ####.#######
+                ...#.......#
+                ...#########
+            `),
+            new Targets([
+                new Vector2(9, 1),
+                new Vector2(10, 5),
+            ]),
+
+            new Spawner(new Vector2(1, 3), Vector2.right, null),
+            new Crate(new Vector2(5, 1), null),
+            new Crate(new Vector2(6, 5), null),
+        ],
+    )),
     new Level("twice", 19, 7, new GameState(
         -1, 0,
         [
@@ -817,6 +863,26 @@ let levels = [
 
             new Spawner(new Vector2(1, 2), Vector2.right, null),
             new Crate(new Vector2(6, 2), null),
+        ],
+    )),
+    new Level("sandbox", 30, 1, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ###########
+                #.........#
+                #.........#
+                #.........#
+                #.........#
+                #.........#
+                ###########
+            `),
+            new Targets([
+            ]),
+
+            new Spawner(new Vector2(4, 3), Vector2.right, null),
+            new Crate(new Vector2(3, 2), null),
+            new Crate(new Vector2(5, 4), null),
         ],
     )),
 ]
@@ -1018,6 +1084,10 @@ let drawExtra = function () {
         }
     }
 }();
+
+let generateText = memoize((text: string, size: number = 32, color: Color = Color.white) => {
+    return Shaku.gfx.buildText(instructions_font, text, size, color, TextAlignments.Center);
+});
 
 let editor_button_looking_for_target = -1;
 // do a single main loop step and request the next step
@@ -1278,6 +1348,9 @@ function update() {
             // load_level(level_editor);
             EDITOR = true;
         }
+        if (!changing_level && EDITOR && Shaku.input.pressed("period")) {
+            load_level(level_editor);
+        }
 
         if (!EDITOR && !changing_level && time_offset === 0 && all_states[cur_turn].isWon()) {
             if (cur_level_n < levels.length - 1) {
@@ -1317,6 +1390,17 @@ function update() {
                 ), k === menu_selected_level ? Color.cyan : Color.darkcyan
             )
         }
+        Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
+        for (let k = 0; k < levels.length; k++) {
+            let text_spr = generateText((k + 1).toString(), 42);
+            text_spr.position.set(
+                (k % menu_row_size) * menu_button_spacing + menu_button_spacing / 3 + menu_button_size / 2,
+                Math.floor(k / menu_row_size) * menu_button_spacing + menu_button_spacing / 3 + menu_button_size / 5,
+            );
+            Shaku.gfx.drawGroup(text_spr, false);
+        }
+        // @ts-ignore
+        Shaku.gfx.useEffect(null);
     }
 
     kalbakUpdate();

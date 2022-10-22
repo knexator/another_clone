@@ -7968,6 +7968,238 @@ var require_shaku = __commonJS({
   }
 });
 
+// node_modules/lodash.memoize/index.js
+var require_lodash = __commonJS({
+  "node_modules/lodash.memoize/index.js"(exports, module) {
+    var FUNC_ERROR_TEXT = "Expected a function";
+    var HASH_UNDEFINED = "__lodash_hash_undefined__";
+    var funcTag = "[object Function]";
+    var genTag = "[object GeneratorFunction]";
+    var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+    var reIsHostCtor = /^\[object .+?Constructor\]$/;
+    var freeGlobal = typeof global == "object" && global && global.Object === Object && global;
+    var freeSelf = typeof self == "object" && self && self.Object === Object && self;
+    var root = freeGlobal || freeSelf || Function("return this")();
+    function getValue(object, key) {
+      return object == null ? void 0 : object[key];
+    }
+    function isHostObject(value) {
+      var result = false;
+      if (value != null && typeof value.toString != "function") {
+        try {
+          result = !!(value + "");
+        } catch (e) {
+        }
+      }
+      return result;
+    }
+    var arrayProto = Array.prototype;
+    var funcProto = Function.prototype;
+    var objectProto = Object.prototype;
+    var coreJsData = root["__core-js_shared__"];
+    var maskSrcKey = function() {
+      var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || "");
+      return uid ? "Symbol(src)_1." + uid : "";
+    }();
+    var funcToString = funcProto.toString;
+    var hasOwnProperty = objectProto.hasOwnProperty;
+    var objectToString = objectProto.toString;
+    var reIsNative = RegExp(
+      "^" + funcToString.call(hasOwnProperty).replace(reRegExpChar, "\\$&").replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, "$1.*?") + "$"
+    );
+    var splice = arrayProto.splice;
+    var Map = getNative(root, "Map");
+    var nativeCreate = getNative(Object, "create");
+    function Hash(entries) {
+      var index = -1, length = entries ? entries.length : 0;
+      this.clear();
+      while (++index < length) {
+        var entry = entries[index];
+        this.set(entry[0], entry[1]);
+      }
+    }
+    function hashClear() {
+      this.__data__ = nativeCreate ? nativeCreate(null) : {};
+    }
+    function hashDelete(key) {
+      return this.has(key) && delete this.__data__[key];
+    }
+    function hashGet(key) {
+      var data = this.__data__;
+      if (nativeCreate) {
+        var result = data[key];
+        return result === HASH_UNDEFINED ? void 0 : result;
+      }
+      return hasOwnProperty.call(data, key) ? data[key] : void 0;
+    }
+    function hashHas(key) {
+      var data = this.__data__;
+      return nativeCreate ? data[key] !== void 0 : hasOwnProperty.call(data, key);
+    }
+    function hashSet(key, value) {
+      var data = this.__data__;
+      data[key] = nativeCreate && value === void 0 ? HASH_UNDEFINED : value;
+      return this;
+    }
+    Hash.prototype.clear = hashClear;
+    Hash.prototype["delete"] = hashDelete;
+    Hash.prototype.get = hashGet;
+    Hash.prototype.has = hashHas;
+    Hash.prototype.set = hashSet;
+    function ListCache(entries) {
+      var index = -1, length = entries ? entries.length : 0;
+      this.clear();
+      while (++index < length) {
+        var entry = entries[index];
+        this.set(entry[0], entry[1]);
+      }
+    }
+    function listCacheClear() {
+      this.__data__ = [];
+    }
+    function listCacheDelete(key) {
+      var data = this.__data__, index = assocIndexOf(data, key);
+      if (index < 0) {
+        return false;
+      }
+      var lastIndex = data.length - 1;
+      if (index == lastIndex) {
+        data.pop();
+      } else {
+        splice.call(data, index, 1);
+      }
+      return true;
+    }
+    function listCacheGet(key) {
+      var data = this.__data__, index = assocIndexOf(data, key);
+      return index < 0 ? void 0 : data[index][1];
+    }
+    function listCacheHas(key) {
+      return assocIndexOf(this.__data__, key) > -1;
+    }
+    function listCacheSet(key, value) {
+      var data = this.__data__, index = assocIndexOf(data, key);
+      if (index < 0) {
+        data.push([key, value]);
+      } else {
+        data[index][1] = value;
+      }
+      return this;
+    }
+    ListCache.prototype.clear = listCacheClear;
+    ListCache.prototype["delete"] = listCacheDelete;
+    ListCache.prototype.get = listCacheGet;
+    ListCache.prototype.has = listCacheHas;
+    ListCache.prototype.set = listCacheSet;
+    function MapCache(entries) {
+      var index = -1, length = entries ? entries.length : 0;
+      this.clear();
+      while (++index < length) {
+        var entry = entries[index];
+        this.set(entry[0], entry[1]);
+      }
+    }
+    function mapCacheClear() {
+      this.__data__ = {
+        "hash": new Hash(),
+        "map": new (Map || ListCache)(),
+        "string": new Hash()
+      };
+    }
+    function mapCacheDelete(key) {
+      return getMapData(this, key)["delete"](key);
+    }
+    function mapCacheGet(key) {
+      return getMapData(this, key).get(key);
+    }
+    function mapCacheHas(key) {
+      return getMapData(this, key).has(key);
+    }
+    function mapCacheSet(key, value) {
+      getMapData(this, key).set(key, value);
+      return this;
+    }
+    MapCache.prototype.clear = mapCacheClear;
+    MapCache.prototype["delete"] = mapCacheDelete;
+    MapCache.prototype.get = mapCacheGet;
+    MapCache.prototype.has = mapCacheHas;
+    MapCache.prototype.set = mapCacheSet;
+    function assocIndexOf(array, key) {
+      var length = array.length;
+      while (length--) {
+        if (eq(array[length][0], key)) {
+          return length;
+        }
+      }
+      return -1;
+    }
+    function baseIsNative(value) {
+      if (!isObject(value) || isMasked(value)) {
+        return false;
+      }
+      var pattern = isFunction(value) || isHostObject(value) ? reIsNative : reIsHostCtor;
+      return pattern.test(toSource(value));
+    }
+    function getMapData(map, key) {
+      var data = map.__data__;
+      return isKeyable(key) ? data[typeof key == "string" ? "string" : "hash"] : data.map;
+    }
+    function getNative(object, key) {
+      var value = getValue(object, key);
+      return baseIsNative(value) ? value : void 0;
+    }
+    function isKeyable(value) {
+      var type = typeof value;
+      return type == "string" || type == "number" || type == "symbol" || type == "boolean" ? value !== "__proto__" : value === null;
+    }
+    function isMasked(func) {
+      return !!maskSrcKey && maskSrcKey in func;
+    }
+    function toSource(func) {
+      if (func != null) {
+        try {
+          return funcToString.call(func);
+        } catch (e) {
+        }
+        try {
+          return func + "";
+        } catch (e) {
+        }
+      }
+      return "";
+    }
+    function memoize2(func, resolver) {
+      if (typeof func != "function" || resolver && typeof resolver != "function") {
+        throw new TypeError(FUNC_ERROR_TEXT);
+      }
+      var memoized = function() {
+        var args = arguments, key = resolver ? resolver.apply(this, args) : args[0], cache = memoized.cache;
+        if (cache.has(key)) {
+          return cache.get(key);
+        }
+        var result = func.apply(this, args);
+        memoized.cache = cache.set(key, result);
+        return result;
+      };
+      memoized.cache = new (memoize2.Cache || MapCache)();
+      return memoized;
+    }
+    memoize2.Cache = MapCache;
+    function eq(value, other) {
+      return value === other || value !== value && other !== other;
+    }
+    function isFunction(value) {
+      var tag = isObject(value) ? objectToString.call(value) : "";
+      return tag == funcTag || tag == genTag;
+    }
+    function isObject(value) {
+      var type = typeof value;
+      return !!value && (type == "object" || type == "function");
+    }
+    module.exports = memoize2;
+  }
+});
+
 // src/main.ts
 var import_shaku = __toESM(require_shaku());
 var import_sprite = __toESM(require_sprite());
@@ -8139,6 +8371,7 @@ function kalbakUpdate() {
 }
 
 // src/main.ts
+var import_lodash = __toESM(require_lodash());
 import_shaku.default.input.setTargetElement(() => import_shaku.default.gfx.canvas);
 await import_shaku.default.init();
 document.body.appendChild(import_shaku.default.gfx.canvas);
@@ -8735,6 +8968,26 @@ var levels = [
       new Crate(new import_vector2.default(8, 4), null)
     ]
   )),
+  new Level("microban", 8, 5, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                ####..
+                #..#..
+                #..###
+                #....#
+                #....#
+                #..###
+                ####..
+            `),
+      new Targets([
+        new import_vector2.default(2, 1)
+      ]),
+      new Spawner(new import_vector2.default(1, 3), import_vector2.default.right, null),
+      new Crate(new import_vector2.default(3, 4), null)
+    ]
+  )),
   new Level("gaps", 8, 3, new GameState(
     -1,
     0,
@@ -8799,6 +9052,28 @@ var levels = [
       new Crate(new import_vector2.default(8, 4), null)
     ]
   )),
+  new Level("bistable", 8, 3, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                ..#########.
+                ..#.......#.
+                ###.#######.
+                #....#......
+                ####.#######
+                ...#.......#
+                ...#########
+            `),
+      new Targets([
+        new import_vector2.default(9, 1),
+        new import_vector2.default(10, 5)
+      ]),
+      new Spawner(new import_vector2.default(1, 3), import_vector2.default.right, null),
+      new Crate(new import_vector2.default(5, 1), null),
+      new Crate(new import_vector2.default(6, 5), null)
+    ]
+  )),
   new Level("twice", 19, 7, new GameState(
     -1,
     0,
@@ -8835,6 +9110,25 @@ var levels = [
       ]),
       new Spawner(new import_vector2.default(1, 2), import_vector2.default.right, null),
       new Crate(new import_vector2.default(6, 2), null)
+    ]
+  )),
+  new Level("sandbox", 30, 1, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                ###########
+                #.........#
+                #.........#
+                #.........#
+                #.........#
+                #.........#
+                ###########
+            `),
+      new Targets([]),
+      new Spawner(new import_vector2.default(4, 3), import_vector2.default.right, null),
+      new Crate(new import_vector2.default(3, 2), null),
+      new Crate(new import_vector2.default(5, 4), null)
     ]
   ))
 ];
@@ -8992,6 +9286,9 @@ var drawExtra = function() {
     }
   };
 }();
+var generateText = (0, import_lodash.default)((text, size = 32, color = import_color.default.white) => {
+  return import_shaku.default.gfx.buildText(instructions_font, text, size, color, import_text_alignments.TextAlignments.Center);
+});
 var editor_button_looking_for_target = -1;
 function update() {
   import_shaku.default.startFrame();
@@ -9230,6 +9527,9 @@ function update() {
     if (!changing_level && !EDITOR && import_shaku.default.input.pressed("dash")) {
       EDITOR = true;
     }
+    if (!changing_level && EDITOR && import_shaku.default.input.pressed("period")) {
+      load_level(level_editor);
+    }
     if (!EDITOR && !changing_level && time_offset === 0 && all_states[cur_turn].isWon()) {
       if (cur_level_n < levels.length - 1) {
         initTransitionToLevel(cur_level_n + 1);
@@ -9266,6 +9566,16 @@ function update() {
         k === menu_selected_level ? import_color.default.cyan : import_color.default.darkcyan
       );
     }
+    import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
+    for (let k = 0; k < levels.length; k++) {
+      let text_spr = generateText((k + 1).toString(), 42);
+      text_spr.position.set(
+        k % menu_row_size * menu_button_spacing + menu_button_spacing / 3 + menu_button_size / 2,
+        Math.floor(k / menu_row_size) * menu_button_spacing + menu_button_spacing / 3 + menu_button_size / 5
+      );
+      import_shaku.default.gfx.drawGroup(text_spr, false);
+    }
+    import_shaku.default.gfx.useEffect(null);
   }
   kalbakUpdate();
   import_shaku.default.endFrame();
