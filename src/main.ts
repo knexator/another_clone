@@ -7,6 +7,7 @@ import Rectangle from "shaku/lib/utils/rectangle";
 import { KeyboardKeys, MouseButtons } from "shaku/lib/input/key_codes";
 import { BlendModes } from "shaku/lib/gfx/blend_modes";
 import { TextureFilterModes } from "shaku/lib/gfx/texture_filter_modes";
+import { TextAlignments } from "shaku/lib/gfx/text_alignments";
 import { BackgroundEffect } from "./background_effect";
 // import { level_1 } from "./levels";
 import { kalbakUpdate, doOnceOnTrue, doEveryFrameUntilTrue } from "./kalbak";
@@ -24,6 +25,8 @@ Shaku.gfx!.centerCanvas();
 const TILE_SIZE = 50;
 
 const SYMBOL_SIZE = 50;
+
+let instructions_font = await Shaku.assets.loadMsdfFontTexture('fonts/Arial.ttf', { jsonUrl: 'fonts/Arial.json', textureUrl: 'fonts/Arial.png' });
 
 const player_texture = await Shaku.assets.loadTexture("imgs/player.png", { generateMipMaps: true });
 // player_texture.filter = TextureFilterModes.LinearMipmapLinear;
@@ -837,6 +840,37 @@ let changing_level = false;
 
 let menu_selected_level = 0;
 
+let drawExtra = function () {
+    let intro_text_left_1 = Shaku.gfx.buildText(instructions_font, "WASD to\nmove", 32, Color.white, TextAlignments.Center);
+    intro_text_left_1.position.set(110, 90);
+    let intro_text_right_1 = Shaku.gfx.buildText(instructions_font, "Arrow keys\nto move", 32, Color.white, TextAlignments.Center);
+    intro_text_right_1.position.set(690, 90);
+
+    // let intro_text_left_2 = Shaku.gfx.buildText(instructions_font, "Space to\nwait", 32, Color.white, TextAlignments.Center);
+    // intro_text_left_2.position.set(110, 190);
+    // let intro_text_right_2 = Shaku.gfx.buildText(instructions_font, "Space to\nwait", 32, Color.white, TextAlignments.Center);
+    // intro_text_right_2.position.set(690, 190);
+
+    let intro_text_left_3 = Shaku.gfx.buildText(instructions_font, "Q/E to\nchange turn", 32, Color.white, TextAlignments.Center);
+    intro_text_left_3.position.set(110, 290);
+    let intro_text_right_3 = Shaku.gfx.buildText(instructions_font, "Z/X to\nchange turn", 32, Color.white, TextAlignments.Center);
+    intro_text_right_3.position.set(690, 290);
+
+    return function () {
+        if (cur_level_n === 0) {
+            Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
+            Shaku.gfx.drawGroup(intro_text_left_1, false);
+            Shaku.gfx.drawGroup(intro_text_right_1, false);
+            // Shaku.gfx.drawGroup(intro_text_left_2, false);
+            // Shaku.gfx.drawGroup(intro_text_right_2, false);
+            Shaku.gfx.drawGroup(intro_text_left_3, false);
+            Shaku.gfx.drawGroup(intro_text_right_3, false);
+            // @ts-ignore
+            Shaku.gfx.useEffect(null);
+        }
+    }
+}();
+
 let EDITOR = false;
 let editor_button_looking_for_target = -1;
 // do a single main loop step and request the next step
@@ -1104,6 +1138,8 @@ function update() {
             }
         }
     }
+
+    drawExtra();
 
     if (state === STATE.MENU) {
         FULL_SCREEN_SPRITE.color = new Color(0, 0, 0, .7);

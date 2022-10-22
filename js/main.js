@@ -4835,7 +4835,7 @@ var require_msdf_font_texture_asset = __commonJS({
           let atlas_texture = new TextureAsset(params.textureUrl);
           await Promise.all([atlas_json.load(), atlas_texture.load()]);
           let atlas_metadata = atlas_json.data;
-          atlas_texture.filter = TextureFilterModes.Linear;
+          atlas_texture.filter = "LINEAR";
           if (atlas_metadata.common.pages > 1) {
             throw new Error("Can't use MSDF font with several pages");
           }
@@ -4886,13 +4886,13 @@ var require_msdf_font_texture_asset = __commonJS({
 var require_text_alignments = __commonJS({
   "../Shaku/lib/gfx/text_alignments.js"(exports, module) {
     "use strict";
-    var TextAlignments = {
+    var TextAlignments2 = {
       Left: "left",
       Right: "right",
       Center: "center"
     };
-    Object.freeze(TextAlignments);
-    module.exports = { TextAlignments };
+    Object.freeze(TextAlignments2);
+    module.exports = { TextAlignments: TextAlignments2 };
   }
 });
 
@@ -5246,7 +5246,7 @@ var require_gfx = __commonJS({
     var Vector22 = require_vector2();
     var FontTextureAsset = require_font_texture_asset();
     var MsdfFontTextureAsset = require_msdf_font_texture_asset();
-    var { TextAlignment, TextAlignments } = require_text_alignments();
+    var { TextAlignment, TextAlignments: TextAlignments2 } = require_text_alignments();
     var Mesh = require_mesh();
     var Circle = require_circle();
     var SpriteBatch = require_sprite_batch();
@@ -5321,14 +5321,14 @@ var require_gfx = __commonJS({
         return Vertex;
       }
       get TextAlignments() {
-        return TextAlignments;
+        return TextAlignments2;
       }
       get TextAlignment() {
         if (!this._TextAlignment_dep) {
           console.warn(`'gfx.TextAlignment' is deprecated and will be removed in future versions. Please use 'gfx.TextAlignments' instead.`);
           this._TextAlignment_dep = true;
         }
-        return TextAlignments;
+        return TextAlignments2;
       }
       createCamera(withViewport) {
         let ret = new Camera(this);
@@ -5538,7 +5538,7 @@ var require_gfx = __commonJS({
         if (!fontTexture || !fontTexture.valid) {
           throw new Error("Font texture is invalid!");
         }
-        alignment = alignment || TextAlignments.Left;
+        alignment = alignment || TextAlignments2.Left;
         color = color || Color2.black;
         fontSize = fontSize || fontTexture.fontSize;
         marginFactor = marginFactor || Vector22.one;
@@ -5549,10 +5549,10 @@ var require_gfx = __commonJS({
         function breakLine() {
           let offsetX = 0;
           switch (alignment) {
-            case TextAlignments.Right:
+            case TextAlignments2.Right:
               offsetX = -lineWidth;
               break;
-            case TextAlignments.Center:
+            case TextAlignments2.Center:
               offsetX = -lineWidth / 2;
               break;
           }
@@ -7976,6 +7976,7 @@ var import_color = __toESM(require_color());
 var import_rectangle = __toESM(require_rectangle());
 var import_key_codes = __toESM(require_key_codes());
 var import_blend_modes = __toESM(require_blend_modes());
+var import_text_alignments = __toESM(require_text_alignments());
 
 // src/background_effect.ts
 var import_effect = __toESM(require_effect());
@@ -8145,6 +8146,7 @@ import_shaku.default.gfx.setResolution(800, 600, true);
 import_shaku.default.gfx.centerCanvas();
 var TILE_SIZE = 50;
 var SYMBOL_SIZE = 50;
+var instructions_font = await import_shaku.default.assets.loadMsdfFontTexture("fonts/Arial.ttf", { jsonUrl: "fonts/Arial.json", textureUrl: "fonts/Arial.png" });
 var player_texture = await import_shaku.default.assets.loadTexture("imgs/player.png", { generateMipMaps: true });
 var player_sprite = new import_sprite.default(player_texture);
 player_sprite.size.set(TILE_SIZE, TILE_SIZE);
@@ -8822,6 +8824,26 @@ function drawSymbolsChanging(dt, lower_row) {
 }
 var changing_level = false;
 var menu_selected_level = 0;
+var drawExtra = function() {
+  let intro_text_left_1 = import_shaku.default.gfx.buildText(instructions_font, "WASD to\nmove", 32, import_color.default.white, import_text_alignments.TextAlignments.Center);
+  intro_text_left_1.position.set(110, 90);
+  let intro_text_right_1 = import_shaku.default.gfx.buildText(instructions_font, "Arrow keys\nto move", 32, import_color.default.white, import_text_alignments.TextAlignments.Center);
+  intro_text_right_1.position.set(690, 90);
+  let intro_text_left_3 = import_shaku.default.gfx.buildText(instructions_font, "Q/E to\nchange turn", 32, import_color.default.white, import_text_alignments.TextAlignments.Center);
+  intro_text_left_3.position.set(110, 290);
+  let intro_text_right_3 = import_shaku.default.gfx.buildText(instructions_font, "Z/X to\nchange turn", 32, import_color.default.white, import_text_alignments.TextAlignments.Center);
+  intro_text_right_3.position.set(690, 290);
+  return function() {
+    if (cur_level_n === 0) {
+      import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
+      import_shaku.default.gfx.drawGroup(intro_text_left_1, false);
+      import_shaku.default.gfx.drawGroup(intro_text_right_1, false);
+      import_shaku.default.gfx.drawGroup(intro_text_left_3, false);
+      import_shaku.default.gfx.drawGroup(intro_text_right_3, false);
+      import_shaku.default.gfx.useEffect(null);
+    }
+  };
+}();
 var EDITOR = false;
 var editor_button_looking_for_target = -1;
 function update() {
@@ -9068,6 +9090,7 @@ function update() {
       }
     }
   }
+  drawExtra();
   if (state === 1 /* MENU */) {
     FULL_SCREEN_SPRITE.color = new import_color.default(0, 0, 0, 0.7);
     import_shaku.default.gfx.drawSprite(FULL_SCREEN_SPRITE);
