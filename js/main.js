@@ -8606,7 +8606,7 @@ var _Player = class extends Pushable {
 };
 var Player = _Player;
 __publicField(Player, "_brightColor", new import_color.default(1.3, 1.3, 1.3, 1));
-var level_editor = new Level("editor", 16, 5, new GameState(
+var level_editor = new Level("editor", 30, 5, new GameState(
   -1,
   0,
   [
@@ -8709,6 +8709,8 @@ var time_offset = 0;
 var initial_state;
 var all_states;
 var level_offset = import_vector2.default.zero;
+var row_1 = 0;
+var row_2 = 0;
 var game_size = new import_vector2.default(800, 450);
 var cur_level_n = 0;
 load_level(levels[cur_level_n]);
@@ -8717,6 +8719,13 @@ function load_level(level) {
   robot_delay = level.n_delay;
   initial_state = level.initial_state.nextStates().at(-1);
   all_states = gameLogic(initial_state, robot_tape);
+  if (level.n_moves < 13) {
+    row_1 = level.n_moves;
+    row_2 = 0;
+  } else {
+    row_1 = Math.ceil(level.n_moves / 2);
+    row_2 = level.n_moves - row_1;
+  }
   selected_turn = 0;
   cur_turn = 0;
   time_offset = 0;
@@ -8789,13 +8798,19 @@ function setSymbolChanging(n) {
   const rect_spr = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
   rect_spr.origin = new import_vector2.default(0, -8 / (SYMBOL_SIZE * 1.5));
   rect_spr.size.set(SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16);
-  rect_spr.position.set(n * SYMBOL_SIZE, 0);
+  if (n < row_1) {
+    rect_spr.position.set(n * SYMBOL_SIZE, 0);
+  } else {
+    rect_spr.position.set((n - row_1) * SYMBOL_SIZE, 0);
+  }
   rect_spr.color = COLOR_SYMBOL;
-  changing_rects.push([rect_spr, 0.2]);
+  changing_rects.push([rect_spr, 0.15, n < row_1]);
 }
-function drawSymbolsChanging(dt) {
+function drawSymbolsChanging(dt, lower_row) {
   for (var i = changing_rects.length - 1; i >= 0; i--) {
-    let [r, t] = changing_rects[i];
+    let [r, t, b] = changing_rects[i];
+    if (b === lower_row)
+      continue;
     import_shaku.default.gfx.drawSprite(r);
     t -= dt;
     if (t <= 0) {
@@ -8982,13 +8997,13 @@ function update() {
       );
     }
   }
-  import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * robot_tape.length * SYMBOL_SIZE, -450));
+  import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_1 * SYMBOL_SIZE, -450));
   import_shaku.default.gfx?.fillRect(
-    new import_rectangle.default(-SYMBOL_SIZE * 0.5 + 8, 8, SYMBOL_SIZE * (robot_tape.length + 1) - 16, SYMBOL_SIZE * 1.5 - 16),
+    new import_rectangle.default(-SYMBOL_SIZE * 0.5 + 8, 8, SYMBOL_SIZE * (row_1 + 1) - 16, SYMBOL_SIZE * 1.5 - 16),
     COLOR_TAPE
   );
   for (let k = selected_turn; k >= 0; k -= robot_delay) {
-    if (k >= robot_tape.length)
+    if (k >= row_1)
       continue;
     if (k === selected_turn) {
       if (changing_rects.length === 0) {
@@ -9000,15 +9015,45 @@ function update() {
       import_shaku.default.gfx.drawSprite(tape_low);
     }
   }
-  drawSymbolsChanging(import_shaku.default.gameTime.delta);
+  drawSymbolsChanging(import_shaku.default.gameTime.delta, false);
   import_shaku.default.gfx.drawSprite(tape_border_left);
-  tape_border_right.position.set(robot_tape.length * SYMBOL_SIZE, 0);
+  tape_border_right.position.set(row_1 * SYMBOL_SIZE, 0);
   import_shaku.default.gfx.drawSprite(tape_border_right);
-  for (let k = 0; k < robot_tape.length; k++) {
+  for (let k = 0; k < row_1; k++) {
     tape_border.position.set(k * SYMBOL_SIZE, 0);
     import_shaku.default.gfx.drawSprite(tape_border);
     let cur_symbol = robot_tape[k];
     drawSymbol(cur_symbol, new import_vector2.default((k + 0.5) * SYMBOL_SIZE, SYMBOL_SIZE * 0.75));
+  }
+  if (row_2 > 0) {
+    import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_2 * SYMBOL_SIZE, -525));
+    import_shaku.default.gfx?.fillRect(
+      new import_rectangle.default(-SYMBOL_SIZE * 0.5 + 8, 8, SYMBOL_SIZE * (row_2 + 1) - 16, SYMBOL_SIZE * 1.5 - 16),
+      COLOR_TAPE
+    );
+    for (let k = selected_turn; k >= row_1; k -= robot_delay) {
+      if (k >= row_1 + row_2)
+        continue;
+      if (k === selected_turn) {
+        if (changing_rects.length === 0) {
+          tape_high.position.set((k - row_1) * SYMBOL_SIZE, 0);
+          import_shaku.default.gfx.drawSprite(tape_high);
+        }
+      } else {
+        tape_low.position.set((k - row_1) * SYMBOL_SIZE, 0);
+        import_shaku.default.gfx.drawSprite(tape_low);
+      }
+    }
+    drawSymbolsChanging(import_shaku.default.gameTime.delta, true);
+    import_shaku.default.gfx.drawSprite(tape_border_left);
+    tape_border_right.position.set(row_2 * SYMBOL_SIZE, 0);
+    import_shaku.default.gfx.drawSprite(tape_border_right);
+    for (let k = 0; k < row_2; k++) {
+      tape_border.position.set(k * SYMBOL_SIZE, 0);
+      import_shaku.default.gfx.drawSprite(tape_border);
+      let cur_symbol = robot_tape[k + row_1];
+      drawSymbol(cur_symbol, new import_vector2.default((k + 0.5) * SYMBOL_SIZE, SYMBOL_SIZE * 0.75));
+    }
   }
   import_shaku.default.gfx.resetCamera();
   if (state === 0 /* GAME */) {
