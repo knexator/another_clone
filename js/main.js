@@ -7968,6 +7968,154 @@ var require_shaku = __commonJS({
   }
 });
 
+// node_modules/lodash.throttle/index.js
+var require_lodash = __commonJS({
+  "node_modules/lodash.throttle/index.js"(exports, module) {
+    var FUNC_ERROR_TEXT = "Expected a function";
+    var NAN = 0 / 0;
+    var symbolTag = "[object Symbol]";
+    var reTrim = /^\s+|\s+$/g;
+    var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
+    var reIsBinary = /^0b[01]+$/i;
+    var reIsOctal = /^0o[0-7]+$/i;
+    var freeParseInt = parseInt;
+    var freeGlobal = typeof global == "object" && global && global.Object === Object && global;
+    var freeSelf = typeof self == "object" && self && self.Object === Object && self;
+    var root = freeGlobal || freeSelf || Function("return this")();
+    var objectProto = Object.prototype;
+    var objectToString = objectProto.toString;
+    var nativeMax = Math.max;
+    var nativeMin = Math.min;
+    var now = function() {
+      return root.Date.now();
+    };
+    function debounce(func, wait, options) {
+      var lastArgs, lastThis, maxWait, result, timerId, lastCallTime, lastInvokeTime = 0, leading = false, maxing = false, trailing = true;
+      if (typeof func != "function") {
+        throw new TypeError(FUNC_ERROR_TEXT);
+      }
+      wait = toNumber(wait) || 0;
+      if (isObject(options)) {
+        leading = !!options.leading;
+        maxing = "maxWait" in options;
+        maxWait = maxing ? nativeMax(toNumber(options.maxWait) || 0, wait) : maxWait;
+        trailing = "trailing" in options ? !!options.trailing : trailing;
+      }
+      function invokeFunc(time) {
+        var args = lastArgs, thisArg = lastThis;
+        lastArgs = lastThis = void 0;
+        lastInvokeTime = time;
+        result = func.apply(thisArg, args);
+        return result;
+      }
+      function leadingEdge(time) {
+        lastInvokeTime = time;
+        timerId = setTimeout(timerExpired, wait);
+        return leading ? invokeFunc(time) : result;
+      }
+      function remainingWait(time) {
+        var timeSinceLastCall = time - lastCallTime, timeSinceLastInvoke = time - lastInvokeTime, result2 = wait - timeSinceLastCall;
+        return maxing ? nativeMin(result2, maxWait - timeSinceLastInvoke) : result2;
+      }
+      function shouldInvoke(time) {
+        var timeSinceLastCall = time - lastCallTime, timeSinceLastInvoke = time - lastInvokeTime;
+        return lastCallTime === void 0 || timeSinceLastCall >= wait || timeSinceLastCall < 0 || maxing && timeSinceLastInvoke >= maxWait;
+      }
+      function timerExpired() {
+        var time = now();
+        if (shouldInvoke(time)) {
+          return trailingEdge(time);
+        }
+        timerId = setTimeout(timerExpired, remainingWait(time));
+      }
+      function trailingEdge(time) {
+        timerId = void 0;
+        if (trailing && lastArgs) {
+          return invokeFunc(time);
+        }
+        lastArgs = lastThis = void 0;
+        return result;
+      }
+      function cancel() {
+        if (timerId !== void 0) {
+          clearTimeout(timerId);
+        }
+        lastInvokeTime = 0;
+        lastArgs = lastCallTime = lastThis = timerId = void 0;
+      }
+      function flush() {
+        return timerId === void 0 ? result : trailingEdge(now());
+      }
+      function debounced() {
+        var time = now(), isInvoking = shouldInvoke(time);
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+        if (isInvoking) {
+          if (timerId === void 0) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === void 0) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }
+      debounced.cancel = cancel;
+      debounced.flush = flush;
+      return debounced;
+    }
+    function throttle2(func, wait, options) {
+      var leading = true, trailing = true;
+      if (typeof func != "function") {
+        throw new TypeError(FUNC_ERROR_TEXT);
+      }
+      if (isObject(options)) {
+        leading = "leading" in options ? !!options.leading : leading;
+        trailing = "trailing" in options ? !!options.trailing : trailing;
+      }
+      return debounce(func, wait, {
+        "leading": leading,
+        "maxWait": wait,
+        "trailing": trailing
+      });
+    }
+    function isObject(value) {
+      var type = typeof value;
+      return !!value && (type == "object" || type == "function");
+    }
+    function isObjectLike(value) {
+      return !!value && typeof value == "object";
+    }
+    function isSymbol(value) {
+      return typeof value == "symbol" || isObjectLike(value) && objectToString.call(value) == symbolTag;
+    }
+    function toNumber(value) {
+      if (typeof value == "number") {
+        return value;
+      }
+      if (isSymbol(value)) {
+        return NAN;
+      }
+      if (isObject(value)) {
+        var other = typeof value.valueOf == "function" ? value.valueOf() : value;
+        value = isObject(other) ? other + "" : other;
+      }
+      if (typeof value != "string") {
+        return value === 0 ? value : +value;
+      }
+      value = value.replace(reTrim, "");
+      var isBinary = reIsBinary.test(value);
+      return isBinary || reIsOctal.test(value) ? freeParseInt(value.slice(2), isBinary ? 2 : 8) : reIsBadHex.test(value) ? NAN : +value;
+    }
+    module.exports = throttle2;
+  }
+});
+
 // src/main.ts
 var import_shaku = __toESM(require_shaku());
 var import_sprite = __toESM(require_sprite());
@@ -8117,12 +8265,15 @@ var BackgroundEffect = class extends import_effect.default {
 };
 
 // src/main.ts
+var throttle = require_lodash();
+console.log(throttle);
 import_shaku.default.input.setTargetElement(() => import_shaku.default.gfx.canvas);
 await import_shaku.default.init();
 document.body.appendChild(import_shaku.default.gfx.canvas);
 import_shaku.default.gfx.setResolution(800, 600, true);
 import_shaku.default.gfx.centerCanvas();
 var TILE_SIZE = 50;
+var SYMBOL_SIZE = 50;
 var player_texture = await import_shaku.default.assets.loadTexture("imgs/player.png", { generateMipMaps: true });
 var player_sprite = new import_sprite.default(player_texture);
 player_sprite.size.set(TILE_SIZE, TILE_SIZE);
@@ -8142,24 +8293,34 @@ spawner_sprite.size.set(TILE_SIZE, TILE_SIZE);
 var geo_texture = await import_shaku.default.assets.loadTexture("imgs/geo.png", { generateMipMaps: true });
 var geo_sprite = new import_sprite.default(geo_texture, new import_rectangle.default(0, 0, TILE_SIZE, TILE_SIZE));
 var floors_texture = await import_shaku.default.assets.loadTexture("imgs/floors.png", { generateMipMaps: true });
-var left_arrow = await makeAsciiSprite(`
-        ..0..
-        .0...
-        0.000
-        .0...
-        ..0..
-    `, [
-  import_shaku.default.utils.Color.orange
-]);
-var none_sprite = await makeAsciiSprite(`
-        .....
-        .000.
-        .0.0.
-        .000.
-        .....
-    `, [
-  import_shaku.default.utils.Color.orange
-]);
+var left_arrow_texture = await import_shaku.default.assets.loadTexture("imgs/left_arrow.png", { generateMipMaps: true });
+var left_arrow = new import_sprite.default(left_arrow_texture);
+left_arrow.size.set(SYMBOL_SIZE, SYMBOL_SIZE);
+var none_texture = await import_shaku.default.assets.loadTexture("imgs/wait.png", { generateMipMaps: true });
+var none_sprite = new import_sprite.default(none_texture);
+none_sprite.size.set(SYMBOL_SIZE, SYMBOL_SIZE);
+var tape_borders_texture = await import_shaku.default.assets.loadTexture("imgs/tape_borders.png", { generateMipMaps: true });
+var tape_border_left = new import_sprite.default(tape_borders_texture, new import_rectangle.default(0, 0, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
+tape_border_left.origin.set(0, 0);
+tape_border_left.position.set(-SYMBOL_SIZE / 2, 0);
+var tape_border = new import_sprite.default(tape_borders_texture, new import_rectangle.default(SYMBOL_SIZE / 2, 0, SYMBOL_SIZE, SYMBOL_SIZE * 1.5));
+tape_border.origin.set(0, 0);
+var tape_border_right = new import_sprite.default(tape_borders_texture, new import_rectangle.default(SYMBOL_SIZE * 1.5, 0, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
+tape_border_right.origin.set(0, 0);
+var tape_border_left_high = new import_sprite.default(tape_borders_texture, new import_rectangle.default(0, SYMBOL_SIZE * 1.5, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
+tape_border_left_high.origin.set(0, 0);
+tape_border_left_high.position.set(-SYMBOL_SIZE / 2, 0);
+var tape_border_high = new import_sprite.default(tape_borders_texture, new import_rectangle.default(SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5, SYMBOL_SIZE, SYMBOL_SIZE * 1.5));
+tape_border_high.origin.set(0, 0);
+var tape_border_right_high = new import_sprite.default(tape_borders_texture, new import_rectangle.default(SYMBOL_SIZE * 1.5, SYMBOL_SIZE * 1.5, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
+tape_border_right_high.origin.set(0, 0);
+var tape_border_left_low = new import_sprite.default(tape_borders_texture, new import_rectangle.default(0, SYMBOL_SIZE * 3, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
+tape_border_left_low.origin.set(0, 0);
+tape_border_left_low.position.set(-SYMBOL_SIZE / 2, 0);
+var tape_border_low = new import_sprite.default(tape_borders_texture, new import_rectangle.default(SYMBOL_SIZE / 2, SYMBOL_SIZE * 3, SYMBOL_SIZE, SYMBOL_SIZE * 1.5));
+tape_border_low.origin.set(0, 0);
+var tape_border_right_low = new import_sprite.default(tape_borders_texture, new import_rectangle.default(SYMBOL_SIZE * 1.5, SYMBOL_SIZE * 3, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
+tape_border_right_low.origin.set(0, 0);
 var Level = class {
   constructor(dev_name, n_moves, n_delay, initial_state2) {
     this.dev_name = dev_name;
@@ -8617,7 +8778,7 @@ var TAPE_SYMBOL = /* @__PURE__ */ ((TAPE_SYMBOL2) => {
 var miniturn_duration = 0.05;
 var robot_delay = 5;
 var robot_tape = [];
-var selected_tape_pos = 0;
+var selected_turn = 0;
 var cur_turn = 0;
 var time_offset = 0;
 var initial_state = new GameState(
@@ -8651,6 +8812,7 @@ var initial_state = new GameState(
 initial_state.wall.recalcFloors(initial_state.spawner.pos);
 var all_states = gameLogic(initial_state, robot_tape);
 var level_offset = import_vector2.default.zero;
+var game_size = new import_vector2.default(800, 450);
 var cur_level;
 load_level(level_1);
 function load_level(level) {
@@ -8659,15 +8821,15 @@ function load_level(level) {
   robot_delay = level.n_delay;
   initial_state = level.initial_state.nextStates().at(-1);
   all_states = gameLogic(initial_state, robot_tape);
-  selected_tape_pos = 0;
+  selected_turn = 0;
   cur_turn = 0;
   time_offset = 0;
-  level_offset = new import_vector2.default(initial_state.wall.w, initial_state.wall.h).mul(TILE_SIZE).sub(import_shaku.default.gfx.getCanvasSize()).add(TILE_SIZE, TILE_SIZE).mul(0.5);
+  level_offset = new import_vector2.default(initial_state.wall.w, initial_state.wall.h).mul(TILE_SIZE).sub(game_size).add(TILE_SIZE, TILE_SIZE).mul(0.5);
 }
 function gameLogic(initial_state2, robot_tape2) {
   let res_all_states = [initial_state2];
   let cur_state = initial_state2;
-  for (let k = 0; k < robot_tape2.length; k++) {
+  for (let k = 0; k <= selected_turn; k++) {
     while (true) {
       let new_states = cur_state.nextStates();
       res_all_states = res_all_states.concat(new_states);
@@ -8711,54 +8873,61 @@ function drawSymbol(symbol, pos) {
       break;
   }
 }
-var FULL_SCREEN_SPRITE = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
-FULL_SCREEN_SPRITE.origin = import_vector2.default.zero;
-FULL_SCREEN_SPRITE.size = import_shaku.default.gfx.getCanvasSize();
+var MAIN_SCREEN_SPRITE = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
+MAIN_SCREEN_SPRITE.origin = import_vector2.default.zero;
+MAIN_SCREEN_SPRITE.size = game_size;
 var background_effect = import_shaku.default.gfx.createEffect(BackgroundEffect);
 import_shaku.default.gfx.useEffect(background_effect);
-background_effect.uniforms["u_aspect_ratio"](FULL_SCREEN_SPRITE.size.x / FULL_SCREEN_SPRITE.size.y);
+background_effect.uniforms["u_aspect_ratio"](MAIN_SCREEN_SPRITE.size.x / MAIN_SCREEN_SPRITE.size.y);
 import_shaku.default.gfx.useEffect(null);
+var LOWER_SCREEN_SPRITE = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
+LOWER_SCREEN_SPRITE.origin = import_vector2.default.zero;
+LOWER_SCREEN_SPRITE.size.set(800, 600 - game_size.y);
+LOWER_SCREEN_SPRITE.position.set(0, game_size.y);
+LOWER_SCREEN_SPRITE.color = import_color.default.fromHex("#2B849C");
 var editor_button_looking_for_target = -1;
 function update() {
   import_shaku.default.startFrame();
   import_shaku.default.gfx.clear(import_shaku.default.utils.Color.darkslategray);
   import_shaku.default.gfx.useEffect(background_effect);
   background_effect.uniforms["u_time"](import_shaku.default.gameTime.elapsed);
-  import_shaku.default.gfx.drawSprite(FULL_SCREEN_SPRITE);
+  import_shaku.default.gfx.drawSprite(MAIN_SCREEN_SPRITE);
   import_shaku.default.gfx.useEffect(null);
-  if (import_shaku.default.input?.pressed(["left", "q"]) && selected_tape_pos > 0) {
-    selected_tape_pos -= 1;
-  } else if (import_shaku.default.input?.pressed(["right", "e"]) && selected_tape_pos < robot_tape.length) {
-    selected_tape_pos += 1;
+  import_shaku.default.gfx.drawSprite(LOWER_SCREEN_SPRITE);
+  if (pressed_throttled(["q", "z"], import_shaku.default.gameTime.delta) && selected_turn > 0) {
+    selected_turn -= 1;
+  } else if (pressed_throttled(["e", "x"], import_shaku.default.gameTime.delta)) {
+    selected_turn += 1;
+    if (selected_turn >= all_states.at(-1).major_turn) {
+      all_states = gameLogic(initial_state, robot_tape);
+    }
   }
   if (import_shaku.default.input?.pressed(["r"])) {
-    selected_tape_pos = 0;
+    selected_turn = 0;
   }
-  if ((all_states[cur_turn].major_turn !== selected_tape_pos || all_states[cur_turn].minor_turn !== 0) && time_offset === 0) {
-    let dir = Math.sign(selected_tape_pos - all_states[cur_turn].major_turn - 0.5);
+  if ((all_states[cur_turn].major_turn !== selected_turn || all_states[cur_turn].minor_turn !== 0) && time_offset === 0) {
+    let dir = Math.sign(selected_turn - all_states[cur_turn].major_turn - 0.5);
     cur_turn += dir;
     time_offset -= dir * 0.99;
   }
   if (import_shaku.default.input?.pressed(["t"])) {
     console.log("cur_turn: ", cur_turn);
-    console.log("selected_tape_pos: ", selected_tape_pos);
+    console.log("selected_turn: ", selected_turn);
     console.log("all states: ", all_states);
   }
   let input_symbol = selectFromInput([
-    ["w", 2 /* UP */],
-    ["s", 3 /* DOWN */],
-    ["d", 1 /* RIGHT */],
-    ["a", 0 /* LEFT */],
+    [["w", "up"], 2 /* UP */],
+    [["s", "down"], 3 /* DOWN */],
+    [["d", "right"], 1 /* RIGHT */],
+    [["a", "left"], 0 /* LEFT */],
     ["space", 4 /* NONE */]
-  ]);
+  ], import_shaku.default.gameTime.delta);
   if (input_symbol !== null) {
-    if (selected_tape_pos >= robot_tape.length) {
-      robot_tape.push(input_symbol);
-    } else {
-      robot_tape[selected_tape_pos] = input_symbol;
+    if (selected_turn < robot_tape.length) {
+      robot_tape[selected_turn] = input_symbol;
+      selected_turn += 1;
+      all_states = gameLogic(initial_state, robot_tape);
     }
-    selected_tape_pos += 1;
-    all_states = gameLogic(initial_state, robot_tape);
   }
   import_shaku.default.gfx.setCameraOrthographic(level_offset);
   let mouse_tile = import_shaku.default.input.mousePosition.add(level_offset).div(TILE_SIZE).round().sub(1, 1);
@@ -8867,26 +9036,54 @@ function update() {
   } else {
     all_states[cur_turn].draw(1);
   }
-  import_shaku.default.gfx.resetCamera();
-  time_offset = moveTowards(time_offset, 0, import_shaku.default.gameTime.delta * (Math.abs(all_states[cur_turn].major_turn - selected_tape_pos) + 1) / miniturn_duration);
-  import_shaku.default.gfx?.fillRect(
-    new import_rectangle.default((robot_delay + 0.5) * TILE_SIZE, import_shaku.default.gfx.canvas.height - TILE_SIZE * 1.5, TILE_SIZE, TILE_SIZE),
-    import_shaku.default.utils.Color.blue
-  );
+  import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * robot_tape.length * SYMBOL_SIZE, -450));
+  import_shaku.default.gfx.drawSprite(tape_border_left);
+  if (selected_turn === robot_tape.length) {
+    tape_border_right_high.position.set(robot_tape.length * SYMBOL_SIZE, 0);
+    import_shaku.default.gfx.drawSprite(tape_border_right_high);
+  } else {
+    tape_border_right.position.set(robot_tape.length * SYMBOL_SIZE, 0);
+    import_shaku.default.gfx.drawSprite(tape_border_right);
+  }
   for (let k = 0; k < robot_tape.length; k++) {
+    if (k === selected_turn) {
+      tape_border_high.position.set(k * SYMBOL_SIZE, 0);
+      import_shaku.default.gfx.drawSprite(tape_border_high);
+    } else if (k < selected_turn && (selected_turn - k) % robot_delay === 0) {
+      tape_border_low.position.set(k * SYMBOL_SIZE, 0);
+      import_shaku.default.gfx.drawSprite(tape_border_low);
+    } else {
+      tape_border.position.set(k * SYMBOL_SIZE, 0);
+      import_shaku.default.gfx.drawSprite(tape_border);
+    }
     let cur_symbol = robot_tape[k];
-    drawSymbol(cur_symbol, new import_vector2.default((k + 1) * TILE_SIZE, import_shaku.default.gfx?.canvas.height - TILE_SIZE));
+    drawSymbol(cur_symbol, new import_vector2.default((k + 0.5) * SYMBOL_SIZE, SYMBOL_SIZE * 0.75));
   }
-  for (let k = selected_tape_pos; k >= 0; k -= robot_delay) {
-    import_shaku.default.gfx?.outlineRect(
-      new import_rectangle.default((k + 0.5) * TILE_SIZE, import_shaku.default.gfx?.canvas.height - TILE_SIZE * 1.5, TILE_SIZE, TILE_SIZE),
-      import_shaku.default.utils.Color.red
-    );
-  }
+  import_shaku.default.gfx.resetCamera();
+  time_offset = moveTowards(time_offset, 0, import_shaku.default.gameTime.delta * (Math.abs(all_states[cur_turn].major_turn - selected_turn) + 1) / miniturn_duration);
   import_shaku.default.endFrame();
   import_shaku.default.requestAnimationFrame(update);
 }
-update();
+var _cooling_time_left = {};
+var _press_count = {};
+function pressed_throttled(code, dt) {
+  let key = Array.isArray(code) ? code.join("") : code;
+  if (!(key in _cooling_time_left)) {
+    _cooling_time_left[key] = 0;
+    _press_count[key] = 0;
+  }
+  _cooling_time_left[key] = Math.max(0, _cooling_time_left[key] - dt);
+  if (!import_shaku.default.input.down(code)) {
+    _press_count[key] = 0;
+    _cooling_time_left[key] = 0;
+    return false;
+  } else if (_cooling_time_left[key] == 0) {
+    _press_count[key] += 1;
+    _cooling_time_left[key] = _press_count[key] == 1 ? 0.22 : 0.08;
+    return true;
+  }
+  return false;
+}
 function moveTowards(cur_val, target_val, max_delta) {
   if (target_val > cur_val) {
     return Math.min(cur_val + max_delta, target_val);
@@ -8895,39 +9092,6 @@ function moveTowards(cur_val, target_val, max_delta) {
   } else {
     return target_val;
   }
-}
-async function makeAsciiSprite(ascii, colors) {
-  let texture = await loadAsciiTexture(ascii, colors);
-  let result_sprite = new import_shaku.default.gfx.Sprite(texture);
-  result_sprite.size.set(TILE_SIZE, TILE_SIZE);
-  return result_sprite;
-}
-async function loadAsciiTexture(ascii, colors) {
-  let rows = ascii.trim().split("\n").map((x) => x.trim());
-  let height = rows.length;
-  let width = rows[0].length;
-  let renderTarget = await import_shaku.default.assets.createRenderTarget(null, width, height, 4);
-  import_shaku.default.gfx.setRenderTarget(renderTarget, false);
-  for (let j = 0; j < height; j++) {
-    for (let i = 0; i < width; i++) {
-      let val = rows[j][i];
-      if (val === "." || val === " ")
-        continue;
-      let n = parseInt(val);
-      let col = colors[n];
-      if (typeof col === "string") {
-        col = import_shaku.default.utils.Color.fromHex(col);
-      }
-      import_shaku.default.gfx.fillRect(
-        new import_shaku.default.utils.Rectangle(i, height - j - 1, 1, 1),
-        col,
-        import_blend_modes.BlendModes.Opaque,
-        0
-      );
-    }
-  }
-  import_shaku.default.gfx.setRenderTarget(null, false);
-  return renderTarget;
 }
 function makeRectArray(width, height, fill) {
   let result = [];
@@ -8948,9 +9112,9 @@ function selectFromEnum(options, value) {
   }
   return null;
 }
-function selectFromInput(options) {
+function selectFromInput(options, dt) {
   for (const [key, result] of options) {
-    if (import_shaku.default.input?.pressed(key)) {
+    if (pressed_throttled(key, dt)) {
       return result;
     }
   }
@@ -8971,6 +9135,7 @@ function mainDir(dir) {
     return dir.y >= 0 ? import_vector2.default.down : import_vector2.default.up;
   }
 }
+update();
 /**
  * A utility to hold gametime.
  * 

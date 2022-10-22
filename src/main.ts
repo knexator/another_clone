@@ -9,6 +9,9 @@ import { BlendModes } from "shaku/lib/gfx/blend_modes";
 import { TextureFilterModes } from "shaku/lib/gfx/texture_filter_modes";
 import { BackgroundEffect } from "./background_effect";
 // import { level_1 } from "./levels";
+let throttle = require('lodash.throttle');
+
+console.log(throttle);
 
 Shaku!.input!.setTargetElement(() => Shaku.gfx!.canvas);
 await Shaku.init();
@@ -21,6 +24,8 @@ Shaku.gfx!.centerCanvas();
 // Shaku.gfx!.maximizeCanvasSize(false, false);
 
 const TILE_SIZE = 50;
+
+const SYMBOL_SIZE = 50;
 
 const player_texture = await Shaku.assets.loadTexture("imgs/player.png", { generateMipMaps: true });
 // player_texture.filter = TextureFilterModes.LinearMipmapLinear;
@@ -60,25 +65,42 @@ const floors_texture = await Shaku.assets.loadTexture("imgs/floors.png", { gener
 // floors_texture.filter = TextureFilterModes.LinearMipmapLinear;
 
 
-const left_arrow = await makeAsciiSprite(`
-        ..0..
-        .0...
-        0.000
-        .0...
-        ..0..
-    `, [
-    Shaku.utils.Color.orange,
-]);
+const left_arrow_texture = await Shaku.assets.loadTexture("imgs/left_arrow.png", { generateMipMaps: true });
+// left_arrow_texture.filter = TextureFilterModes.LinearMipmapLinear;
+const left_arrow = new Sprite(left_arrow_texture);
+left_arrow.size.set(SYMBOL_SIZE, SYMBOL_SIZE);
 
-const none_sprite = await makeAsciiSprite(`
-        .....
-        .000.
-        .0.0.
-        .000.
-        .....
-    `, [
-    Shaku.utils.Color.orange,
-]);
+const none_texture = await Shaku.assets.loadTexture("imgs/wait.png", { generateMipMaps: true });
+// none_texture.filter = TextureFilterModes.LinearMipmapLinear;
+const none_sprite = new Sprite(none_texture);
+none_sprite.size.set(SYMBOL_SIZE, SYMBOL_SIZE);
+
+const tape_borders_texture = await Shaku.assets.loadTexture("imgs/tape_borders.png", { generateMipMaps: true });
+
+const tape_border_left = new Sprite(tape_borders_texture, new Rectangle(0, 0, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
+tape_border_left.origin.set(0, 0);
+tape_border_left.position.set(-SYMBOL_SIZE / 2, 0);
+const tape_border = new Sprite(tape_borders_texture, new Rectangle(SYMBOL_SIZE / 2, 0, SYMBOL_SIZE, SYMBOL_SIZE * 1.5));
+tape_border.origin.set(0, 0);
+const tape_border_right = new Sprite(tape_borders_texture, new Rectangle(SYMBOL_SIZE * 1.5, 0, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
+tape_border_right.origin.set(0, 0);
+
+const tape_border_left_high = new Sprite(tape_borders_texture, new Rectangle(0, SYMBOL_SIZE * 1.5, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
+tape_border_left_high.origin.set(0, 0);
+tape_border_left_high.position.set(-SYMBOL_SIZE / 2, 0);
+const tape_border_high = new Sprite(tape_borders_texture, new Rectangle(SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5, SYMBOL_SIZE, SYMBOL_SIZE * 1.5));
+tape_border_high.origin.set(0, 0);
+const tape_border_right_high = new Sprite(tape_borders_texture, new Rectangle(SYMBOL_SIZE * 1.5, SYMBOL_SIZE * 1.5, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
+tape_border_right_high.origin.set(0, 0);
+
+const tape_border_left_low = new Sprite(tape_borders_texture, new Rectangle(0, SYMBOL_SIZE * 3, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
+tape_border_left_low.origin.set(0, 0);
+tape_border_left_low.position.set(-SYMBOL_SIZE / 2, 0);
+const tape_border_low = new Sprite(tape_borders_texture, new Rectangle(SYMBOL_SIZE / 2, SYMBOL_SIZE * 3, SYMBOL_SIZE, SYMBOL_SIZE * 1.5));
+tape_border_low.origin.set(0, 0);
+const tape_border_right_low = new Sprite(tape_borders_texture, new Rectangle(SYMBOL_SIZE * 1.5, SYMBOL_SIZE * 3, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
+tape_border_right_low.origin.set(0, 0);
+
 
 class Level {
     constructor(
@@ -612,7 +634,8 @@ let robot_delay = 5;
 // instructions for the robot(s)
 let robot_tape: TAPE_SYMBOL[] = [];
 
-let selected_tape_pos = 0;
+// let selected_tape_pos = 0;
+let selected_turn = 0;
 
 let cur_turn = 0;
 let time_offset = 0;
@@ -653,6 +676,9 @@ let all_states = gameLogic(initial_state, robot_tape);
 
 let level_offset = Vector2.zero;
 
+// let game_size = new Vector2(800, 400);
+let game_size = new Vector2(800, 450);
+
 let cur_level: Level;
 load_level(level_1);
 
@@ -663,16 +689,16 @@ function load_level(level: Level) {
     initial_state = level.initial_state.nextStates().at(-1)!;
     all_states = gameLogic(initial_state, robot_tape);
 
-    selected_tape_pos = 0;
+    selected_turn = 0;
     cur_turn = 0;
     time_offset = 0;
-    level_offset = new Vector2(initial_state.wall.w, initial_state.wall.h).mul(TILE_SIZE).sub(Shaku.gfx.getCanvasSize()).add(TILE_SIZE, TILE_SIZE).mul(.5);
+    level_offset = new Vector2(initial_state.wall.w, initial_state.wall.h).mul(TILE_SIZE).sub(game_size).add(TILE_SIZE, TILE_SIZE).mul(.5);
 }
 
 function gameLogic(initial_state: GameState, robot_tape: TAPE_SYMBOL[]): GameState[] {
     let res_all_states: GameState[] = [initial_state];
     let cur_state = initial_state;
-    for (let k = 0; k < robot_tape.length; k++) {
+    for (let k = 0; k <= selected_turn; k++) {
         while (true) {
             let new_states = cur_state.nextStates();
             res_all_states = res_all_states.concat(new_states);
@@ -717,15 +743,21 @@ function drawSymbol(symbol: TAPE_SYMBOL, pos: Vector2) {
     }
 }
 
-const FULL_SCREEN_SPRITE = new Sprite(Shaku.gfx.whiteTexture);
-FULL_SCREEN_SPRITE.origin = Vector2.zero;
-FULL_SCREEN_SPRITE.size = Shaku.gfx.getCanvasSize();
+const MAIN_SCREEN_SPRITE = new Sprite(Shaku.gfx.whiteTexture);
+MAIN_SCREEN_SPRITE.origin = Vector2.zero;
+MAIN_SCREEN_SPRITE.size = game_size;
 const background_effect = Shaku.gfx.createEffect(BackgroundEffect);
 Shaku.gfx.useEffect(background_effect);
 // @ts-ignore
-background_effect.uniforms["u_aspect_ratio"](FULL_SCREEN_SPRITE.size.x / FULL_SCREEN_SPRITE.size.y);
+background_effect.uniforms["u_aspect_ratio"](MAIN_SCREEN_SPRITE.size.x / MAIN_SCREEN_SPRITE.size.y);
 // @ts-ignore
 Shaku.gfx.useEffect(null);
+
+const LOWER_SCREEN_SPRITE = new Sprite(Shaku.gfx.whiteTexture);
+LOWER_SCREEN_SPRITE.origin = Vector2.zero;
+LOWER_SCREEN_SPRITE.size.set(800, 600 - game_size.y);
+LOWER_SCREEN_SPRITE.position.set(0, game_size.y);
+LOWER_SCREEN_SPRITE.color = Color.fromHex("#2B849C")
 
 let editor_button_looking_for_target = -1;
 // do a single main loop step and request the next step
@@ -738,53 +770,54 @@ function update() {
     // @ts-ignore
     background_effect.uniforms["u_time"](Shaku.gameTime.elapsed);
     // background_effect.uniforms["u_time"](cur_turn + time_offset);
-    Shaku.gfx.drawSprite(FULL_SCREEN_SPRITE);
+    Shaku.gfx.drawSprite(MAIN_SCREEN_SPRITE);
     // @ts-ignore
     Shaku.gfx.useEffect(null);
-    // console.log(background_effect.uniforms["u_aspect_ratio"]);
 
-    // TODO: PUT YOUR GAME UPDATES / RENDERING HERE
+    Shaku.gfx.drawSprite(LOWER_SCREEN_SPRITE);
 
-    // player_sprite.position.set((Math.sin(Shaku.gameTime.elapsed) + 1) * Shaku.gfx!.canvas.width * .5, 60);
-    // Shaku.gfx!.drawSprite(player_sprite);
 
-    if (Shaku.input?.pressed(["left", "q"]) && selected_tape_pos > 0) {
-        selected_tape_pos -= 1;
-    } else if (Shaku.input?.pressed(["right", "e"]) && selected_tape_pos < robot_tape.length) {
-        selected_tape_pos += 1;
+
+    // if (Shaku.input?.pressed(["q", "z"]) && selected_turn > 0) {
+    if (pressed_throttled(["q", "z"], Shaku.gameTime.delta) && selected_turn > 0) {
+        selected_turn -= 1;
+    } else if (pressed_throttled(["e", "x"], Shaku.gameTime.delta)) {
+        selected_turn += 1;
+        if (selected_turn >= all_states.at(-1)!.major_turn) {
+            all_states = gameLogic(initial_state, robot_tape);
+        }
     }
+
     if (Shaku.input?.pressed(["r"])) {
-        selected_tape_pos = 0;
+        selected_turn = 0;
     }
 
-    if ((all_states[cur_turn].major_turn !== selected_tape_pos || all_states[cur_turn].minor_turn !== 0) && time_offset === 0) {
-        let dir = Math.sign(selected_tape_pos - all_states[cur_turn].major_turn - .5); // -.5 is for minor_turn !== 0
+    if ((all_states[cur_turn].major_turn !== selected_turn || all_states[cur_turn].minor_turn !== 0) && time_offset === 0) {
+        let dir = Math.sign(selected_turn - all_states[cur_turn].major_turn - .5); // -.5 is for minor_turn !== 0
         cur_turn += dir;
         time_offset -= dir * .99;
     }
 
     if (Shaku.input?.pressed(["t"])) {
         console.log("cur_turn: ", cur_turn);
-        console.log("selected_tape_pos: ", selected_tape_pos);
+        console.log("selected_turn: ", selected_turn);
         console.log("all states: ", all_states);
     }
 
     let input_symbol = selectFromInput([
-        ["w", TAPE_SYMBOL.UP],
-        ["s", TAPE_SYMBOL.DOWN],
-        ["d", TAPE_SYMBOL.RIGHT],
-        ["a", TAPE_SYMBOL.LEFT],
+        [["w", "up"], TAPE_SYMBOL.UP],
+        [["s", "down"], TAPE_SYMBOL.DOWN],
+        [["d", "right"], TAPE_SYMBOL.RIGHT],
+        [["a", "left"], TAPE_SYMBOL.LEFT],
         ["space", TAPE_SYMBOL.NONE],
-    ])
+    ], Shaku.gameTime.delta)
     if (input_symbol !== null) {
-        if (selected_tape_pos >= robot_tape.length) {
-            // add to the end
-            robot_tape.push(input_symbol)
-        } else {
-            robot_tape[selected_tape_pos] = input_symbol;
+        if (selected_turn < robot_tape.length) {
+            robot_tape[selected_turn] = input_symbol;
+            // tape_border_high.color = Color.fromHex("#B84B4B");
+            selected_turn += 1;
+            all_states = gameLogic(initial_state, robot_tape);
         }
-        selected_tape_pos += 1;
-        all_states = gameLogic(initial_state, robot_tape);
     }
 
     Shaku.gfx.setCameraOrthographic(level_offset);
@@ -893,37 +926,65 @@ function update() {
     } else {
         all_states[cur_turn].draw(1);
     }
-    Shaku.gfx.resetCamera()
-    time_offset = moveTowards(time_offset, 0, Shaku.gameTime.delta! * (Math.abs(all_states[cur_turn].major_turn - selected_tape_pos) + 1) / miniturn_duration);
 
-    Shaku.gfx?.fillRect(
-        new Rectangle((robot_delay + .5) * TILE_SIZE, Shaku.gfx!.canvas!.height - TILE_SIZE * 1.5, TILE_SIZE, TILE_SIZE),
+    Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * robot_tape.length * SYMBOL_SIZE, -450));
+    /*Shaku.gfx?.fillRect(
+        new Rectangle(robot_delay * SYMBOL_SIZE, 0, SYMBOL_SIZE, SYMBOL_SIZE),
         Shaku.utils.Color.blue
-    )
-    for (let k = 0; k < robot_tape.length; k++) {
-        let cur_symbol = robot_tape[k];
-        drawSymbol(cur_symbol, new Vector2((k + 1) * TILE_SIZE, Shaku.gfx?.canvas.height - TILE_SIZE));
+    )*/
+    Shaku.gfx.drawSprite(tape_border_left);
+    if (selected_turn === robot_tape.length) {
+        tape_border_right_high.position.set(robot_tape.length * SYMBOL_SIZE, 0);
+        Shaku.gfx.drawSprite(tape_border_right_high);
+    } else {
+        tape_border_right.position.set(robot_tape.length * SYMBOL_SIZE, 0);
+        Shaku.gfx.drawSprite(tape_border_right);
     }
-    for (let k = selected_tape_pos; k >= 0; k -= robot_delay) {
-        Shaku.gfx?.outlineRect(
-            new Rectangle((k + .5) * TILE_SIZE, Shaku.gfx?.canvas.height - TILE_SIZE * 1.5, TILE_SIZE, TILE_SIZE),
-            Shaku.utils.Color.red
-        )
+    for (let k = 0; k < robot_tape.length; k++) {
+        if (k === selected_turn) {
+            tape_border_high.position.set(k * SYMBOL_SIZE, 0);
+            Shaku.gfx.drawSprite(tape_border_high);
+        } else if (k < selected_turn && (selected_turn - k) % robot_delay === 0) {
+            tape_border_low.position.set(k * SYMBOL_SIZE, 0);
+            Shaku.gfx.drawSprite(tape_border_low);
+        } else {
+            tape_border.position.set(k * SYMBOL_SIZE, 0);
+            Shaku.gfx.drawSprite(tape_border);
+        }
+        let cur_symbol = robot_tape[k];
+        drawSymbol(cur_symbol, new Vector2((k + .5) * SYMBOL_SIZE, SYMBOL_SIZE * .75));
     }
 
+    Shaku.gfx.resetCamera()
+
+    time_offset = moveTowards(time_offset, 0, Shaku.gameTime.delta! * (Math.abs(all_states[cur_turn].major_turn - selected_turn) + 1) / miniturn_duration);
 
     // end frame and request next step
     Shaku.endFrame();
     Shaku.requestAnimationFrame(update);
 }
 
-// start main loop
-update();
-// };
 
-// runGame();
-
-
+let _cooling_time_left: Record<string, number> = {};
+let _press_count: Record<string, number> = {};
+function pressed_throttled(code: string | string[], dt: number): boolean {
+    let key = Array.isArray(code) ? code.join('') : code;
+    if (!(key in _cooling_time_left)) {
+        _cooling_time_left[key] = 0;
+        _press_count[key] = 0;
+    }
+    _cooling_time_left[key] = Math.max(0, _cooling_time_left[key] - dt);
+    if (!Shaku.input.down(code)) {
+        _press_count[key] = 0;
+        _cooling_time_left[key] = 0;
+        return false;
+    } else if (_cooling_time_left[key] == 0) {
+        _press_count[key] += 1;
+        _cooling_time_left[key] = _press_count[key] == 1 ? .22 : .08;
+        return true;
+    }
+    return false
+}
 
 function moveTowards(cur_val: number, target_val: number, max_delta: number): number {
     if (target_val > cur_val) {
@@ -1011,9 +1072,9 @@ function selectFromEnum<A, B>(options: [A, B][], value: A): B | null {
     return null;
 }
 
-function selectFromInput<T>(options: [string, T][]): T | null {
+function selectFromInput<T>(options: [string | string[], T][], dt: number): T | null {
     for (const [key, result] of options) {
-        if (Shaku.input?.pressed(key)) {
+        if (pressed_throttled(key, dt)) {
             return result;
         }
     }
@@ -1048,3 +1109,6 @@ function clamp(value: number, a: number, b: number) {
     if (value > b) return b;
     return value;
 }
+
+// start main loop
+update();
