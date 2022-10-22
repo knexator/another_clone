@@ -654,6 +654,133 @@ let levels = [
             new Crate(new Vector2(4, 2), null),
         ],
     )),
+    new Level("move_spawner", 6, 4, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                .#########.
+                .#.......#.
+                ##.......##
+                #.........#
+                #.........#
+                #.........#
+                ###########
+            `),
+            new Targets([
+                new Vector2(2, 1),
+                new Vector2(3, 1),
+                new Vector2(4, 1),
+                new Vector2(5, 1),
+                new Vector2(6, 1),
+                new Vector2(7, 1),
+                new Vector2(8, 1),
+            ]),
+
+            new Spawner(new Vector2(2, 5), Vector2.up, null),
+            new Crate(new Vector2(2, 2), null),
+            new Crate(new Vector2(3, 2), null),
+            new Crate(new Vector2(4, 2), null),
+            new Crate(new Vector2(5, 2), null),
+            new Crate(new Vector2(6, 2), null),
+            new Crate(new Vector2(7, 2), null),
+            new Crate(new Vector2(8, 2), null),
+        ],
+    )),
+    new Level("filler", 11, 2, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ###########
+                #.........#
+                #.........#
+                #.........#
+                #.........#
+                #........##
+                ##########.
+            `),
+            new Targets([
+                new Vector2(3, 1),
+                new Vector2(4, 1),
+                new Vector2(5, 1),
+                new Vector2(6, 1),
+                new Vector2(7, 1),
+                new Vector2(8, 1),
+            ]),
+
+            new Spawner(new Vector2(1, 1), Vector2.down, null),
+            new Crate(new Vector2(3, 4), null),
+            new Crate(new Vector2(4, 4), null),
+            new Crate(new Vector2(5, 4), null),
+            new Crate(new Vector2(6, 4), null),
+            new Crate(new Vector2(7, 4), null),
+            new Crate(new Vector2(8, 4), null),
+        ],
+    )),
+    new Level("gaps", 8, 3, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ...##########.
+                ...#........#.
+                ####........#.
+                #...........#.
+                #...........##
+                #............#
+                ##############
+            `),
+            new Targets([
+                new Vector2(4, 1),
+                new Vector2(5, 1),
+                new Vector2(6, 2),
+                new Vector2(7, 1),
+                new Vector2(8, 1),
+                new Vector2(9, 2),
+                new Vector2(10, 1),
+                new Vector2(11, 1),
+            ]),
+
+            new Spawner(new Vector2(2, 5), Vector2.up, null),
+
+            new Crate(new Vector2(4, 2), null),
+            new Crate(new Vector2(5, 2), null),
+            new Crate(new Vector2(6, 2), null),
+            new Crate(new Vector2(7, 2), null),
+            new Crate(new Vector2(8, 2), null),
+            new Crate(new Vector2(9, 2), null),
+            new Crate(new Vector2(10, 2), null),
+            new Crate(new Vector2(11, 2), null),
+        ],
+    )),
+    new Level("u_chain", 16, 2, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ###########
+                #.........#
+                #.........#
+                #.........#
+                #.........#
+                #........##
+                ##########.
+            `),
+            new Targets([
+                new Vector2(3, 2),
+                new Vector2(4, 2),
+                new Vector2(5, 2),
+                new Vector2(6, 2),
+                new Vector2(7, 2),
+                new Vector2(8, 2),
+            ]),
+
+            new Spawner(new Vector2(1, 1), Vector2.down, null),
+            new Crate(new Vector2(3, 4), null),
+            new Crate(new Vector2(4, 4), null),
+            new Crate(new Vector2(5, 4), null),
+            new Crate(new Vector2(6, 4), null),
+            new Crate(new Vector2(7, 4), null),
+            new Crate(new Vector2(8, 4), null),
+        ],
+    )),
     new Level("twice", 19, 7, new GameState(
         -1, 0,
         [
@@ -671,6 +798,25 @@ let levels = [
 
             new Spawner(new Vector2(1, 4), Vector2.up, null),
             new Crate(new Vector2(4, 2), null),
+        ],
+    )),
+    new Level("basic_reversed", 17, 3, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                #######..
+                #...#.###
+                #...#...#
+                #.......#
+                #.#######
+                ###......
+            `),
+            new Targets([
+                new Vector2(6, 3),
+            ]),
+
+            new Spawner(new Vector2(1, 2), Vector2.right, null),
+            new Crate(new Vector2(6, 2), null),
         ],
     )),
 ]
@@ -837,6 +983,7 @@ function drawSymbolsChanging(dt: number, lower_row: boolean) {
 }
 
 let changing_level = false;
+let EDITOR = false;
 
 let menu_selected_level = 0;
 
@@ -857,6 +1004,7 @@ let drawExtra = function () {
     intro_text_right_3.position.set(690, 290);
 
     return function () {
+        if (EDITOR) return;
         if (cur_level_n === 0) {
             Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
             Shaku.gfx.drawGroup(intro_text_left_1, false);
@@ -871,7 +1019,6 @@ let drawExtra = function () {
     }
 }();
 
-let EDITOR = false;
 let editor_button_looking_for_target = -1;
 // do a single main loop step and request the next step
 function update() {
@@ -1128,11 +1275,11 @@ function update() {
         time_offset = moveTowards(time_offset, 0, Shaku.gameTime.delta! * (Math.abs(all_states[cur_turn].major_turn - selected_turn) + 1) / miniturn_duration);
 
         if (!changing_level && !EDITOR && Shaku.input.pressed("dash")) {
-            load_level(level_editor);
+            // load_level(level_editor);
             EDITOR = true;
         }
 
-        if (!changing_level && time_offset === 0 && all_states[cur_turn].isWon()) {
+        if (!EDITOR && !changing_level && time_offset === 0 && all_states[cur_turn].isWon()) {
             if (cur_level_n < levels.length - 1) {
                 initTransitionToLevel(cur_level_n + 1);
             }

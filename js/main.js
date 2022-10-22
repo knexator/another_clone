@@ -8673,6 +8673,132 @@ var levels = [
       new Crate(new import_vector2.default(4, 2), null)
     ]
   )),
+  new Level("move_spawner", 6, 4, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                .#########.
+                .#.......#.
+                ##.......##
+                #.........#
+                #.........#
+                #.........#
+                ###########
+            `),
+      new Targets([
+        new import_vector2.default(2, 1),
+        new import_vector2.default(3, 1),
+        new import_vector2.default(4, 1),
+        new import_vector2.default(5, 1),
+        new import_vector2.default(6, 1),
+        new import_vector2.default(7, 1),
+        new import_vector2.default(8, 1)
+      ]),
+      new Spawner(new import_vector2.default(2, 5), import_vector2.default.up, null),
+      new Crate(new import_vector2.default(2, 2), null),
+      new Crate(new import_vector2.default(3, 2), null),
+      new Crate(new import_vector2.default(4, 2), null),
+      new Crate(new import_vector2.default(5, 2), null),
+      new Crate(new import_vector2.default(6, 2), null),
+      new Crate(new import_vector2.default(7, 2), null),
+      new Crate(new import_vector2.default(8, 2), null)
+    ]
+  )),
+  new Level("filler", 11, 2, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                ###########
+                #.........#
+                #.........#
+                #.........#
+                #.........#
+                #........##
+                ##########.
+            `),
+      new Targets([
+        new import_vector2.default(3, 1),
+        new import_vector2.default(4, 1),
+        new import_vector2.default(5, 1),
+        new import_vector2.default(6, 1),
+        new import_vector2.default(7, 1),
+        new import_vector2.default(8, 1)
+      ]),
+      new Spawner(new import_vector2.default(1, 1), import_vector2.default.down, null),
+      new Crate(new import_vector2.default(3, 4), null),
+      new Crate(new import_vector2.default(4, 4), null),
+      new Crate(new import_vector2.default(5, 4), null),
+      new Crate(new import_vector2.default(6, 4), null),
+      new Crate(new import_vector2.default(7, 4), null),
+      new Crate(new import_vector2.default(8, 4), null)
+    ]
+  )),
+  new Level("gaps", 8, 3, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                ...##########.
+                ...#........#.
+                ####........#.
+                #...........#.
+                #...........##
+                #............#
+                ##############
+            `),
+      new Targets([
+        new import_vector2.default(4, 1),
+        new import_vector2.default(5, 1),
+        new import_vector2.default(6, 2),
+        new import_vector2.default(7, 1),
+        new import_vector2.default(8, 1),
+        new import_vector2.default(9, 2),
+        new import_vector2.default(10, 1),
+        new import_vector2.default(11, 1)
+      ]),
+      new Spawner(new import_vector2.default(2, 5), import_vector2.default.up, null),
+      new Crate(new import_vector2.default(4, 2), null),
+      new Crate(new import_vector2.default(5, 2), null),
+      new Crate(new import_vector2.default(6, 2), null),
+      new Crate(new import_vector2.default(7, 2), null),
+      new Crate(new import_vector2.default(8, 2), null),
+      new Crate(new import_vector2.default(9, 2), null),
+      new Crate(new import_vector2.default(10, 2), null),
+      new Crate(new import_vector2.default(11, 2), null)
+    ]
+  )),
+  new Level("u_chain", 16, 2, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                ###########
+                #.........#
+                #.........#
+                #.........#
+                #.........#
+                #........##
+                ##########.
+            `),
+      new Targets([
+        new import_vector2.default(3, 2),
+        new import_vector2.default(4, 2),
+        new import_vector2.default(5, 2),
+        new import_vector2.default(6, 2),
+        new import_vector2.default(7, 2),
+        new import_vector2.default(8, 2)
+      ]),
+      new Spawner(new import_vector2.default(1, 1), import_vector2.default.down, null),
+      new Crate(new import_vector2.default(3, 4), null),
+      new Crate(new import_vector2.default(4, 4), null),
+      new Crate(new import_vector2.default(5, 4), null),
+      new Crate(new import_vector2.default(6, 4), null),
+      new Crate(new import_vector2.default(7, 4), null),
+      new Crate(new import_vector2.default(8, 4), null)
+    ]
+  )),
   new Level("twice", 19, 7, new GameState(
     -1,
     0,
@@ -8690,6 +8816,25 @@ var levels = [
       ]),
       new Spawner(new import_vector2.default(1, 4), import_vector2.default.up, null),
       new Crate(new import_vector2.default(4, 2), null)
+    ]
+  )),
+  new Level("basic_reversed", 17, 3, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                #######..
+                #...#.###
+                #...#...#
+                #.......#
+                #.#######
+                ###......
+            `),
+      new Targets([
+        new import_vector2.default(6, 3)
+      ]),
+      new Spawner(new import_vector2.default(1, 2), import_vector2.default.right, null),
+      new Crate(new import_vector2.default(6, 2), null)
     ]
   ))
 ];
@@ -8823,6 +8968,7 @@ function drawSymbolsChanging(dt, lower_row) {
   }
 }
 var changing_level = false;
+var EDITOR = false;
 var menu_selected_level = 0;
 var drawExtra = function() {
   let intro_text_left_1 = import_shaku.default.gfx.buildText(instructions_font, "WASD to\nmove", 32, import_color.default.white, import_text_alignments.TextAlignments.Center);
@@ -8834,6 +8980,8 @@ var drawExtra = function() {
   let intro_text_right_3 = import_shaku.default.gfx.buildText(instructions_font, "Z/X to\nchange turn", 32, import_color.default.white, import_text_alignments.TextAlignments.Center);
   intro_text_right_3.position.set(690, 290);
   return function() {
+    if (EDITOR)
+      return;
     if (cur_level_n === 0) {
       import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
       import_shaku.default.gfx.drawGroup(intro_text_left_1, false);
@@ -8844,7 +8992,6 @@ var drawExtra = function() {
     }
   };
 }();
-var EDITOR = false;
 var editor_button_looking_for_target = -1;
 function update() {
   import_shaku.default.startFrame();
@@ -9081,10 +9228,9 @@ function update() {
   if (state === 0 /* GAME */) {
     time_offset = moveTowards(time_offset, 0, import_shaku.default.gameTime.delta * (Math.abs(all_states[cur_turn].major_turn - selected_turn) + 1) / miniturn_duration);
     if (!changing_level && !EDITOR && import_shaku.default.input.pressed("dash")) {
-      load_level(level_editor);
       EDITOR = true;
     }
-    if (!changing_level && time_offset === 0 && all_states[cur_turn].isWon()) {
+    if (!EDITOR && !changing_level && time_offset === 0 && all_states[cur_turn].isWon()) {
       if (cur_level_n < levels.length - 1) {
         initTransitionToLevel(cur_level_n + 1);
       }
