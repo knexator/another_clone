@@ -219,12 +219,10 @@ class GameState {
         for (let button_id = 0; button_id < cur_state.buttons.length; button_id++) {
             // update button states
             let cur_button = cur_state.buttons[button_id];
-            if (cur_button.update(cur_state)) {
-                // button changed state
-                for (const target_id of cur_button.target_ids) {
-                    result = result.concat(cur_state.buttonTargets[target_id].onButtonUpdate(cur_state, cur_button.active));
-                    cur_state = result.at(-1)!;
-                }
+            let { value, prev_value } = cur_button.update(cur_state)
+            for (const target_id of cur_button.target_ids) {
+                result = result.concat(cur_state.buttonTargets[target_id].mainUpdate(cur_state, value, prev_value));
+                cur_state = result.at(-1)!;
             }
         }
 
@@ -415,21 +413,21 @@ class Button extends GameObject {
         return new Button(this.pos, this.target_ids, this.active, this);
     }
 
-    update(state: GameState): boolean {
+    update(state: GameState): { value: boolean, prev_value: boolean } {
         let pressed = state.crates.some(crate => crate.pos.equals(this.pos))
             || state.players.some(player => player.pos.equals(this.pos))
             || state.spawner.pos.equals(this.pos);
-        if (this.active != pressed) {
-            this.active = pressed;
-            return true;
-        } else {
-            return false;
+        let prev_active = this.active;
+        this.active = pressed;
+        return {
+            value: this.active,
+            prev_value: prev_active,
         }
     }
 }
 
 abstract class ButtonTarget extends GameObject {
-    abstract onButtonUpdate(state: GameState, button_active: boolean): GameState[];
+    abstract mainUpdate(state: GameState, button_active: boolean, button_prev_active: boolean): GameState[];
 
     remove(state: GameState) { // editor
         let this_index = state.buttonTargets.indexOf(this);
@@ -462,7 +460,7 @@ class TwoStateWall extends ButtonTarget {
         this.wall_sprite.rotation = this.dir.getRadians();
     };
 
-    onButtonUpdate(state: GameState, button_active: boolean): GameState[] {
+    mainUpdate(state: GameState, button_active: boolean, button_prev_active: boolean): GameState[] {
         let new_state = new GameState(state.major_turn, state.minor_turn + 1, state.things.map(x => x.clone()));
         if (button_active) {
             // try to extend

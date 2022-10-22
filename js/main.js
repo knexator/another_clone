@@ -8527,11 +8527,10 @@ var GameState = class {
     }
     for (let button_id = 0; button_id < cur_state.buttons.length; button_id++) {
       let cur_button = cur_state.buttons[button_id];
-      if (cur_button.update(cur_state)) {
-        for (const target_id of cur_button.target_ids) {
-          result = result.concat(cur_state.buttonTargets[target_id].onButtonUpdate(cur_state, cur_button.active));
-          cur_state = result.at(-1);
-        }
+      let { value, prev_value } = cur_button.update(cur_state);
+      for (const target_id of cur_button.target_ids) {
+        result = result.concat(cur_state.buttonTargets[target_id].mainUpdate(cur_state, value, prev_value));
+        cur_state = result.at(-1);
       }
     }
     result.push(new GameState(cur_state.major_turn + 1, 0, cur_state.things.map((x) => x.clone())));
@@ -8698,12 +8697,12 @@ var _Button = class extends GameObject {
   }
   update(state2) {
     let pressed = state2.crates.some((crate) => crate.pos.equals(this.pos)) || state2.players.some((player) => player.pos.equals(this.pos)) || state2.spawner.pos.equals(this.pos);
-    if (this.active != pressed) {
-      this.active = pressed;
-      return true;
-    } else {
-      return false;
-    }
+    let prev_active = this.active;
+    this.active = pressed;
+    return {
+      value: this.active,
+      prev_value: prev_active
+    };
   }
 };
 var Button = _Button;
@@ -8739,7 +8738,7 @@ var TwoStateWall = class extends ButtonTarget {
   }
   rail_sprite;
   wall_sprite;
-  onButtonUpdate(state2, button_active) {
+  mainUpdate(state2, button_active, button_prev_active) {
     let new_state = new GameState(state2.major_turn, state2.minor_turn + 1, state2.things.map((x) => x.clone()));
     if (button_active) {
       if (new_state.move(this.pos.add(this.dir), this.dir)) {
