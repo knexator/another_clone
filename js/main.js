@@ -8832,7 +8832,15 @@ var _Player = class extends Pushable {
   draw(turn_time) {
     this.sprite.rotation = this.dir.getRadians() + Math.PI / 2;
     this.sprite.color = this.index === 0 ? _Player._brightColor : import_shaku.default.utils.Color.white;
-    super.draw(turn_time);
+    if (turn_time !== 1 && this.previous) {
+      this.sprite.position.copy(import_vector2.default.lerp(this.previous.pos, this.pos, turn_time).add(1, 1).mul(TILE_SIZE));
+      if (this.previous.age !== this.age && this.previous.pos.equals(this.pos)) {
+        this.sprite.position.copy(this.pos.add(this.dir.mul(turn_time - turn_time * turn_time)).add(1, 1).mul(TILE_SIZE));
+      }
+    } else {
+      this.sprite.position.copy(this.pos.add(1, 1).mul(TILE_SIZE));
+    }
+    import_shaku.default.gfx.drawSprite(this.sprite);
   }
   clone() {
     return new _Player(this.pos.clone(), this.dir.clone(), this.index, this.age, this);

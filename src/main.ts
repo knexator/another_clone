@@ -580,7 +580,18 @@ class Player extends Pushable {
     draw(turn_time: number): void {
         this.sprite.rotation = this.dir.getRadians() + Math.PI / 2;
         this.sprite.color = (this.index === 0) ? Player._brightColor : Shaku.utils.Color.white;
-        super.draw(turn_time);
+
+        if (turn_time !== 1 && this.previous) {
+            // turn_time = clamp(remap(turn_time, .2, 1, 0, 1), 0, 1);
+            this.sprite.position.copy(Vector2.lerp(this.previous.pos, this.pos, turn_time).add(1, 1).mul(TILE_SIZE));
+            if (this.previous.age !== this.age && this.previous.pos.equals(this.pos)) {
+                // player bumping into a wall
+                this.sprite.position.copy(this.pos.add(this.dir.mul((turn_time - turn_time * turn_time))).add(1, 1).mul(TILE_SIZE));
+            }
+        } else {
+            this.sprite.position.copy(this.pos.add(1, 1).mul(TILE_SIZE));
+        }
+        Shaku.gfx!.drawSprite(this.sprite);
     }
 
     clone(): GameObject {
