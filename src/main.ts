@@ -37,6 +37,12 @@ const player_texture = await Shaku.assets.loadTexture("imgs/player.png", { gener
 const player_sprite = new Sprite(player_texture);
 player_sprite.size.set(TILE_SIZE, TILE_SIZE);
 
+const player_gray_texture = await Shaku.assets.loadTexture("imgs/player_gray.png", { generateMipMaps: true });
+// player_gray_texture.filter = TextureFilterModes.LinearMipmapLinear;
+const player_gray_sprite = new Sprite(player_gray_texture);
+player_gray_sprite.size.set(TILE_SIZE, TILE_SIZE);
+
+
 const crate_texture = await Shaku.assets.loadTexture("imgs/crate.png", { generateMipMaps: true });
 // crate_texture.filter = TextureFilterModes.LinearMipmapLinear;
 const crate_sprite = new Sprite(crate_texture);
@@ -578,13 +584,15 @@ class Player extends Pushable {
 
     private static _brightColor = new Color(1.3, 1.3, 1.3, 1);
     draw(turn_time: number): void {
+        this.sprite = this.age < robot_tape.length ? player_sprite : player_gray_sprite;
+
         this.sprite.rotation = this.dir.getRadians() + Math.PI / 2;
         this.sprite.color = (this.index === 0) ? Player._brightColor : Shaku.utils.Color.white;
 
         if (turn_time !== 1 && this.previous) {
             // turn_time = clamp(remap(turn_time, .2, 1, 0, 1), 0, 1);
             this.sprite.position.copy(Vector2.lerp(this.previous.pos, this.pos, turn_time).add(1, 1).mul(TILE_SIZE));
-            if (this.previous.age !== this.age && this.previous.pos.equals(this.pos)) {
+            if (this.previous.age !== this.age && this.age > 0 && this.age - 1 < robot_tape.length && robot_tape[this.age - 1] !== TAPE_SYMBOL.NONE && this.previous.pos.equals(this.pos)) {
                 // player bumping into a wall
                 this.sprite.position.copy(this.pos.add(this.dir.mul((turn_time - turn_time * turn_time))).add(1, 1).mul(TILE_SIZE));
             }
