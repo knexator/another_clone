@@ -8491,6 +8491,8 @@ var GameState = class {
     let result = [];
     let cur_state = this;
     for (let k = 0; k < cur_state.players.length; k++) {
+      if (cur_state.players[k].age >= robot_tape.length)
+        continue;
       cur_state = new GameState(cur_state.major_turn, k + 1, cur_state.things.map((x) => x.clone()));
       let new_player = cur_state.players[k];
       if (new_player.index !== k) {
@@ -8937,6 +8939,26 @@ var levels = [
       new Crate(new import_vector2.default(4, 2), null)
     ]
   )),
+  new Level("auto", 2, 1, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                ########......
+                #......#######
+                #####........#
+                ....##.#######
+                .....###......
+            `),
+      new Targets([
+        new import_vector2.default(1, 1),
+        new import_vector2.default(12, 2)
+      ]),
+      new Spawner(new import_vector2.default(6, 3), import_vector2.default.up, null),
+      new Crate(new import_vector2.default(5, 1), null),
+      new Crate(new import_vector2.default(8, 2), null)
+    ]
+  )),
   new Level("move_spawner", 6, 4, new GameState(
     -1,
     0,
@@ -9019,6 +9041,28 @@ var levels = [
       new Crate(new import_vector2.default(3, 4), null)
     ]
   )),
+  new Level("bistable", 8, 3, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                ..#########.
+                ..#.......#.
+                ###.#######.
+                #....#......
+                ####.#######
+                ...#.......#
+                ...#########
+            `),
+      new Targets([
+        new import_vector2.default(9, 1),
+        new import_vector2.default(10, 5)
+      ]),
+      new Spawner(new import_vector2.default(1, 3), import_vector2.default.right, null),
+      new Crate(new import_vector2.default(5, 1), null),
+      new Crate(new import_vector2.default(6, 5), null)
+    ]
+  )),
   new Level("gaps", 8, 3, new GameState(
     -1,
     0,
@@ -9053,6 +9097,27 @@ var levels = [
       new Crate(new import_vector2.default(11, 2), null)
     ]
   )),
+  new Level("two_directions", 5, 2, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                .........###
+                ....######.#
+                ....#......#
+                #####......#
+                #..........#
+                ############
+            `),
+      new Targets([
+        new import_vector2.default(10, 1),
+        new import_vector2.default(1, 4)
+      ]),
+      new Spawner(new import_vector2.default(6, 3), import_vector2.default.up, null),
+      new Crate(new import_vector2.default(10, 2), null),
+      new Crate(new import_vector2.default(2, 4), null)
+    ]
+  )),
   new Level("u_chain", 16, 2, new GameState(
     -1,
     0,
@@ -9081,28 +9146,6 @@ var levels = [
       new Crate(new import_vector2.default(6, 4), null),
       new Crate(new import_vector2.default(7, 4), null),
       new Crate(new import_vector2.default(8, 4), null)
-    ]
-  )),
-  new Level("bistable", 8, 3, new GameState(
-    -1,
-    0,
-    [
-      Walls.fromString(`
-                ..#########.
-                ..#.......#.
-                ###.#######.
-                #....#......
-                ####.#######
-                ...#.......#
-                ...#########
-            `),
-      new Targets([
-        new import_vector2.default(9, 1),
-        new import_vector2.default(10, 5)
-      ]),
-      new Spawner(new import_vector2.default(1, 3), import_vector2.default.right, null),
-      new Crate(new import_vector2.default(5, 1), null),
-      new Crate(new import_vector2.default(6, 5), null)
     ]
   )),
   new Level("twice", 19, 7, new GameState(
