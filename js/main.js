@@ -8538,7 +8538,11 @@ var GameState = class {
         cur_state = result.at(-1);
       }
     }
-    result.push(new GameState(cur_state.major_turn + 1, 0, cur_state.things.map((x) => x.clone())));
+    let last = result.at(-1);
+    if (last) {
+      last.minor_turn = 0;
+      last.major_turn += 1;
+    }
     return result;
   }
   move(pos, dir) {
@@ -9215,7 +9219,8 @@ var TAPE_SYMBOL = /* @__PURE__ */ ((TAPE_SYMBOL2) => {
   TAPE_SYMBOL2[TAPE_SYMBOL2["NONE"] = 4] = "NONE";
   return TAPE_SYMBOL2;
 })(TAPE_SYMBOL || {});
-var miniturn_duration = 0.05;
+var miniturn_duration = 0.3;
+var margin_fraction = 0.4;
 var robot_delay = 5;
 var robot_tape = [];
 var selected_turn = 0;
@@ -9468,9 +9473,9 @@ function update() {
   }
   import_shaku.default.gfx.setCameraOrthographic(level_offset);
   if (time_offset < 0) {
-    all_states[cur_turn].draw(time_offset + 1);
+    all_states[cur_turn].draw(clamp((time_offset + 1) / (1 - margin_fraction), 0, 1));
   } else if (time_offset > 0) {
-    all_states[cur_turn + 1].draw(time_offset);
+    all_states[cur_turn + 1].draw(clamp((time_offset - margin_fraction) / (1 - margin_fraction), 0, 1));
   } else {
     all_states[cur_turn].draw(1);
   }
@@ -9779,6 +9784,13 @@ function mainDir(dir) {
   } else {
     return dir.y >= 0 ? import_vector2.default.down : import_vector2.default.up;
   }
+}
+function clamp(value, a, b) {
+  if (value < a)
+    return a;
+  if (value > b)
+    return b;
+  return value;
 }
 update();
 /**

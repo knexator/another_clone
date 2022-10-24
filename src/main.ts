@@ -233,7 +233,12 @@ class GameState {
             }
         }
 
-        result.push(new GameState(cur_state.major_turn + 1, 0, cur_state.things.map(x => x.clone())));
+        let last = result.at(-1);
+        if (last) {
+            last.minor_turn = 0;
+            last.major_turn += 1;
+        }
+        // result.push(new GameState(cur_state.major_turn + 1, 0, cur_state.things.map(x => x.clone())));
         return result;
     }
 
@@ -983,7 +988,8 @@ enum TAPE_SYMBOL {
     NONE,
 }
 
-let miniturn_duration = .05;
+let miniturn_duration = 0.3;
+let margin_fraction = 0.4;
 
 let robot_delay = 5;
 
@@ -1299,9 +1305,9 @@ function update() {
     Shaku.gfx.setCameraOrthographic(level_offset);
 
     if (time_offset < 0) { // going forwards in time
-        all_states[cur_turn].draw(time_offset + 1);
+        all_states[cur_turn].draw(clamp((time_offset + 1) / (1 - margin_fraction), 0, 1));
     } else if (time_offset > 0) { // going backwards in time
-        all_states[cur_turn + 1].draw(time_offset);
+        all_states[cur_turn + 1].draw(clamp((time_offset - margin_fraction) / (1 - margin_fraction), 0, 1));
     } else {
         all_states[cur_turn].draw(1);
     }
