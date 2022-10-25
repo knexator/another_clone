@@ -1185,6 +1185,9 @@ let drawExtra = function () {
     let intro_text_right_3 = Shaku.gfx.buildText(instructions_font, "Z/X to\nchange turn", 32, Color.white, TextAlignments.Center);
     intro_text_right_3.position.set(690, 290);
 
+    let intro_text_4 = Shaku.gfx.buildText(instructions_font, "R to restart, Esc. to select level", 28, Color.white, TextAlignments.Center);
+    intro_text_4.position.set(400, 550);
+
     let use_space_text = Shaku.gfx.buildText(instructions_font, "Space to wait", 32, Color.white, TextAlignments.Center);
     use_space_text.position.set(550, 90);
 
@@ -1212,6 +1215,7 @@ let drawExtra = function () {
                 Shaku.gfx.drawGroup(intro_text_left_3, false);
                 Shaku.gfx.drawGroup(intro_text_right_3, false);
             }
+            Shaku.gfx.drawGroup(intro_text_4, false);
             // @ts-ignore
             Shaku.gfx.useEffect(null);
         } else if (cur_level_n === 1) {

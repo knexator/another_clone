@@ -11831,6 +11831,8 @@ var drawExtra = function() {
   intro_text_left_3.position.set(110, 290);
   let intro_text_right_3 = import_shaku.default.gfx.buildText(instructions_font, "Z/X to\nchange turn", 32, import_color.default.white, import_text_alignments.TextAlignments.Center);
   intro_text_right_3.position.set(690, 290);
+  let intro_text_4 = import_shaku.default.gfx.buildText(instructions_font, "R to restart, Esc. to select level", 28, import_color.default.white, import_text_alignments.TextAlignments.Center);
+  intro_text_4.position.set(400, 550);
   let use_space_text = import_shaku.default.gfx.buildText(instructions_font, "Space to wait", 32, import_color.default.white, import_text_alignments.TextAlignments.Center);
   use_space_text.position.set(550, 90);
   let permanent_text_left = import_shaku.default.gfx.buildText(instructions_font, "Q/Z", 32, import_color.default.lightgrey, import_text_alignments.TextAlignments.Center);
@@ -11854,6 +11856,7 @@ var drawExtra = function() {
         import_shaku.default.gfx.drawGroup(intro_text_left_3, false);
         import_shaku.default.gfx.drawGroup(intro_text_right_3, false);
       }
+      import_shaku.default.gfx.drawGroup(intro_text_4, false);
       import_shaku.default.gfx.useEffect(null);
     } else if (cur_level_n === 1) {
       import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
