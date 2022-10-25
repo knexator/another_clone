@@ -10837,11 +10837,13 @@ var margin_fraction = 0.3;
 var TILE_SIZE = 50;
 var SYMBOL_SIZE = 50;
 var CONFIG = {
-  time: "MANUAL"
+  time: "MANUAL",
+  instant_reset: true
 };
 var gui = new GUI$1({});
 gui.remember(CONFIG);
-gui.add(CONFIG, "time", ["MANUAL", "AUTO"]);
+gui.add(CONFIG, "time", ["MANUAL", "SEMI", "AUTO"]);
+gui.add(CONFIG, "instant_reset");
 import_shaku.default.input.setTargetElement(() => import_shaku.default.gfx.canvas);
 await import_shaku.default.init();
 document.body.appendChild(import_shaku.default.gfx.canvas);
@@ -10911,8 +10913,10 @@ var GameState = class {
     this.minor_turn = minor_turn;
     this.things = things;
     this.empty = false;
+    this.someChanges = true;
   }
   empty;
+  someChanges;
   draw(turn_time) {
     this.things.forEach((x) => x.draw(turn_time));
     this.spawner.draw(turn_time);
@@ -11003,11 +11007,14 @@ var GameState = class {
       let { value, prev_value } = cur_button.update(cur_state);
       for (const target_id of cur_button.target_ids) {
         result2 = result2.concat(cur_state.buttonTargets[target_id].mainUpdate(cur_state, value, prev_value));
-        cur_state = result2.at(-1);
+        if (result2.length > 0) {
+          cur_state = result2.at(-1);
+        }
       }
     }
     let filler_state = new GameState(cur_state.major_turn + 1, 0, cur_state.things.map((x) => x.clone()));
     filler_state.empty = true;
+    filler_state.someChanges = result2.length > 0;
     result2.push(filler_state);
     return result2;
   }
@@ -11899,24 +11906,22 @@ function update() {
       break;
   }
   if (state === 0 /* GAME */) {
-    if (CONFIG.time === "MANUAL") {
-      if (pressed_throttled(["q", "z"], import_shaku.default.gameTime.delta) && selected_turn > 0) {
-        selected_turn -= 1;
-      } else if (pressed_throttled(["e", "x"], import_shaku.default.gameTime.delta)) {
-        selected_turn += 1;
-        if (selected_turn >= all_states.at(-1).major_turn) {
-          all_states = gameLogic(initial_state, robot_tape);
-        }
+    if (pressed_throttled(["q", "z"], import_shaku.default.gameTime.delta) && selected_turn > 0) {
+      selected_turn -= 1;
+    } else if (pressed_throttled(["e", "x"], import_shaku.default.gameTime.delta)) {
+      selected_turn += 1;
+      if (selected_turn >= all_states.at(-1).major_turn) {
+        all_states = gameLogic(initial_state, robot_tape);
       }
     }
     if (!changing_level && import_shaku.default.input?.pressed(["r"])) {
       selected_turn = 0;
-      if (CONFIG.time === "AUTO") {
+      if (CONFIG.instant_reset) {
         cur_turn = 0;
         time_offset = 0;
       }
     }
-    if (time_offset === 0 && CONFIG.time === "AUTO" && all_states[cur_turn].major_turn >= robot_tape.length && all_states[cur_turn].minor_turn == 0) {
+    if (time_offset === 0 && CONFIG.time === "AUTO" && all_states[cur_turn].major_turn >= robot_tape.length && all_states[cur_turn].minor_turn == 0 && all_states[cur_turn].someChanges) {
       selected_turn += 1;
       if (selected_turn >= all_states.at(-1).major_turn) {
         all_states = gameLogic(initial_state, robot_tape);
@@ -11947,25 +11952,32 @@ function update() {
         selected_turn += 1;
         all_states = gameLogic(initial_state, robot_tape);
       } else {
-        let time_left = 0.1;
-        row_1_background.color = COLOR_SYMBOL;
-        row_2_background.color = COLOR_SYMBOL;
-        doEveryFrameUntilTrue(() => {
-          import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_1 * SYMBOL_SIZE, -450));
-          import_shaku.default.gfx.drawSprite(row_1_background);
-          if (row_2 > 0) {
-            import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_2 * SYMBOL_SIZE, -525));
-            import_shaku.default.gfx.drawSprite(row_2_background);
+        if (CONFIG.time === "MANUAL") {
+          let time_left = 0.1;
+          row_1_background.color = COLOR_SYMBOL;
+          row_2_background.color = COLOR_SYMBOL;
+          doEveryFrameUntilTrue(() => {
+            import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_1 * SYMBOL_SIZE, -450));
+            import_shaku.default.gfx.drawSprite(row_1_background);
+            if (row_2 > 0) {
+              import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_2 * SYMBOL_SIZE, -525));
+              import_shaku.default.gfx.drawSprite(row_2_background);
+            }
+            import_shaku.default.gfx.resetCamera();
+            time_left -= import_shaku.default.gameTime.delta;
+            if (time_left < 0) {
+              row_1_background.color = COLOR_TAPE;
+              row_2_background.color = COLOR_TAPE;
+              return true;
+            }
+            return false;
+          });
+        } else if (CONFIG.time === "SEMI") {
+          selected_turn += 1;
+          if (selected_turn >= all_states.at(-1).major_turn) {
+            all_states = gameLogic(initial_state, robot_tape);
           }
-          import_shaku.default.gfx.resetCamera();
-          time_left -= import_shaku.default.gameTime.delta;
-          if (time_left < 0) {
-            row_1_background.color = COLOR_TAPE;
-            row_2_background.color = COLOR_TAPE;
-            return true;
-          }
-          return false;
-        });
+        }
       }
     }
   }
