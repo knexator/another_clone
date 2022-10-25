@@ -15,6 +15,21 @@ import { BackgroundEffect } from "./background_effect";
 // import { level_1 } from "./levels";
 import { kalbakUpdate, doOnceOnTrue, doEveryFrameUntilTrue } from "./kalbak";
 import memoize from "lodash.memoize";
+import * as dat from 'dat.gui';
+
+let miniturn_duration = 0.25;
+let margin_fraction = 0.3;
+const TILE_SIZE = 50;
+const SYMBOL_SIZE = 50;
+
+const CONFIG: {
+    time: "MANUAL" | "AUTO",
+} = {
+    time: "MANUAL",
+};
+let gui = new dat.GUI({});
+gui.remember(CONFIG);
+gui.add(CONFIG, "time", ["MANUAL", "AUTO"]);
 
 Shaku!.input!.setTargetElement(() => Shaku.gfx!.canvas);
 await Shaku.init();
@@ -25,10 +40,6 @@ Shaku.gfx!.setResolution(800, 600, true);
 // Shaku.gfx!.setResolution(1152, 648, true);
 Shaku.gfx!.centerCanvas();
 // Shaku.gfx!.maximizeCanvasSize(false, false);
-
-const TILE_SIZE = 50;
-
-const SYMBOL_SIZE = 50;
 
 let instructions_font = await Shaku.assets.loadMsdfFontTexture('fonts/Arial.ttf', { jsonUrl: 'fonts/Arial.json', textureUrl: 'fonts/Arial.png' });
 
@@ -123,13 +134,13 @@ class Level {
 }
 
 class GameState {
-    public spawned_player: boolean;
+    public empty: boolean;
     constructor(
         public major_turn: number,
         public minor_turn: number,
         public things: GameObject[],
     ) {
-        this.spawned_player = false;
+        this.empty = false;
     }
 
     draw(turn_time: number) {
@@ -233,12 +244,14 @@ class GameState {
             }
         }
 
-        let last = result.at(-1);
-        if (last) {
-            last.minor_turn = 0;
-            last.major_turn += 1;
-        }
-        // result.push(new GameState(cur_state.major_turn + 1, 0, cur_state.things.map(x => x.clone())));
+        // let last = result.at(-1);
+        // if (last) {
+        //     last.minor_turn = 0;
+        //     last.major_turn += 1;
+        // }
+        let filler_state = new GameState(cur_state.major_turn + 1, 0, cur_state.things.map(x => x.clone()));
+        filler_state.empty = true;
+        result.push(filler_state);
         return result;
     }
 
@@ -662,18 +675,19 @@ let levels = [
             new Crate(new Vector2(2, 5), null),
         ],
     )),
-    new Level("wait_tut", 11, 5, new GameState(
+    new Level("wait_tut", 12, 5, new GameState(
         -1, 0,
         [
             Walls.fromString(`
-                ...###.....
-                ####.######
-                #.........#
-                ######.####
-                .....###...
+                ...###....
+                ####.#####
+                #........#
+                ######.#.#
+                .....###.#
+                .......###
             `),
             new Targets([
-                new Vector2(9, 2),
+                new Vector2(8, 4),
             ]),
 
             new Button(new Vector2(4, 1), [0], false, null),
@@ -681,7 +695,7 @@ let levels = [
             new TwoStateWall(new Vector2(6, 2), Vector2.down, false, null),
 
             new Spawner(new Vector2(1, 2), Vector2.right, null),
-            new Crate(new Vector2(8, 2), null),
+            new Crate(new Vector2(8, 3), null),
         ],
     )),
     new Level("basic", 10, 5, new GameState(
@@ -988,8 +1002,6 @@ enum TAPE_SYMBOL {
     NONE,
 }
 
-let miniturn_duration = 0.3;
-let margin_fraction = 0.4;
 
 let robot_delay = 5;
 
@@ -1001,6 +1013,7 @@ let selected_turn = 0;
 
 let cur_turn = 0;
 let time_offset = 0;
+let ending_boost = 0;
 
 let initial_state: GameState;
 
@@ -1028,6 +1041,10 @@ load_level(levels[cur_level_n]);
 
 function load_level(level: Level) {
     // cur_level = level;
+    selected_turn = 0;
+    cur_turn = 0;
+    time_offset = 0;
+    ending_boost = 2;
     robot_tape = Array(level.n_moves).fill(TAPE_SYMBOL.NONE);
     robot_delay = level.n_delay;
     initial_state = level.initial_state.nextStates().at(-1)!;
@@ -1047,9 +1064,6 @@ function load_level(level: Level) {
         row_2_background.size.set(SYMBOL_SIZE * (row_2 + 1) - 16, SYMBOL_SIZE * 1.5 - 16);
     }
 
-    selected_turn = 0;
-    cur_turn = 0;
-    time_offset = 0;
     level_offset = new Vector2(initial_state.wall.w, initial_state.wall.h).mul(TILE_SIZE).sub(game_size).add(TILE_SIZE, TILE_SIZE).mul(.5);
 }
 
@@ -1172,7 +1186,7 @@ let drawExtra = function () {
     intro_text_right_3.position.set(690, 290);
 
     let use_space_text = Shaku.gfx.buildText(instructions_font, "Space to wait", 32, Color.white, TextAlignments.Center);
-    use_space_text.position.set(535, 110);
+    use_space_text.position.set(550, 90);
 
     return function () {
         if (EDITOR) return;
@@ -1182,8 +1196,10 @@ let drawExtra = function () {
             Shaku.gfx.drawGroup(intro_text_right_1, false);
             // Shaku.gfx.drawGroup(intro_text_left_2, false);
             // Shaku.gfx.drawGroup(intro_text_right_2, false);
-            Shaku.gfx.drawGroup(intro_text_left_3, false);
-            Shaku.gfx.drawGroup(intro_text_right_3, false);
+            if (CONFIG.time === "MANUAL") {
+                Shaku.gfx.drawGroup(intro_text_left_3, false);
+                Shaku.gfx.drawGroup(intro_text_right_3, false);
+            }
             // @ts-ignore
             Shaku.gfx.useEffect(null);
         } else if (cur_level_n === 1) {
@@ -1216,6 +1232,11 @@ function update() {
 
     Shaku.gfx.drawSprite(LOWER_SCREEN_SPRITE);
 
+    if (selected_turn >= robot_tape.length) {
+        FULL_SCREEN_SPRITE.color = new Color(0, 0, 0, .2);
+        Shaku.gfx.drawSprite(FULL_SCREEN_SPRITE);
+    }
+
     // changing game state
     switch (state) {
         case STATE.GAME:
@@ -1238,20 +1259,33 @@ function update() {
     }
 
     if (state === STATE.GAME) {
-        if (pressed_throttled(["q", "z"], Shaku.gameTime.delta) && selected_turn > 0) {
-            selected_turn -= 1;
-        } else if (pressed_throttled(["e", "x"], Shaku.gameTime.delta)) {
+        if (CONFIG.time === "MANUAL") {
+            if (pressed_throttled(["q", "z"], Shaku.gameTime.delta) && selected_turn > 0) {
+                selected_turn -= 1;
+            } else if (pressed_throttled(["e", "x"], Shaku.gameTime.delta)) {
+                selected_turn += 1;
+                if (selected_turn >= all_states.at(-1)!.major_turn) {
+                    all_states = gameLogic(initial_state, robot_tape);
+                }
+            }
+        }
+
+        if (!changing_level && Shaku.input?.pressed(["r"])) {
+            selected_turn = 0;
+            if (CONFIG.time === "AUTO") {
+                cur_turn = 0;
+                time_offset = 0;
+            }
+        }
+
+        if (time_offset === 0 && CONFIG.time === "AUTO" && all_states[cur_turn].major_turn >= robot_tape.length && all_states[cur_turn].minor_turn == 0) {
             selected_turn += 1;
             if (selected_turn >= all_states.at(-1)!.major_turn) {
                 all_states = gameLogic(initial_state, robot_tape);
             }
         }
 
-        if (!changing_level && Shaku.input?.pressed(["r"])) {
-            selected_turn = 0;
-        }
-
-        if ((all_states[cur_turn].major_turn !== selected_turn || all_states[cur_turn].minor_turn !== 0) && time_offset === 0) {
+        if (time_offset === 0 && (all_states[cur_turn].major_turn !== selected_turn || all_states[cur_turn].minor_turn !== 0)) {
             let dir = Math.sign(selected_turn - all_states[cur_turn].major_turn - .5); // -.5 is for minor_turn !== 0
             cur_turn += dir;
             time_offset -= dir * .99;
@@ -1469,7 +1503,34 @@ function update() {
     Shaku.gfx.resetCamera()
 
     if (state === STATE.GAME) {
-        time_offset = moveTowards(time_offset, 0, Shaku.gameTime.delta! * (Math.abs(all_states[cur_turn].major_turn - selected_turn) + 1) / miniturn_duration);
+        // console.log(Math.abs(all_states[cur_turn].major_turn - selected_turn));
+        // time_offset = moveTowards(time_offset, 0, Shaku.gameTime.delta! / miniturn_duration);
+        // console.log(all_states[cur_turn].major_turn, all_states[cur_turn].minor_turn, all_states[cur_turn].empty);
+        if (time_offset !== 0) {
+            let turn_dist = Math.abs(all_states[cur_turn].major_turn - selected_turn);
+
+            if (time_offset < 0) { // forwards                
+                if (all_states[cur_turn].empty) {
+                    time_offset = 0;
+                }
+            } else {
+                turn_dist += 1;
+                if (all_states[cur_turn + 1].empty) {
+                    time_offset = 0;
+                }
+            }
+
+            let boost = turn_dist + 1;
+            boost *= boost * .85;
+            if (CONFIG.time === "AUTO" && selected_turn >= robot_tape.length) {
+                boost *= ending_boost;
+                ending_boost += Shaku.gameTime.delta!;
+            } else {
+                ending_boost = 1.5;
+            }
+
+            time_offset = moveTowards(time_offset, 0, Shaku.gameTime.delta! * boost / miniturn_duration);
+        }
 
         if (!changing_level && !EDITOR && Shaku.input.pressed("dash")) {
             // load_level(level_editor);
