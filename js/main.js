@@ -11718,16 +11718,62 @@ function load_level(level) {
   cur_turn = 0;
   time_offset = 0;
   ending_boost = 2;
-  robot_tape = Array(level.n_moves).fill(4 /* NONE */);
   robot_delay = level.n_delay;
+  updateTapeLength(level.n_moves);
   initial_state = level.initial_state.nextStates().at(-1);
   all_states = gameLogic(initial_state, robot_tape);
-  if (level.n_moves < 13) {
-    row_1 = level.n_moves;
+  level_offset = new import_vector2.default(initial_state.wall.w, initial_state.wall.h).mul(TILE_SIZE).sub(game_size).add(TILE_SIZE, TILE_SIZE).mul(0.5);
+}
+function openCurInEditor() {
+  let old_wall = initial_state.wall;
+  let off_x = Math.floor((16 - old_wall.w) / 2);
+  let off_y = Math.floor((9 - old_wall.h) / 2);
+  let new_wall = new Walls(16, 9);
+  for (let i = 0; i < old_wall.w; i++) {
+    for (let j = 0; j < old_wall.h; j++) {
+      new_wall.data[off_y + j][off_x + i] = old_wall.data[j][i];
+    }
+  }
+  initial_state.things = initial_state.things.map((x) => {
+    if (x instanceof Walls)
+      return new_wall;
+    if (x instanceof Pushable || x instanceof TwoStateWall || x instanceof Button) {
+      x.pos.addSelf(off_x, off_y);
+      return x;
+    }
+    if (x instanceof Targets) {
+      x.positions.forEach((p) => {
+        p.addSelf(off_x, off_y);
+      });
+      return x;
+    }
+    return x;
+  });
+  initial_state.wall.recalcFloors(initial_state.spawner.pos);
+  selected_turn = 0;
+  cur_turn = 0;
+  time_offset = 0;
+  ending_boost = 2;
+  all_states = gameLogic(initial_state, robot_tape);
+  level_offset = new import_vector2.default(16, 9).mul(TILE_SIZE).sub(game_size).add(TILE_SIZE, TILE_SIZE).mul(0.5);
+}
+function updateTapeLength(n, keep_tape = false) {
+  if (keep_tape) {
+    while (robot_tape.length > n) {
+      robot_tape.pop();
+    }
+    while (robot_tape.length < n) {
+      robot_tape.push(4 /* NONE */);
+    }
+  } else {
+    robot_tape = Array(n).fill(4 /* NONE */);
+  }
+  if (n < 13) {
+    row_1 = n;
     row_2 = 0;
   } else {
-    row_1 = Math.ceil(level.n_moves / 2);
-    row_2 = level.n_moves - row_1;
+    row_1 = Math.ceil(n / 2);
+    row_2 = n - row_1;
   }
   row_1_background.position.set(-SYMBOL_SIZE * 0.5 + 8, 8);
   row_1_background.size.set(SYMBOL_SIZE * (row_1 + 1) - 16, SYMBOL_SIZE * 1.5 - 16);
@@ -11735,7 +11781,6 @@ function load_level(level) {
     row_2_background.position.set(-SYMBOL_SIZE * 0.5 + 8, 8);
     row_2_background.size.set(SYMBOL_SIZE * (row_2 + 1) - 16, SYMBOL_SIZE * 1.5 - 16);
   }
-  level_offset = new import_vector2.default(initial_state.wall.w, initial_state.wall.h).mul(TILE_SIZE).sub(game_size).add(TILE_SIZE, TILE_SIZE).mul(0.5);
 }
 function gameLogic(initial_state2, robot_tape2) {
   let res_all_states = [initial_state2];
@@ -12011,8 +12056,13 @@ function update() {
       all_states = gameLogic(initial_state, robot_tape);
     }
     if (import_shaku.default.input?.mouseWheelSign !== 0) {
-      robot_delay += import_shaku.default.input?.mouseWheelSign;
-      robot_delay = Math.max(1, robot_delay);
+      if (import_shaku.default.input.shiftDown) {
+        let n = clamp(robot_tape.length + import_shaku.default.input?.mouseWheelSign, 2, 30);
+        updateTapeLength(n, true);
+      } else {
+        robot_delay += import_shaku.default.input?.mouseWheelSign;
+        robot_delay = Math.max(1, robot_delay);
+      }
       all_states = gameLogic(initial_state, robot_tape);
     }
     if (import_shaku.default.input.keyPressed(import_key_codes.KeyboardKeys.n1)) {
@@ -12171,9 +12221,7 @@ function update() {
     }
     if (!changing_level && !EDITOR && import_shaku.default.input.pressed("dash")) {
       EDITOR = true;
-    }
-    if (!changing_level && EDITOR && import_shaku.default.input.pressed("period")) {
-      load_level(level_editor);
+      openCurInEditor();
     }
     if (!EDITOR && !changing_level && time_offset === 0 && all_states[cur_turn].isWon()) {
       if (cur_level_n < levels.length - 1) {
