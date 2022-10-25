@@ -11833,7 +11833,17 @@ var drawExtra = function() {
   intro_text_right_3.position.set(690, 290);
   let use_space_text = import_shaku.default.gfx.buildText(instructions_font, "Space to wait", 32, import_color.default.white, import_text_alignments.TextAlignments.Center);
   use_space_text.position.set(550, 90);
+  let permanent_text_left = import_shaku.default.gfx.buildText(instructions_font, "Q/Z", 32, import_color.default.lightgrey, import_text_alignments.TextAlignments.Center);
+  permanent_text_left.position.set(30, 420);
+  let permanent_text_right = import_shaku.default.gfx.buildText(instructions_font, "E/X", 32, import_color.default.lightgrey, import_text_alignments.TextAlignments.Center);
+  permanent_text_right.position.set(770, 420);
   return function() {
+    if (CONFIG.time === "MANUAL" && selected_turn >= robot_tape.length) {
+      import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
+      import_shaku.default.gfx.drawGroup(permanent_text_left, false);
+      import_shaku.default.gfx.drawGroup(permanent_text_right, false);
+      import_shaku.default.gfx.useEffect(null);
+    }
     if (EDITOR)
       return;
     if (cur_level_n === 0) {

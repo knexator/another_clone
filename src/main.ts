@@ -1188,7 +1188,19 @@ let drawExtra = function () {
     let use_space_text = Shaku.gfx.buildText(instructions_font, "Space to wait", 32, Color.white, TextAlignments.Center);
     use_space_text.position.set(550, 90);
 
+    let permanent_text_left = Shaku.gfx.buildText(instructions_font, "Q/Z", 32, Color.lightgrey, TextAlignments.Center);
+    permanent_text_left.position.set(30, 420);
+    let permanent_text_right = Shaku.gfx.buildText(instructions_font, "E/X", 32, Color.lightgrey, TextAlignments.Center);
+    permanent_text_right.position.set(770, 420);
+
     return function () {
+        if (CONFIG.time === "MANUAL" && selected_turn >= robot_tape.length) {
+            Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
+            Shaku.gfx.drawGroup(permanent_text_left, false);
+            Shaku.gfx.drawGroup(permanent_text_right, false);
+            // @ts-ignore
+            Shaku.gfx.useEffect(null);
+        }
         if (EDITOR) return;
         if (cur_level_n === 0) {
             Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
