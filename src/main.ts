@@ -954,6 +954,25 @@ let levels = [
             new Crate(new Vector2(4, 2), null),
         ],
     )),
+    new Level("compose", 19, 13, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                .####.....
+                .#..######
+                ##.......#
+                #...##...#
+                ##...#####
+                .#####....
+            `),
+            new Targets([
+                new Vector2(4, 4),
+            ]),
+
+            new Spawner(new Vector2(1, 3), Vector2.right, null),
+            new Crate(new Vector2(7, 2), null),
+        ],
+    )),
     new Level("basic_reversed", 17, 3, new GameState(
         -1, 0,
         [
@@ -1281,8 +1300,11 @@ let drawExtra = function () {
     }
 }();
 
-let generateText = memoize((text: string, size: number = 32, color: Color = Color.white) => {
-    return Shaku.gfx.buildText(instructions_font, text, size, color, TextAlignments.Center);
+let generateText = memoize((text: string, x: number, y: number, size: number = 32, color: Color = Color.white) => {
+    console.log("building text");
+    let group = Shaku.gfx.buildText(instructions_font, text, size, color, TextAlignments.Center);
+    group.position.set(x, y);
+    return group;
 });
 
 let editor_button_looking_for_target = -1;
@@ -1528,6 +1550,9 @@ function update() {
 
     Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_1 * SYMBOL_SIZE, -450));
     Shaku.gfx.drawSprite(row_1_background);
+    if (EDITOR && robot_delay < row_1) {
+        Shaku.gfx.fillRect(new Rectangle(robot_delay * SYMBOL_SIZE, 8, SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16), Color.blue);
+    }
     for (let k = selected_turn; k >= 0; k -= robot_delay) {
         if (k >= row_1) continue;
         if (k === selected_turn) {
@@ -1556,6 +1581,9 @@ function update() {
             new Rectangle(-SYMBOL_SIZE * .5 + 8, 8, SYMBOL_SIZE * (row_2 + 1) - 16, SYMBOL_SIZE * 1.5 - 16),
             COLOR_TAPE
         )
+        if (EDITOR && robot_delay >= row_1) {
+            Shaku.gfx.fillRect(new Rectangle((robot_delay - row_1) * SYMBOL_SIZE, 8, SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16), Color.blue);
+        }
         for (let k = selected_turn; k >= row_1; k -= robot_delay) {
             if (k >= row_1 + row_2) continue;
             if (k === selected_turn) {
@@ -1657,10 +1685,10 @@ function update() {
         }
         Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
         for (let k = 0; k < levels.length; k++) {
-            let text_spr = generateText((k + 1).toString(), 42);
-            text_spr.position.set(
+            let text_spr = generateText((k + 1).toString(),
                 (k % menu_row_size) * menu_button_spacing + menu_button_spacing / 3 + menu_button_size / 2,
                 Math.floor(k / menu_row_size) * menu_button_spacing + menu_button_spacing / 3 + menu_button_size / 5,
+                42
             );
             Shaku.gfx.drawGroup(text_spr, false);
         }

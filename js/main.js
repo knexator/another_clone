@@ -11645,6 +11645,25 @@ var levels = [
       new Crate(new import_vector2.default(4, 2), null)
     ]
   )),
+  new Level("compose", 19, 13, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                .####.....
+                .#..######
+                ##.......#
+                #...##...#
+                ##...#####
+                .#####....
+            `),
+      new Targets([
+        new import_vector2.default(4, 4)
+      ]),
+      new Spawner(new import_vector2.default(1, 3), import_vector2.default.right, null),
+      new Crate(new import_vector2.default(7, 2), null)
+    ]
+  )),
   new Level("basic_reversed", 17, 3, new GameState(
     -1,
     0,
@@ -11917,8 +11936,11 @@ var drawExtra = function() {
     }
   };
 }();
-var generateText = (0, import_lodash.default)((text, size = 32, color = import_color.default.white) => {
-  return import_shaku.default.gfx.buildText(instructions_font, text, size, color, import_text_alignments.TextAlignments.Center);
+var generateText = (0, import_lodash.default)((text, x, y, size = 32, color = import_color.default.white) => {
+  console.log("building text");
+  let group = import_shaku.default.gfx.buildText(instructions_font, text, size, color, import_text_alignments.TextAlignments.Center);
+  group.position.set(x, y);
+  return group;
 });
 var editor_button_looking_for_target = -1;
 function update() {
@@ -12142,6 +12164,9 @@ function update() {
   }
   import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_1 * SYMBOL_SIZE, -450));
   import_shaku.default.gfx.drawSprite(row_1_background);
+  if (EDITOR && robot_delay < row_1) {
+    import_shaku.default.gfx.fillRect(new import_rectangle.default(robot_delay * SYMBOL_SIZE, 8, SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16), import_color.default.blue);
+  }
   for (let k = selected_turn; k >= 0; k -= robot_delay) {
     if (k >= row_1)
       continue;
@@ -12171,6 +12196,9 @@ function update() {
       new import_rectangle.default(-SYMBOL_SIZE * 0.5 + 8, 8, SYMBOL_SIZE * (row_2 + 1) - 16, SYMBOL_SIZE * 1.5 - 16),
       COLOR_TAPE
     );
+    if (EDITOR && robot_delay >= row_1) {
+      import_shaku.default.gfx.fillRect(new import_rectangle.default((robot_delay - row_1) * SYMBOL_SIZE, 8, SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16), import_color.default.blue);
+    }
     for (let k = selected_turn; k >= row_1; k -= robot_delay) {
       if (k >= row_1 + row_2)
         continue;
@@ -12261,10 +12289,11 @@ function update() {
     }
     import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
     for (let k = 0; k < levels.length; k++) {
-      let text_spr = generateText((k + 1).toString(), 42);
-      text_spr.position.set(
+      let text_spr = generateText(
+        (k + 1).toString(),
         k % menu_row_size * menu_button_spacing + menu_button_spacing / 3 + menu_button_size / 2,
-        Math.floor(k / menu_row_size) * menu_button_spacing + menu_button_spacing / 3 + menu_button_size / 5
+        Math.floor(k / menu_row_size) * menu_button_spacing + menu_button_spacing / 3 + menu_button_size / 5,
+        42
       );
       import_shaku.default.gfx.drawGroup(text_spr, false);
     }
