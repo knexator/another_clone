@@ -827,6 +827,47 @@ let levels = [
             new Crate(new Vector2(3, 4), null),
         ],
     )),
+    new Level("bistable_push", 6, 2, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ..#########.
+                ###.......#.
+                #...########
+                ###........#
+                ..##########
+            `),
+            new Targets([
+                new Vector2(8, 1),
+                new Vector2(9, 3),
+            ]),
+
+            new Spawner(new Vector2(1, 2), Vector2.right, null),
+            new Crate(new Vector2(5, 1), null),
+            new Crate(new Vector2(6, 3), null),
+        ],
+    )),
+    new Level("two_directions", 5, 2, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                .........###
+                ....######.#
+                ....#......#
+                #####......#
+                #..........#
+                ############
+            `),
+            new Targets([
+                new Vector2(10, 1),
+                new Vector2(1, 4),
+            ]),
+
+            new Spawner(new Vector2(6, 3), Vector2.up, null),
+            new Crate(new Vector2(10, 2), null),
+            new Crate(new Vector2(2, 4), null),
+        ],
+    )),
     new Level("bistable", 8, 3, new GameState(
         -1, 0,
         [
@@ -882,27 +923,6 @@ let levels = [
             new Crate(new Vector2(9, 2), null),
             new Crate(new Vector2(10, 2), null),
             new Crate(new Vector2(11, 2), null),
-        ],
-    )),
-    new Level("two_directions", 5, 2, new GameState(
-        -1, 0,
-        [
-            Walls.fromString(`
-                .........###
-                ....######.#
-                ....#......#
-                #####......#
-                #..........#
-                ############
-            `),
-            new Targets([
-                new Vector2(10, 1),
-                new Vector2(1, 4),
-            ]),
-
-            new Spawner(new Vector2(6, 3), Vector2.up, null),
-            new Crate(new Vector2(10, 2), null),
-            new Crate(new Vector2(2, 4), null),
         ],
     )),
     new Level("u_chain", 16, 2, new GameState(

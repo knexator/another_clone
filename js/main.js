@@ -11519,6 +11519,47 @@ var levels = [
       new Crate(new import_vector2.default(3, 4), null)
     ]
   )),
+  new Level("bistable_push", 6, 2, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                ..#########.
+                ###.......#.
+                #...########
+                ###........#
+                ..##########
+            `),
+      new Targets([
+        new import_vector2.default(8, 1),
+        new import_vector2.default(9, 3)
+      ]),
+      new Spawner(new import_vector2.default(1, 2), import_vector2.default.right, null),
+      new Crate(new import_vector2.default(5, 1), null),
+      new Crate(new import_vector2.default(6, 3), null)
+    ]
+  )),
+  new Level("two_directions", 5, 2, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                .........###
+                ....######.#
+                ....#......#
+                #####......#
+                #..........#
+                ############
+            `),
+      new Targets([
+        new import_vector2.default(10, 1),
+        new import_vector2.default(1, 4)
+      ]),
+      new Spawner(new import_vector2.default(6, 3), import_vector2.default.up, null),
+      new Crate(new import_vector2.default(10, 2), null),
+      new Crate(new import_vector2.default(2, 4), null)
+    ]
+  )),
   new Level("bistable", 8, 3, new GameState(
     -1,
     0,
@@ -11573,27 +11614,6 @@ var levels = [
       new Crate(new import_vector2.default(9, 2), null),
       new Crate(new import_vector2.default(10, 2), null),
       new Crate(new import_vector2.default(11, 2), null)
-    ]
-  )),
-  new Level("two_directions", 5, 2, new GameState(
-    -1,
-    0,
-    [
-      Walls.fromString(`
-                .........###
-                ....######.#
-                ....#......#
-                #####......#
-                #..........#
-                ############
-            `),
-      new Targets([
-        new import_vector2.default(10, 1),
-        new import_vector2.default(1, 4)
-      ]),
-      new Spawner(new import_vector2.default(6, 3), import_vector2.default.up, null),
-      new Crate(new import_vector2.default(10, 2), null),
-      new Crate(new import_vector2.default(2, 4), null)
     ]
   )),
   new Level("u_chain", 16, 2, new GameState(
