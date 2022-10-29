@@ -231,7 +231,7 @@ class GameState {
                 cur_state.things.push(new Player(
                     spawn_pos,
                     spawn_dir.clone(),
-                    cur_state.minor_turn - 1,
+                    cur_state.players.length,
                     0,
                     cur_state.spawner as Player // hacky
                 ));
@@ -751,9 +751,9 @@ let levels = [
             Walls.fromString(`
                 .#########.
                 .#.......#.
-                ##.......##
-                #.........#
-                #.........#
+                .#.......#.
+                ##.......#.
+                #........##
                 #.........#
                 ###########
             `),
