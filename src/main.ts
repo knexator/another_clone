@@ -44,6 +44,10 @@ Shaku.gfx!.setResolution(800, 600, true);
 Shaku.gfx!.centerCanvas();
 // Shaku.gfx!.maximizeCanvasSize(false, false);
 
+Shaku.startFrame();
+Shaku.gfx!.clear(Shaku.utils.Color.darkslategray);
+Shaku.endFrame();
+
 let instructions_font = await Shaku.assets.loadMsdfFontTexture('fonts/Arial.ttf', { jsonUrl: 'fonts/Arial.json', textureUrl: 'fonts/Arial.png' });
 
 const player_texture = await Shaku.assets.loadTexture("imgs/player.png", { generateMipMaps: true });
@@ -686,7 +690,7 @@ let levels = [
             new Crate(new Vector2(2, 5), null),
         ],
     )),
-    new Level("wait_tut", 12, 5, new GameState(
+    /*new Level("wait_tut", 12, 5, new GameState(
         -1, 0,
         [
             Walls.fromString(`
@@ -708,7 +712,7 @@ let levels = [
             new Spawner(new Vector2(1, 2), Vector2.right, null),
             new Crate(new Vector2(8, 3), null),
         ],
-    )),
+    )),*/
     new Level("basic", 10, 5, new GameState(
         -1, 0,
         [
@@ -1305,11 +1309,14 @@ let drawExtra = function () {
     let intro_text_right_3 = Shaku.gfx.buildText(instructions_font, "Z/X to\nchange turn", 32, Color.white, TextAlignments.Center);
     intro_text_right_3.position.set(690, 290);
 
+    let intro_text_2 = Shaku.gfx.buildText(instructions_font, "Space to wait", 32, Color.white, TextAlignments.Center);
+    intro_text_2.position.set(400, 410);
+
     let intro_text_4 = Shaku.gfx.buildText(instructions_font, "R to restart, Esc. to select level", 28, Color.white, TextAlignments.Center);
     intro_text_4.position.set(400, 550);
 
-    let use_space_text = Shaku.gfx.buildText(instructions_font, "Space to wait", 32, Color.white, TextAlignments.Center);
-    use_space_text.position.set(550, 90);
+    // let use_space_text = Shaku.gfx.buildText(instructions_font, "Space to wait", 32, Color.white, TextAlignments.Center);
+    // use_space_text.position.set(550, 90);
 
     let permanent_text_left = Shaku.gfx.buildText(instructions_font, "Q/Z", 32, Color.lightgrey, TextAlignments.Center);
     permanent_text_left.position.set(30, 420);
@@ -1331,19 +1338,20 @@ let drawExtra = function () {
             Shaku.gfx.drawGroup(intro_text_right_1, false);
             // Shaku.gfx.drawGroup(intro_text_left_2, false);
             // Shaku.gfx.drawGroup(intro_text_right_2, false);
-            if (CONFIG.time === "MANUAL") {
-                Shaku.gfx.drawGroup(intro_text_left_3, false);
-                Shaku.gfx.drawGroup(intro_text_right_3, false);
-            }
+            // if (CONFIG.time === "MANUAL") {
+            Shaku.gfx.drawGroup(intro_text_left_3, false);
+            Shaku.gfx.drawGroup(intro_text_right_3, false);
+            // }
+            Shaku.gfx.drawGroup(intro_text_2, false);
             Shaku.gfx.drawGroup(intro_text_4, false);
             // @ts-ignore
             Shaku.gfx.useEffect(null);
-        } else if (cur_level_n === 1) {
+        } /*else if (cur_level_n === 1) {
             Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
             Shaku.gfx.drawGroup(use_space_text, false);
             // @ts-ignore
             Shaku.gfx.useEffect(null);
-        }
+        }*/
     }
 }();
 
@@ -1372,7 +1380,7 @@ function update() {
     Shaku.gfx.drawSprite(LOWER_SCREEN_SPRITE);
 
     if (selected_turn >= robot_tape.length) {
-        FULL_SCREEN_SPRITE.color = new Color(0, 0, 0, .2);
+        FULL_SCREEN_SPRITE.color = new Color(0, 0, 0, .4);
         Shaku.gfx.drawSprite(FULL_SCREEN_SPRITE);
     }
 
@@ -1450,30 +1458,37 @@ function update() {
                 selected_turn += 1;
                 all_states = gameLogic(initial_state, robot_tape);
             } else {
-                if (CONFIG.time === "MANUAL") {
-                    let time_left = .1;
-                    row_1_background.color = COLOR_SYMBOL;
-                    row_2_background.color = COLOR_SYMBOL;
-                    doEveryFrameUntilTrue(() => {
-                        Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_1 * SYMBOL_SIZE, -450));
-                        Shaku.gfx.drawSprite(row_1_background);
-                        if (row_2 > 0) {
-                            Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_2 * SYMBOL_SIZE, -525));
-                            Shaku.gfx.drawSprite(row_2_background);
-                        }
-                        Shaku.gfx.resetCamera();
-                        time_left -= Shaku.gameTime.delta;
-                        if (time_left < 0) {
-                            row_1_background.color = COLOR_TAPE;
-                            row_2_background.color = COLOR_TAPE;
-                            return true;
-                        }
-                        return false;
-                    })
-                } else if (CONFIG.time === "SEMI") {
+                if (input_symbol === TAPE_SYMBOL.NONE) {
                     selected_turn += 1;
                     if (selected_turn >= all_states.at(-1)!.major_turn) {
                         all_states = gameLogic(initial_state, robot_tape);
+                    }
+                } else {
+                    if (CONFIG.time === "MANUAL") {
+                        let time_left = .1;
+                        row_1_background.color = COLOR_SYMBOL;
+                        row_2_background.color = COLOR_SYMBOL;
+                        doEveryFrameUntilTrue(() => {
+                            Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_1 * SYMBOL_SIZE, -450));
+                            Shaku.gfx.drawSprite(row_1_background);
+                            if (row_2 > 0) {
+                                Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_2 * SYMBOL_SIZE, -525));
+                                Shaku.gfx.drawSprite(row_2_background);
+                            }
+                            Shaku.gfx.resetCamera();
+                            time_left -= Shaku.gameTime.delta;
+                            if (time_left < 0) {
+                                row_1_background.color = COLOR_TAPE;
+                                row_2_background.color = COLOR_TAPE;
+                                return true;
+                            }
+                            return false;
+                        })
+                    } else if (CONFIG.time === "SEMI") {
+                        selected_turn += 1;
+                        if (selected_turn >= all_states.at(-1)!.major_turn) {
+                            all_states = gameLogic(initial_state, robot_tape);
+                        }
                     }
                 }
             }

@@ -10842,13 +10842,16 @@ var CONFIG = {
 };
 var gui = new GUI$1({});
 gui.remember(CONFIG);
-gui.add(CONFIG, "time", ["MANUAL", "SEMI", "AUTO"]);
+gui.add(CONFIG, "time", ["MANUAL", "AUTO"]);
 gui.add(CONFIG, "instant_reset");
 import_shaku.default.input.setTargetElement(() => import_shaku.default.gfx.canvas);
 await import_shaku.default.init();
 document.body.appendChild(import_shaku.default.gfx.canvas);
 import_shaku.default.gfx.setResolution(800, 600, true);
 import_shaku.default.gfx.centerCanvas();
+import_shaku.default.startFrame();
+import_shaku.default.gfx.clear(import_shaku.default.utils.Color.darkslategray);
+import_shaku.default.endFrame();
 var instructions_font = await import_shaku.default.assets.loadMsdfFontTexture("fonts/Arial.ttf", { jsonUrl: "fonts/Arial.json", textureUrl: "fonts/Arial.png" });
 var player_texture = await import_shaku.default.assets.loadTexture("imgs/player.png", { generateMipMaps: true });
 var player_sprite = new import_sprite.default(player_texture);
@@ -11378,27 +11381,6 @@ var levels = [
       ]),
       new Spawner(new import_vector2.default(3, 3), import_vector2.default.right, null),
       new Crate(new import_vector2.default(2, 5), null)
-    ]
-  )),
-  new Level("wait_tut", 12, 5, new GameState(
-    -1,
-    0,
-    [
-      Walls.fromString(`
-                ...###....
-                ####.#####
-                #........#
-                ######.#.#
-                .....###.#
-                .......###
-            `),
-      new Targets([
-        new import_vector2.default(8, 4)
-      ]),
-      new Button(new import_vector2.default(4, 1), [0], false, null),
-      new TwoStateWall(new import_vector2.default(6, 2), import_vector2.default.down, false, null),
-      new Spawner(new import_vector2.default(1, 2), import_vector2.default.right, null),
-      new Crate(new import_vector2.default(8, 3), null)
     ]
   )),
   new Level("basic", 10, 5, new GameState(
@@ -11949,10 +11931,10 @@ var drawExtra = function() {
   intro_text_left_3.position.set(110, 290);
   let intro_text_right_3 = import_shaku.default.gfx.buildText(instructions_font, "Z/X to\nchange turn", 32, import_color.default.white, import_text_alignments.TextAlignments.Center);
   intro_text_right_3.position.set(690, 290);
+  let intro_text_2 = import_shaku.default.gfx.buildText(instructions_font, "Space to wait", 32, import_color.default.white, import_text_alignments.TextAlignments.Center);
+  intro_text_2.position.set(400, 410);
   let intro_text_4 = import_shaku.default.gfx.buildText(instructions_font, "R to restart, Esc. to select level", 28, import_color.default.white, import_text_alignments.TextAlignments.Center);
   intro_text_4.position.set(400, 550);
-  let use_space_text = import_shaku.default.gfx.buildText(instructions_font, "Space to wait", 32, import_color.default.white, import_text_alignments.TextAlignments.Center);
-  use_space_text.position.set(550, 90);
   let permanent_text_left = import_shaku.default.gfx.buildText(instructions_font, "Q/Z", 32, import_color.default.lightgrey, import_text_alignments.TextAlignments.Center);
   permanent_text_left.position.set(30, 420);
   let permanent_text_right = import_shaku.default.gfx.buildText(instructions_font, "E/X", 32, import_color.default.lightgrey, import_text_alignments.TextAlignments.Center);
@@ -11970,15 +11952,10 @@ var drawExtra = function() {
       import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
       import_shaku.default.gfx.drawGroup(intro_text_left_1, false);
       import_shaku.default.gfx.drawGroup(intro_text_right_1, false);
-      if (CONFIG.time === "MANUAL") {
-        import_shaku.default.gfx.drawGroup(intro_text_left_3, false);
-        import_shaku.default.gfx.drawGroup(intro_text_right_3, false);
-      }
+      import_shaku.default.gfx.drawGroup(intro_text_left_3, false);
+      import_shaku.default.gfx.drawGroup(intro_text_right_3, false);
+      import_shaku.default.gfx.drawGroup(intro_text_2, false);
       import_shaku.default.gfx.drawGroup(intro_text_4, false);
-      import_shaku.default.gfx.useEffect(null);
-    } else if (cur_level_n === 1) {
-      import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
-      import_shaku.default.gfx.drawGroup(use_space_text, false);
       import_shaku.default.gfx.useEffect(null);
     }
   };
@@ -11999,7 +11976,7 @@ function update() {
   import_shaku.default.gfx.useEffect(null);
   import_shaku.default.gfx.drawSprite(LOWER_SCREEN_SPRITE);
   if (selected_turn >= robot_tape.length) {
-    FULL_SCREEN_SPRITE.color = new import_color.default(0, 0, 0, 0.2);
+    FULL_SCREEN_SPRITE.color = new import_color.default(0, 0, 0, 0.4);
     import_shaku.default.gfx.drawSprite(FULL_SCREEN_SPRITE);
   }
   switch (state) {
@@ -12066,30 +12043,37 @@ function update() {
         selected_turn += 1;
         all_states = gameLogic(initial_state, robot_tape);
       } else {
-        if (CONFIG.time === "MANUAL") {
-          let time_left = 0.1;
-          row_1_background.color = COLOR_SYMBOL;
-          row_2_background.color = COLOR_SYMBOL;
-          doEveryFrameUntilTrue(() => {
-            import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_1 * SYMBOL_SIZE, -450));
-            import_shaku.default.gfx.drawSprite(row_1_background);
-            if (row_2 > 0) {
-              import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_2 * SYMBOL_SIZE, -525));
-              import_shaku.default.gfx.drawSprite(row_2_background);
-            }
-            import_shaku.default.gfx.resetCamera();
-            time_left -= import_shaku.default.gameTime.delta;
-            if (time_left < 0) {
-              row_1_background.color = COLOR_TAPE;
-              row_2_background.color = COLOR_TAPE;
-              return true;
-            }
-            return false;
-          });
-        } else if (CONFIG.time === "SEMI") {
+        if (input_symbol === 4 /* NONE */) {
           selected_turn += 1;
           if (selected_turn >= all_states.at(-1).major_turn) {
             all_states = gameLogic(initial_state, robot_tape);
+          }
+        } else {
+          if (CONFIG.time === "MANUAL") {
+            let time_left = 0.1;
+            row_1_background.color = COLOR_SYMBOL;
+            row_2_background.color = COLOR_SYMBOL;
+            doEveryFrameUntilTrue(() => {
+              import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_1 * SYMBOL_SIZE, -450));
+              import_shaku.default.gfx.drawSprite(row_1_background);
+              if (row_2 > 0) {
+                import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_2 * SYMBOL_SIZE, -525));
+                import_shaku.default.gfx.drawSprite(row_2_background);
+              }
+              import_shaku.default.gfx.resetCamera();
+              time_left -= import_shaku.default.gameTime.delta;
+              if (time_left < 0) {
+                row_1_background.color = COLOR_TAPE;
+                row_2_background.color = COLOR_TAPE;
+                return true;
+              }
+              return false;
+            });
+          } else if (CONFIG.time === "SEMI") {
+            selected_turn += 1;
+            if (selected_turn >= all_states.at(-1).major_turn) {
+              all_states = gameLogic(initial_state, robot_tape);
+            }
           }
         }
       }
