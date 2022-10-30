@@ -139,6 +139,7 @@ class Level {
 class GameState {
     public empty: boolean;
     public someChanges: boolean;
+    public won: boolean;
     constructor(
         public major_turn: number,
         public minor_turn: number,
@@ -146,6 +147,7 @@ class GameState {
     ) {
         this.empty = false;
         this.someChanges = true;
+        this.won = false;
     }
 
     draw(turn_time: number) {
@@ -260,6 +262,7 @@ class GameState {
         filler_state.empty = true;
         filler_state.someChanges = result.length > 0;
         result.push(filler_state);
+        filler_state.won = filler_state.isWon();
         return result;
     }
 
@@ -729,20 +732,20 @@ let levels = [
         -1, 0,
         [
             Walls.fromString(`
-                ########......
-                #......#######
-                #####........#
-                ....##.#######
-                .....###......
+                #########.......
+                #.......########
+                ######.........#
+                .....##.########
+                ......###......
             `),
             new Targets([
-                new Vector2(1, 1),
-                new Vector2(12, 2),
+                new Vector2(2, 1),
+                new Vector2(13, 2),
             ]),
 
-            new Spawner(new Vector2(6, 3), Vector2.up, null),
-            new Crate(new Vector2(5, 1), null),
-            new Crate(new Vector2(8, 2), null),
+            new Spawner(new Vector2(7, 3), Vector2.up, null),
+            new Crate(new Vector2(6, 1), null),
+            new Crate(new Vector2(9, 2), null),
         ],
     )),
     new Level("move_spawner", 6, 4, new GameState(
@@ -1010,6 +1013,30 @@ let levels = [
 
             new Spawner(new Vector2(1, 2), Vector2.right, null),
             new Crate(new Vector2(6, 2), null),
+        ],
+    )),
+    new Level("tree", 14, 4, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ..##########...
+                .##........#...
+                ##..########...
+                #..........#...
+                ###..##########
+                ..##..........#
+                ...############
+            `),
+            new Targets([
+                new Vector2(9, 1),
+                new Vector2(9, 3),
+                new Vector2(12, 5),
+            ]),
+
+            new Spawner(new Vector2(1, 3), Vector2.right, null),
+            new Crate(new Vector2(6, 1), null),
+            new Crate(new Vector2(6, 3), null),
+            new Crate(new Vector2(6, 5), null),
         ],
     )),
     new Level("sandbox", 30, 1, new GameState(
@@ -1388,7 +1415,7 @@ function update() {
             }
         }
 
-        if (time_offset === 0 && CONFIG.time === "AUTO" && all_states[cur_turn].major_turn >= robot_tape.length && all_states[cur_turn].minor_turn == 0 && all_states[cur_turn].someChanges) {
+        if (time_offset === 0 && CONFIG.time === "AUTO" && all_states[cur_turn].major_turn >= robot_tape.length && all_states[cur_turn].minor_turn == 0 && all_states[cur_turn].someChanges && !all_states[cur_turn].won) {
             selected_turn += 1;
             if (selected_turn >= all_states.at(-1)!.major_turn) {
                 all_states = gameLogic(initial_state, robot_tape);
@@ -1665,7 +1692,7 @@ function update() {
             openCurInEditor();
         }
 
-        if (!EDITOR && !changing_level && time_offset === 0 && all_states[cur_turn].isWon()) {
+        if (!EDITOR && !changing_level && time_offset === 0 && all_states[cur_turn].won) {
             if (cur_level_n < levels.length - 1) {
                 initTransitionToLevel(cur_level_n + 1);
             }
