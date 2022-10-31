@@ -5246,7 +5246,7 @@ var require_gfx = __commonJS({
     var Vector22 = require_vector2();
     var FontTextureAsset = require_font_texture_asset();
     var MsdfFontTextureAsset = require_msdf_font_texture_asset();
-    var { TextAlignment, TextAlignments: TextAlignments2 } = require_text_alignments();
+    var { TextAlignment: TextAlignment2, TextAlignments: TextAlignments2 } = require_text_alignments();
     var Mesh = require_mesh();
     var Circle = require_circle();
     var SpriteBatch = require_sprite_batch();
@@ -10902,8 +10902,9 @@ tape_low.origin = new import_vector2.default(0, -8 / (SYMBOL_SIZE * 1.5));
 tape_low.size.set(SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16);
 tape_low.color = COLOR_LOW;
 var Level = class {
-  constructor(dev_name, n_moves, n_delay, initial_state2) {
+  constructor(dev_name, public_name, n_moves, n_delay, initial_state2) {
     this.dev_name = dev_name;
+    this.public_name = public_name;
     this.n_moves = n_moves;
     this.n_delay = n_delay;
     this.initial_state = initial_state2;
@@ -11337,33 +11338,8 @@ var _Player = class extends Pushable {
 };
 var Player = _Player;
 __publicField(Player, "_brightColor", new import_color.default(1.3, 1.3, 1.3, 1));
-var level_editor = new Level("editor", 30, 5, new GameState(
-  -1,
-  0,
-  [
-    Walls.fromString(`
-#...###########.
-....#.........#.
-....#.........#.
-.####.........#.
-.#............#.
-.#............#.
-.#............#.
-.#............#.
-.##############.
-        `),
-    new Targets([
-      new import_vector2.default(6, 2)
-    ]),
-    new Button(new import_vector2.default(8, 4), [0], false, null),
-    new TwoStateWall(new import_vector2.default(7, 3), import_vector2.default.up, false, null),
-    new Spawner(new import_vector2.default(6, 6), import_vector2.default.right, null),
-    new Crate(new import_vector2.default(5, 3), null),
-    new Crate(new import_vector2.default(10, 2), null)
-  ]
-));
 var levels = [
-  new Level("first", 12, 4, new GameState(
+  new Level("first", "spiral", 12, 4, new GameState(
     -1,
     0,
     [
@@ -11383,7 +11359,7 @@ var levels = [
       new Crate(new import_vector2.default(2, 5), null)
     ]
   )),
-  new Level("basic", 10, 5, new GameState(
+  new Level("basic", "smol", 10, 5, new GameState(
     -1,
     0,
     [
@@ -11402,7 +11378,7 @@ var levels = [
       new Crate(new import_vector2.default(4, 2), null)
     ]
   )),
-  new Level("auto", 2, 1, new GameState(
+  new Level("auto", "sausage", 2, 1, new GameState(
     -1,
     0,
     [
@@ -11419,10 +11395,10 @@ var levels = [
       ]),
       new Spawner(new import_vector2.default(7, 3), import_vector2.default.up, null),
       new Crate(new import_vector2.default(6, 1), null),
-      new Crate(new import_vector2.default(9, 2), null)
+      new Crate(new import_vector2.default(8, 2), null)
     ]
   )),
-  new Level("move_spawner", 6, 4, new GameState(
+  new Level("move_spawner", "hat", 6, 4, new GameState(
     -1,
     0,
     [
@@ -11454,7 +11430,7 @@ var levels = [
       new Crate(new import_vector2.default(8, 2), null)
     ]
   )),
-  new Level("filler", 11, 2, new GameState(
+  new Level("filler", "whale", 11, 2, new GameState(
     -1,
     0,
     [
@@ -11484,7 +11460,7 @@ var levels = [
       new Crate(new import_vector2.default(8, 4), null)
     ]
   )),
-  new Level("microban", 8, 5, new GameState(
+  new Level("microban", "microban", 8, 5, new GameState(
     -1,
     0,
     [
@@ -11504,7 +11480,7 @@ var levels = [
       new Crate(new import_vector2.default(3, 4), null)
     ]
   )),
-  new Level("bistable_push", 6, 2, new GameState(
+  new Level("bistable_push", "prongs", 6, 2, new GameState(
     -1,
     0,
     [
@@ -11524,7 +11500,7 @@ var levels = [
       new Crate(new import_vector2.default(6, 3), null)
     ]
   )),
-  new Level("two_directions", 5, 2, new GameState(
+  new Level("two_directions", "stairs", 5, 2, new GameState(
     -1,
     0,
     [
@@ -11545,7 +11521,7 @@ var levels = [
       new Crate(new import_vector2.default(2, 4), null)
     ]
   )),
-  new Level("bistable", 8, 3, new GameState(
+  new Level("bistable", "claw", 8, 3, new GameState(
     -1,
     0,
     [
@@ -11567,7 +11543,7 @@ var levels = [
       new Crate(new import_vector2.default(6, 5), null)
     ]
   )),
-  new Level("gaps", 8, 3, new GameState(
+  new Level("gaps", "car", 8, 3, new GameState(
     -1,
     0,
     [
@@ -11601,7 +11577,26 @@ var levels = [
       new Crate(new import_vector2.default(11, 2), null)
     ]
   )),
-  new Level("u_chain", 16, 2, new GameState(
+  new Level("twice", "spaceship", 19, 13, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                ..###.....
+                ..#.######
+                ###......#
+                #...##...#
+                ##...#####
+                .#####....
+            `),
+      new Targets([
+        new import_vector2.default(4, 4)
+      ]),
+      new Spawner(new import_vector2.default(1, 3), import_vector2.default.right, null),
+      new Crate(new import_vector2.default(7, 2), null)
+    ]
+  )),
+  new Level("u_chain", "eyes", 16, 2, new GameState(
     -1,
     0,
     [
@@ -11631,26 +11626,7 @@ var levels = [
       new Crate(new import_vector2.default(8, 4), null)
     ]
   )),
-  new Level("twice", 19, 7, new GameState(
-    -1,
-    0,
-    [
-      Walls.fromString(`
-                ..###..
-                ###.###
-                #.....#
-                #.#...#
-                #....##
-                ######.
-            `),
-      new Targets([
-        new import_vector2.default(4, 4)
-      ]),
-      new Spawner(new import_vector2.default(1, 4), import_vector2.default.up, null),
-      new Crate(new import_vector2.default(4, 2), null)
-    ]
-  )),
-  new Level("compose", 19, 13, new GameState(
+  new Level("compose", "nose", 19, 11, new GameState(
     -1,
     0,
     [
@@ -11669,7 +11645,7 @@ var levels = [
       new Crate(new import_vector2.default(7, 2), null)
     ]
   )),
-  new Level("basic_reversed", 17, 3, new GameState(
+  new Level("basic_reversed", "duck", 17, 3, new GameState(
     -1,
     0,
     [
@@ -11688,7 +11664,7 @@ var levels = [
       new Crate(new import_vector2.default(6, 2), null)
     ]
   )),
-  new Level("tree", 14, 4, new GameState(
+  new Level("tree", "trident", 14, 4, new GameState(
     -1,
     0,
     [
@@ -11712,7 +11688,7 @@ var levels = [
       new Crate(new import_vector2.default(6, 5), null)
     ]
   )),
-  new Level("sandbox", 30, 1, new GameState(
+  new Level("sandbox", "_dev", 30, 1, new GameState(
     -1,
     0,
     [
@@ -11760,8 +11736,10 @@ var row_2_background = new import_sprite.default(import_shaku.default.gfx.whiteT
 row_2_background.origin = import_vector2.default.zero;
 row_2_background.color = COLOR_TAPE;
 var cur_level_n = 0;
+var cur_level;
 load_level(levels[cur_level_n]);
 function load_level(level) {
+  cur_level = level;
   selected_turn = 0;
   cur_turn = 0;
   time_offset = 0;
@@ -11960,12 +11938,12 @@ var drawExtra = function() {
     }
   };
 }();
-var generateText = (0, import_lodash.default)((text, x, y, size = 32, color = import_color.default.white) => {
+var generateText = (0, import_lodash.default)((text, x, y, size = 32, color = import_color.default.white, aligment = import_text_alignments.TextAlignments.Center) => {
   console.log("building text");
-  let group = import_shaku.default.gfx.buildText(instructions_font, text, size, color, import_text_alignments.TextAlignments.Center);
+  let group = import_shaku.default.gfx.buildText(instructions_font, text, size, color, aligment);
   group.position.set(x, y);
   return group;
-});
+}, (text, x, y) => text + x.toString() + y.toString());
 var editor_button_looking_for_target = -1;
 function update() {
   import_shaku.default.startFrame();
@@ -12320,16 +12298,20 @@ function update() {
     }
     import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
     for (let k = 0; k < levels.length; k++) {
-      let text_spr = generateText(
-        (k + 1).toString(),
+      let name_spr = generateText(
+        levels[k].public_name,
         k % menu_row_size * menu_button_spacing + menu_button_spacing / 3 + menu_button_size / 2,
         Math.floor(k / menu_row_size) * menu_button_spacing + menu_button_spacing / 3 + menu_button_size / 5,
-        42
+        18
       );
-      import_shaku.default.gfx.drawGroup(text_spr, false);
+      import_shaku.default.gfx.drawGroup(name_spr, false);
     }
     import_shaku.default.gfx.useEffect(null);
   }
+  let level_name_spr = generateText(cur_level.public_name, 5, 0, 24, import_color.default.white, import_text_alignments.TextAlignments.Left);
+  import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
+  import_shaku.default.gfx.drawGroup(level_name_spr, false);
+  import_shaku.default.gfx.useEffect(null);
   kalbakUpdate();
   import_shaku.default.endFrame();
   import_shaku.default.requestAnimationFrame(update);
