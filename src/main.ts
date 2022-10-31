@@ -1128,32 +1128,13 @@ let levels = [
             new Crate(new Vector2(6, 5), null),
         ],
     )),
-    new Level("sandbox", "_dev", 30, 1, new GameState(
-        -1, 0,
-        [
-            Walls.fromString(`
-                ###########
-                #.........#
-                #.........#
-                #.........#
-                #.........#
-                #.........#
-                ###########
-            `),
-            new Targets([
-            ]),
-
-            new Spawner(new Vector2(4, 3), Vector2.right, null),
-            new Crate(new Vector2(3, 2), null),
-            new Crate(new Vector2(5, 4), null),
-        ],
-    )),
 ]
 
 enum STATE {
     INTRO,
     GAME,
     MENU,
+    END,
 }
 
 let state = STATE.INTRO;
@@ -1368,7 +1349,7 @@ function drawSymbolsChanging(dt: number, lower_row: boolean) {
     }
 }
 
-let changing_level = false;
+let exiting_level = false;
 let EDITOR = false;
 
 let menu_selected_level = 0;
@@ -1483,7 +1464,7 @@ function update() {
     // changing game state
     switch (state) {
         case STATE.GAME:
-            if (time_offset === 0 && !changing_level && Shaku.input.pressed("escape")) {
+            if (time_offset === 0 && !exiting_level && Shaku.input.pressed("escape")) {
                 menu_selected_level = cur_level_n;
                 state = STATE.MENU;
             }
@@ -1511,7 +1492,7 @@ function update() {
             }
         }
 
-        if (!changing_level && Shaku.input?.pressed(["r"])) {
+        if (!exiting_level && Shaku.input?.pressed(["r"])) {
             selected_turn = 0;
             if (CONFIG.instant_reset) {
                 cur_turn = 0;
@@ -1768,6 +1749,26 @@ function update() {
 
     Shaku.gfx.resetCamera()
 
+    if (state === STATE.END) {
+        Shaku.gfx.useEffect(background_effect);
+        // @ts-ignore
+        background_effect.uniforms["u_aspect_ratio"](FULL_SCREEN_SPRITE.size.x / FULL_SCREEN_SPRITE.size.y);
+        Shaku.gfx.drawSprite(FULL_SCREEN_SPRITE);
+        // @ts-ignore
+        Shaku.gfx.useEffect(null);
+
+        // Shaku.gfx.drawSprite(LOWER_SCREEN_SPRITE);
+        Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
+        Shaku.gfx.drawGroup(generateText("Thanks for\nplaying!", 400, 100, 112, Color.white), false);
+        // @ts-ignore
+        Shaku.gfx.useEffect(null);
+
+        if (Shaku.input.pressed("escape")) {
+            menu_selected_level = -1;
+            state = STATE.MENU;
+        }
+    }
+
     if (state === STATE.GAME) {
         // console.log(Math.abs(all_states[cur_turn].major_turn - selected_turn));
         // time_offset = moveTowards(time_offset, 0, Shaku.gameTime.delta! / miniturn_duration);
@@ -1798,14 +1799,16 @@ function update() {
             time_offset = moveTowards(time_offset, 0, Shaku.gameTime.delta! * boost / miniturn_duration);
         }
 
-        if (!changing_level && !EDITOR && Shaku.input.pressed("dash")) {
+        if (!exiting_level && !EDITOR && Shaku.input.pressed("dash")) {
             EDITOR = true;
             openCurInEditor();
         }
 
-        if (!EDITOR && !changing_level && time_offset === 0 && all_states[cur_turn].won) {
+        if (!EDITOR && !exiting_level && time_offset === 0 && all_states[cur_turn].won) {
             if (cur_level_n < levels.length - 1) {
                 initTransitionToLevel(cur_level_n + 1);
+            } else {
+                initTransitionToExitLevel(() => initTransitionToEnterEnd());
             }
         }
     }
@@ -1924,31 +1927,65 @@ function update() {
     Shaku.requestAnimationFrame(update);
 }
 
-function initTransitionToLevel(n: number) {
-    /** -1 to 1; -1 to 0 is exiting prev level, 0 to 1 is entering new one */
-    let changing_level_time = -1;
-    changing_level = true;
+function initTransitionToExitLevel(next_thing: Function) {
+    let exit_level_time = 0;
+    exiting_level = true;
     doEveryFrameUntilTrue(() => {
         // todo: cooler transition
-        FULL_SCREEN_SPRITE.color = new Color(0, 0, 0, 1 - Math.abs(changing_level_time));
+        FULL_SCREEN_SPRITE.color = new Color(0, 0, 0, exit_level_time);
         Shaku.gfx.drawSprite(FULL_SCREEN_SPRITE);
 
-        let prev = changing_level_time;
-        changing_level_time = moveTowards(prev, 1, Shaku.gameTime.delta * 3);
-        if (prev < 0 && changing_level_time >= 0) {
-            state = STATE.GAME;
-            changing_level = false;
-            cur_level_n = n;
-            load_level(levels[n]);
+        exit_level_time = moveTowards(exit_level_time, 1, Shaku.gameTime.delta * 3);
+
+        if (exit_level_time >= 1) {
+            exiting_level = false;
+            next_thing();
+            return true;
         }
-        return changing_level_time >= 1;
-    })
+        return false;
+    });
+}
+
+function initTransitionToEnterLevel(n: number) {
+    let enter_level_time = 0;
+
+    state = STATE.GAME;
+    cur_level_n = n;
+    load_level(levels[n]);
+
+    doEveryFrameUntilTrue(() => {
+        // todo: cooler transition
+        FULL_SCREEN_SPRITE.color = new Color(0, 0, 0, 1 - enter_level_time);
+        Shaku.gfx.drawSprite(FULL_SCREEN_SPRITE);
+
+        enter_level_time = moveTowards(enter_level_time, 1, Shaku.gameTime.delta * 3);
+
+        return enter_level_time >= 1;
+    });
+}
+
+function initTransitionToEnterEnd() {
+    let enter_end_time = 0;
+    state = STATE.END;
+    doEveryFrameUntilTrue(() => {
+        // todo: cooler transition
+        FULL_SCREEN_SPRITE.color = new Color(0, 0, 0, 1 - enter_end_time);
+        Shaku.gfx.drawSprite(FULL_SCREEN_SPRITE);
+
+        enter_end_time = moveTowards(enter_end_time, 1, Shaku.gameTime.delta * 3);
+
+        return enter_end_time >= 1;
+    });
+}
+
+function initTransitionToLevel(n: number) {
+    initTransitionToExitLevel(() => initTransitionToEnterLevel(n));
 }
 
 let _cooling_time_left: Record<string, number> = {};
 let _press_count: Record<string, number> = {};
 function pressed_throttled(code: string | string[], dt: number): boolean {
-    if (changing_level) return false;
+    if (exiting_level) return false;
     let key = Array.isArray(code) ? code.join('') : code;
     if (!(key in _cooling_time_left)) {
         _cooling_time_left[key] = 0;

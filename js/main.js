@@ -11743,25 +11743,6 @@ var levels = [
       new Crate(new import_vector2.default(6, 3), null),
       new Crate(new import_vector2.default(6, 5), null)
     ]
-  )),
-  new Level("sandbox", "_dev", 30, 1, new GameState(
-    -1,
-    0,
-    [
-      Walls.fromString(`
-                ###########
-                #.........#
-                #.........#
-                #.........#
-                #.........#
-                #.........#
-                ###########
-            `),
-      new Targets([]),
-      new Spawner(new import_vector2.default(4, 3), import_vector2.default.right, null),
-      new Crate(new import_vector2.default(3, 2), null),
-      new Crate(new import_vector2.default(5, 4), null)
-    ]
   ))
 ];
 var state = 0 /* INTRO */;
@@ -11950,7 +11931,7 @@ function drawSymbolsChanging(dt, lower_row) {
     }
   }
 }
-var changing_level = false;
+var exiting_level = false;
 var EDITOR = false;
 var menu_selected_level = 0;
 var drawExtra = function() {
@@ -12014,7 +11995,7 @@ function update() {
   }
   switch (state) {
     case 1 /* GAME */:
-      if (time_offset === 0 && !changing_level && import_shaku.default.input.pressed("escape")) {
+      if (time_offset === 0 && !exiting_level && import_shaku.default.input.pressed("escape")) {
         menu_selected_level = cur_level_n;
         state = 2 /* MENU */;
       }
@@ -12038,7 +12019,7 @@ function update() {
         all_states = gameLogic(initial_state, robot_tape);
       }
     }
-    if (!changing_level && import_shaku.default.input?.pressed(["r"])) {
+    if (!exiting_level && import_shaku.default.input?.pressed(["r"])) {
       selected_turn = 0;
       if (CONFIG.instant_reset) {
         cur_turn = 0;
@@ -12288,6 +12269,19 @@ function update() {
     }
   }
   import_shaku.default.gfx.resetCamera();
+  if (state === 3 /* END */) {
+    import_shaku.default.gfx.useEffect(background_effect);
+    background_effect.uniforms["u_aspect_ratio"](FULL_SCREEN_SPRITE.size.x / FULL_SCREEN_SPRITE.size.y);
+    import_shaku.default.gfx.drawSprite(FULL_SCREEN_SPRITE);
+    import_shaku.default.gfx.useEffect(null);
+    import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
+    import_shaku.default.gfx.drawGroup(generateText("Thanks for\nplaying!", 400, 100, 112, import_color.default.white), false);
+    import_shaku.default.gfx.useEffect(null);
+    if (import_shaku.default.input.pressed("escape")) {
+      menu_selected_level = -1;
+      state = 2 /* MENU */;
+    }
+  }
   if (state === 1 /* GAME */) {
     if (time_offset !== 0) {
       let turn_dist = Math.abs(all_states[cur_turn].major_turn - selected_turn);
@@ -12311,13 +12305,15 @@ function update() {
       }
       time_offset = moveTowards(time_offset, 0, import_shaku.default.gameTime.delta * boost / miniturn_duration);
     }
-    if (!changing_level && !EDITOR && import_shaku.default.input.pressed("dash")) {
+    if (!exiting_level && !EDITOR && import_shaku.default.input.pressed("dash")) {
       EDITOR = true;
       openCurInEditor();
     }
-    if (!EDITOR && !changing_level && time_offset === 0 && all_states[cur_turn].won) {
+    if (!EDITOR && !exiting_level && time_offset === 0 && all_states[cur_turn].won) {
       if (cur_level_n < levels.length - 1) {
         initTransitionToLevel(cur_level_n + 1);
+      } else {
+        initTransitionToExitLevel(() => initTransitionToEnterEnd());
       }
     }
   }
@@ -12400,27 +12396,50 @@ function update() {
   import_shaku.default.endFrame();
   import_shaku.default.requestAnimationFrame(update);
 }
-function initTransitionToLevel(n) {
-  let changing_level_time = -1;
-  changing_level = true;
+function initTransitionToExitLevel(next_thing) {
+  let exit_level_time = 0;
+  exiting_level = true;
   doEveryFrameUntilTrue(() => {
-    FULL_SCREEN_SPRITE.color = new import_color.default(0, 0, 0, 1 - Math.abs(changing_level_time));
+    FULL_SCREEN_SPRITE.color = new import_color.default(0, 0, 0, exit_level_time);
     import_shaku.default.gfx.drawSprite(FULL_SCREEN_SPRITE);
-    let prev = changing_level_time;
-    changing_level_time = moveTowards(prev, 1, import_shaku.default.gameTime.delta * 3);
-    if (prev < 0 && changing_level_time >= 0) {
-      state = 1 /* GAME */;
-      changing_level = false;
-      cur_level_n = n;
-      load_level(levels[n]);
+    exit_level_time = moveTowards(exit_level_time, 1, import_shaku.default.gameTime.delta * 3);
+    if (exit_level_time >= 1) {
+      exiting_level = false;
+      next_thing();
+      return true;
     }
-    return changing_level_time >= 1;
+    return false;
   });
+}
+function initTransitionToEnterLevel(n) {
+  let enter_level_time = 0;
+  state = 1 /* GAME */;
+  cur_level_n = n;
+  load_level(levels[n]);
+  doEveryFrameUntilTrue(() => {
+    FULL_SCREEN_SPRITE.color = new import_color.default(0, 0, 0, 1 - enter_level_time);
+    import_shaku.default.gfx.drawSprite(FULL_SCREEN_SPRITE);
+    enter_level_time = moveTowards(enter_level_time, 1, import_shaku.default.gameTime.delta * 3);
+    return enter_level_time >= 1;
+  });
+}
+function initTransitionToEnterEnd() {
+  let enter_end_time = 0;
+  state = 3 /* END */;
+  doEveryFrameUntilTrue(() => {
+    FULL_SCREEN_SPRITE.color = new import_color.default(0, 0, 0, 1 - enter_end_time);
+    import_shaku.default.gfx.drawSprite(FULL_SCREEN_SPRITE);
+    enter_end_time = moveTowards(enter_end_time, 1, import_shaku.default.gameTime.delta * 3);
+    return enter_end_time >= 1;
+  });
+}
+function initTransitionToLevel(n) {
+  initTransitionToExitLevel(() => initTransitionToEnterLevel(n));
 }
 var _cooling_time_left = {};
 var _press_count = {};
 function pressed_throttled(code, dt) {
-  if (changing_level)
+  if (exiting_level)
     return false;
   let key = Array.isArray(code) ? code.join("") : code;
   if (!(key in _cooling_time_left)) {
