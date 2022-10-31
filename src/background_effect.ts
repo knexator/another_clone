@@ -22,6 +22,7 @@ const fragmentShader = `#version 300 es
 precision highp float;
 
 uniform float u_time;
+uniform float u_alpha;
 
 in vec2 v_texCoord;
 out vec4 FragColor;
@@ -112,10 +113,10 @@ void main(void) {
     uv.x += u_time * 0.01 * cos(log(u_time) + .4);
     uv.y += u_time * 0.01 * sin(log(u_time) + .4);
     //float noise = texture(iChannel0, uv).x;
-    float noise = simplex3d(vec3(uv * 10.0, u_time*0.21));
+    float noise = simplex3d(vec3(uv * 10.0, u_time*0.21)) * clamp(u_time - .3, 0.0, 1.0);
 
     // Output to screen
-    FragColor = vec4(mix(vec3(.1843, .3098, .3098), vec3(.149, .2471, .2471), noise), 1.0);
+    FragColor = vec4(u_alpha * mix(vec3(.1843, .3098, .3098), vec3(.149, .2471, .2471), noise), u_alpha);
 }`;
 
 export class BackgroundEffect extends Effect {
@@ -136,6 +137,7 @@ export class BackgroundEffect extends Effect {
             "u_world": { type: Effect.UniformTypes.Matrix, bind: Effect.UniformBinds.World },
             "u_time": { type: Effect.UniformTypes.Float, bind: "u_time" },
             "u_aspect_ratio": { type: Effect.UniformTypes.Float, bind: "u_aspect_ratio" },
+            "u_alpha": { type: Effect.UniformTypes.Float, bind: "u_alpha" },
         };
     }
 

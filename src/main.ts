@@ -16,6 +16,7 @@ import { BackgroundEffect } from "./background_effect";
 import { kalbakUpdate, doOnceOnTrue, doEveryFrameUntilTrue } from "./kalbak";
 import memoize from "lodash.memoize";
 import * as dat from 'dat.gui';
+import MsdfFontTextureAsset from "shaku/types/assets/msdf_font_texture_asset";
 
 let miniturn_duration = 0.25;
 let margin_fraction = 0.3;
@@ -44,11 +45,43 @@ Shaku.gfx!.setResolution(800, 600, true);
 Shaku.gfx!.centerCanvas();
 // Shaku.gfx!.maximizeCanvasSize(false, false);
 
+// let game_size = new Vector2(800, 400);
+let game_size = new Vector2(800, 450);
+
+const logo_texture = await Shaku.assets.loadTexture("imgs/logo.png", { generateMipMaps: true });
+const logo_sprite = new Sprite(logo_texture);
+logo_sprite.origin.set(0, 0);
+
+const logo_start_texture = await Shaku.assets.loadTexture("imgs/start.png", { generateMipMaps: true });
+const logo_start_sprite = new Sprite(logo_start_texture);
+logo_start_sprite.origin.set(0, 0);
+
+const LOWER_SCREEN_SPRITE = new Sprite(Shaku.gfx.whiteTexture);
+LOWER_SCREEN_SPRITE.origin = Vector2.zero;
+LOWER_SCREEN_SPRITE.size.set(800, 600 - game_size.y);
+LOWER_SCREEN_SPRITE.position.set(0, game_size.y);
+LOWER_SCREEN_SPRITE.color = Color.fromHex("#2B849C")
+
+
 Shaku.startFrame();
 Shaku.gfx!.clear(Shaku.utils.Color.darkslategray);
+Shaku.gfx.drawSprite(logo_sprite);
+Shaku.gfx.drawSprite(LOWER_SCREEN_SPRITE);
+// Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
+// Shaku.gfx.drawGroup(generateText("Another\nClone", 400, 200, 64, Color.wheat, TextAlignments.Center, logo_font), false);
 Shaku.endFrame();
 
 let instructions_font = await Shaku.assets.loadMsdfFontTexture('fonts/Arial.ttf', { jsonUrl: 'fonts/Arial.json', textureUrl: 'fonts/Arial.png' });
+
+const dirs_texture = await Shaku.assets.loadTexture("imgs/directions.png", { generateMipMaps: true });
+const dirs_sprite = new Sprite(dirs_texture, new Rectangle(0, 0, 150, 100));
+dirs_sprite.position.set(400, 375);
+const space_texture = await Shaku.assets.loadTexture("imgs/spacebar.png", { generateMipMaps: true });
+const space_sprite = new Sprite(space_texture);
+space_sprite.position.set(150, 400);
+const undo_texture = await Shaku.assets.loadTexture("imgs/undo_redo.png", { generateMipMaps: true });
+const undo_sprite = new Sprite(undo_texture, new Rectangle(0, 0, 200, 50));
+undo_sprite.position.set(650, 400);
 
 const player_texture = await Shaku.assets.loadTexture("imgs/player.png", { generateMipMaps: true });
 // player_texture.filter = TextureFilterModes.LinearMipmapLinear;
@@ -671,24 +704,23 @@ class Player extends Pushable {
 ));*/
 
 let levels = [
-    new Level("first", "spiral", 12, 4, new GameState(
+    new Level("first", "sofa", 17, 4, new GameState(
         -1, 0,
         [
             Walls.fromString(`
-                #######
-                #.....#
-                #.###.#
-                #.#...#
-                #.#####
-                #.....#
-                #######
+                .###########
+                .#.........#
+                #########..#
+                #.........##
+                #...####..#.
+                #####..####.
             `),
             new Targets([
-                new Vector2(5, 5),
+                new Vector2(2, 1),
             ]),
 
-            new Spawner(new Vector2(3, 3), Vector2.right, null),
-            new Crate(new Vector2(2, 5), null),
+            new Spawner(new Vector2(3, 4), Vector2.left, null),
+            new Crate(new Vector2(2, 3), null),
         ],
     )),
     /*new Level("wait_tut", 12, 5, new GameState(
@@ -1119,11 +1151,12 @@ let levels = [
 ]
 
 enum STATE {
+    INTRO,
     GAME,
     MENU,
 }
 
-let state = STATE.GAME;
+let state = STATE.INTRO;
 
 enum TAPE_SYMBOL {
     LEFT,
@@ -1155,9 +1188,6 @@ let level_offset = Vector2.zero;
 let row_1 = 0;
 let row_2 = 0;
 
-// let game_size = new Vector2(800, 400);
-let game_size = new Vector2(800, 450);
-
 let row_1_background = new Sprite(Shaku.gfx.whiteTexture);
 row_1_background.origin = Vector2.zero;
 row_1_background.color = COLOR_TAPE;
@@ -1181,6 +1211,9 @@ function load_level(level: Level) {
     initial_state = level.initial_state.nextStates().at(-1)!;
     all_states = gameLogic(initial_state, robot_tape);
     level_offset = new Vector2(initial_state.wall.w, initial_state.wall.h).mul(TILE_SIZE).sub(game_size).add(TILE_SIZE, TILE_SIZE).mul(.5);
+    if (level.dev_name === "first") {
+        level_offset.y += TILE_SIZE * .5;
+    }
 }
 
 function openCurInEditor() {
@@ -1302,12 +1335,6 @@ background_effect.uniforms["u_aspect_ratio"](MAIN_SCREEN_SPRITE.size.x / MAIN_SC
 // @ts-ignore
 Shaku.gfx.useEffect(null);
 
-const LOWER_SCREEN_SPRITE = new Sprite(Shaku.gfx.whiteTexture);
-LOWER_SCREEN_SPRITE.origin = Vector2.zero;
-LOWER_SCREEN_SPRITE.size.set(800, 600 - game_size.y);
-LOWER_SCREEN_SPRITE.position.set(0, game_size.y);
-LOWER_SCREEN_SPRITE.color = Color.fromHex("#2B849C")
-
 const FULL_SCREEN_SPRITE = new Sprite(Shaku.gfx.whiteTexture);
 FULL_SCREEN_SPRITE.origin = Vector2.zero;
 FULL_SCREEN_SPRITE.size = Shaku.gfx.getCanvasSize();
@@ -1386,19 +1413,27 @@ let drawExtra = function () {
         }
         if (EDITOR) return;
         if (cur_level_n === 0) {
-            Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
-            Shaku.gfx.drawGroup(intro_text_left_1, false);
-            Shaku.gfx.drawGroup(intro_text_right_1, false);
-            // Shaku.gfx.drawGroup(intro_text_left_2, false);
-            // Shaku.gfx.drawGroup(intro_text_right_2, false);
-            // if (CONFIG.time === "MANUAL") {
-            Shaku.gfx.drawGroup(intro_text_left_3, false);
-            Shaku.gfx.drawGroup(intro_text_right_3, false);
-            // }
-            Shaku.gfx.drawGroup(intro_text_2, false);
-            Shaku.gfx.drawGroup(intro_text_4, false);
-            // @ts-ignore
-            Shaku.gfx.useEffect(null);
+            // Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
+            // Shaku.gfx.drawGroup(intro_text_left_1, false);
+            // Shaku.gfx.drawGroup(intro_text_right_1, false);
+            // // Shaku.gfx.drawGroup(intro_text_left_2, false);
+            // // Shaku.gfx.drawGroup(intro_text_right_2, false);
+            // // if (CONFIG.time === "MANUAL") {
+            // Shaku.gfx.drawGroup(intro_text_left_3, false);
+            // Shaku.gfx.drawGroup(intro_text_right_3, false);
+            // // }
+            // Shaku.gfx.drawGroup(intro_text_2, false);
+            // Shaku.gfx.drawGroup(intro_text_4, false);
+            // // @ts-ignore
+            // Shaku.gfx.useEffect(null);
+
+            dirs_sprite.sourceRect.y = (Shaku.gameTime.elapsed % 2) < 1 ? 0 : 100;
+            undo_sprite.sourceRect.y = (Shaku.gameTime.elapsed % 2) < 1 ? 0 : 50;
+
+            Shaku.gfx.drawSprite(dirs_sprite);
+            Shaku.gfx.drawSprite(space_sprite);
+            Shaku.gfx.drawSprite(undo_sprite);
+
         } /*else if (cur_level_n === 1) {
             Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
             Shaku.gfx.drawGroup(use_space_text, false);
@@ -1408,13 +1443,15 @@ let drawExtra = function () {
     }
 }();
 
-let generateText = memoize((text: string, x: number, y: number, size: number = 32, color: Color = Color.white, aligment: TextAlignment = TextAlignments.Center) => {
+let generateText = memoize((text: string, x: number, y: number, size: number = 32, color: Color = Color.white, aligment: TextAlignment = TextAlignments.Center, font: MsdfFontTextureAsset = instructions_font) => {
     console.log("building text");
-    let group = Shaku.gfx.buildText(instructions_font, text, size, color, aligment);
+    let group = Shaku.gfx.buildText(font, text, size, color, aligment);
     group.position.set(x, y);
     return group;
 }, (text, x, y) => text + x.toString() + y.toString());
 
+/** From 0 to 1 */
+let intro_exit_time = 0;
 let editor_button_looking_for_target = -1;
 // do a single main loop step and request the next step
 function update() {
@@ -1425,11 +1462,17 @@ function update() {
     Shaku.gfx.useEffect(background_effect);
     // @ts-ignore
     background_effect.uniforms["u_time"](Shaku.gameTime.elapsed);
+    // @ts-ignore
+    background_effect.uniforms["u_alpha"](1);
     // background_effect.uniforms["u_time"](cur_turn + time_offset);
     Shaku.gfx.drawSprite(MAIN_SCREEN_SPRITE);
     // @ts-ignore
     Shaku.gfx.useEffect(null);
 
+    if (state === STATE.INTRO) {
+        // @ts-ignore
+        LOWER_SCREEN_SPRITE.color.a = 1;
+    }
     Shaku.gfx.drawSprite(LOWER_SCREEN_SPRITE);
 
     if (selected_turn >= robot_tape.length) {
@@ -1817,6 +1860,57 @@ function update() {
         Shaku.gfx.useEffect(null);
     }
 
+    if (state === STATE.INTRO) {
+
+        // FULL_SCREEN_SPRITE.color = new Color(0, 0, 0, 1 - clamp(Shaku.gameTime.elapsed - 2, 0, 1));
+        // Shaku.gfx.drawSprite(FULL_SCREEN_SPRITE);
+
+        if (intro_exit_time > 0) {
+            intro_exit_time += Shaku.gameTime.delta * 1.5;
+            if (intro_exit_time >= 1) {
+                state = STATE.GAME;
+            }
+        }
+
+        Shaku.gfx.useEffect(background_effect);
+        // @ts-ignore
+        background_effect.uniforms["u_alpha"](1 - intro_exit_time * intro_exit_time);
+        // @ts-ignore
+        Shaku.gfx.drawSprite(MAIN_SCREEN_SPRITE);
+        // @ts-ignore
+        Shaku.gfx.useEffect(null);
+
+        logo_sprite.position.y = lerp(0, -400, intro_exit_time * intro_exit_time);
+        Shaku.gfx.drawSprite(logo_sprite);
+
+        // @ts-ignore
+        LOWER_SCREEN_SPRITE.color.a = 1 - intro_exit_time * intro_exit_time;
+        Shaku.gfx.drawSprite(LOWER_SCREEN_SPRITE);
+
+        if (intro_exit_time === 0) {
+            // @ts-ignore
+            logo_start_sprite.color.a = clamp(Shaku.gameTime.elapsed - .8, 0, 1);
+        } else {
+            // @ts-ignore
+            logo_start_sprite.color.a -= Shaku.gameTime.delta;
+            logo_start_sprite.position.y = lerp(0, 200, intro_exit_time * intro_exit_time);
+        }
+        Shaku.gfx.drawSprite(logo_start_sprite);
+
+        if (state === STATE.GAME) {
+            // @ts-ignore
+            LOWER_SCREEN_SPRITE.color.a = 1;
+        }
+
+        if (Shaku.input.anyKeyPressed || Shaku.input.anyMouseButtonPressed) {
+            intro_exit_time += 0.0001;
+        }
+
+        // Shaku.endFrame();
+        // Shaku.requestAnimationFrame(update);
+        // return;
+    }
+
     let level_name_spr = generateText(cur_level.public_name, 5, 0, 24, Color.white, TextAlignments.Left);
     Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
     Shaku.gfx.drawGroup(level_name_spr, false);
@@ -1995,6 +2089,10 @@ function clamp(value: number, a: number, b: number) {
     if (value < a) return a;
     if (value > b) return b;
     return value;
+}
+
+function lerp(a: number, b: number, t: number): number {
+    return a * (1 - t) + b * t;
 }
 
 // start main loop

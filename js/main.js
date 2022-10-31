@@ -2141,7 +2141,7 @@ var require_animator = __commonJS({
           let a = this._smoothDamp && this._progress < 1 ? this._progress * (1 + 1 - this._progress) : this._progress;
           let newValue = null;
           if (typeof fromValue === "number") {
-            newValue = lerp(fromValue, toValue, a);
+            newValue = lerp2(fromValue, toValue, a);
           } else if (fromValue.constructor.lerp) {
             newValue = fromValue.constructor.lerp(fromValue, toValue, a);
           } else {
@@ -2269,7 +2269,7 @@ var require_animator = __commonJS({
         }
       }
     };
-    function lerp(start, end, amt) {
+    function lerp2(start, end, amt) {
       return (1 - amt) * start + amt * end;
     }
     module.exports = Animator;
@@ -2366,7 +2366,7 @@ var require_perlin = __commonJS({
   "../Shaku/lib/utils/perlin.js"(exports, module) {
     "use strict";
     var MathHelper = require_math_helper();
-    var lerp = MathHelper.lerp;
+    var lerp2 = MathHelper.lerp;
     function fade(t) {
       return t * t * t * (t * (t * 6 - 15) + 10);
     }
@@ -2706,9 +2706,9 @@ var require_perlin = __commonJS({
         var n10 = gradP[X + 1 + perm[Y]].dot2(x - 1, y) * contrast;
         var n11 = gradP[X + 1 + perm[Y + 1]].dot2(x - 1, y - 1) * contrast;
         var u = fade(x);
-        return Math.min(lerp(
-          lerp(n00, n10, u),
-          lerp(n01, n11, u),
+        return Math.min(lerp2(
+          lerp2(n00, n10, u),
+          lerp2(n01, n11, u),
           fade(y)
         ) + 0.5, 1);
       }
@@ -8231,6 +8231,7 @@ var fragmentShader = `#version 300 es
 precision highp float;
 
 uniform float u_time;
+uniform float u_alpha;
 
 in vec2 v_texCoord;
 out vec4 FragColor;
@@ -8321,10 +8322,10 @@ void main(void) {
     uv.x += u_time * 0.01 * cos(log(u_time) + .4);
     uv.y += u_time * 0.01 * sin(log(u_time) + .4);
     //float noise = texture(iChannel0, uv).x;
-    float noise = simplex3d(vec3(uv * 10.0, u_time*0.21));
+    float noise = simplex3d(vec3(uv * 10.0, u_time*0.21)) * clamp(u_time - .3, 0.0, 1.0);
 
     // Output to screen
-    FragColor = vec4(mix(vec3(.1843, .3098, .3098), vec3(.149, .2471, .2471), noise), 1.0);
+    FragColor = vec4(u_alpha * mix(vec3(.1843, .3098, .3098), vec3(.149, .2471, .2471), noise), u_alpha);
 }`;
 var BackgroundEffect = class extends import_effect.default {
   get vertexCode() {
@@ -8338,7 +8339,8 @@ var BackgroundEffect = class extends import_effect.default {
       "u_projection": { type: import_effect.default.UniformTypes.Matrix, bind: import_effect.default.UniformBinds.Projection },
       "u_world": { type: import_effect.default.UniformTypes.Matrix, bind: import_effect.default.UniformBinds.World },
       "u_time": { type: import_effect.default.UniformTypes.Float, bind: "u_time" },
-      "u_aspect_ratio": { type: import_effect.default.UniformTypes.Float, bind: "u_aspect_ratio" }
+      "u_aspect_ratio": { type: import_effect.default.UniformTypes.Float, bind: "u_aspect_ratio" },
+      "u_alpha": { type: import_effect.default.UniformTypes.Float, bind: "u_alpha" }
     };
   }
   get attributeTypes() {
@@ -10849,10 +10851,33 @@ await import_shaku.default.init();
 document.body.appendChild(import_shaku.default.gfx.canvas);
 import_shaku.default.gfx.setResolution(800, 600, true);
 import_shaku.default.gfx.centerCanvas();
+var game_size = new import_vector2.default(800, 450);
+var logo_texture = await import_shaku.default.assets.loadTexture("imgs/logo.png", { generateMipMaps: true });
+var logo_sprite = new import_sprite.default(logo_texture);
+logo_sprite.origin.set(0, 0);
+var logo_start_texture = await import_shaku.default.assets.loadTexture("imgs/start.png", { generateMipMaps: true });
+var logo_start_sprite = new import_sprite.default(logo_start_texture);
+logo_start_sprite.origin.set(0, 0);
+var LOWER_SCREEN_SPRITE = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
+LOWER_SCREEN_SPRITE.origin = import_vector2.default.zero;
+LOWER_SCREEN_SPRITE.size.set(800, 600 - game_size.y);
+LOWER_SCREEN_SPRITE.position.set(0, game_size.y);
+LOWER_SCREEN_SPRITE.color = import_color.default.fromHex("#2B849C");
 import_shaku.default.startFrame();
 import_shaku.default.gfx.clear(import_shaku.default.utils.Color.darkslategray);
+import_shaku.default.gfx.drawSprite(logo_sprite);
+import_shaku.default.gfx.drawSprite(LOWER_SCREEN_SPRITE);
 import_shaku.default.endFrame();
 var instructions_font = await import_shaku.default.assets.loadMsdfFontTexture("fonts/Arial.ttf", { jsonUrl: "fonts/Arial.json", textureUrl: "fonts/Arial.png" });
+var dirs_texture = await import_shaku.default.assets.loadTexture("imgs/directions.png", { generateMipMaps: true });
+var dirs_sprite = new import_sprite.default(dirs_texture, new import_rectangle.default(0, 0, 150, 100));
+dirs_sprite.position.set(400, 375);
+var space_texture = await import_shaku.default.assets.loadTexture("imgs/spacebar.png", { generateMipMaps: true });
+var space_sprite = new import_sprite.default(space_texture);
+space_sprite.position.set(150, 400);
+var undo_texture = await import_shaku.default.assets.loadTexture("imgs/undo_redo.png", { generateMipMaps: true });
+var undo_sprite = new import_sprite.default(undo_texture, new import_rectangle.default(0, 0, 200, 50));
+undo_sprite.position.set(650, 400);
 var player_texture = await import_shaku.default.assets.loadTexture("imgs/player.png", { generateMipMaps: true });
 var player_sprite = new import_sprite.default(player_texture);
 player_sprite.size.set(TILE_SIZE, TILE_SIZE);
@@ -11339,24 +11364,23 @@ var _Player = class extends Pushable {
 var Player = _Player;
 __publicField(Player, "_brightColor", new import_color.default(1.3, 1.3, 1.3, 1));
 var levels = [
-  new Level("first", "spiral", 12, 4, new GameState(
+  new Level("first", "sofa", 17, 4, new GameState(
     -1,
     0,
     [
       Walls.fromString(`
-                #######
-                #.....#
-                #.###.#
-                #.#...#
-                #.#####
-                #.....#
-                #######
+                .###########
+                .#.........#
+                #########..#
+                #.........##
+                #...####..#.
+                #####..####.
             `),
       new Targets([
-        new import_vector2.default(5, 5)
+        new import_vector2.default(2, 1)
       ]),
-      new Spawner(new import_vector2.default(3, 3), import_vector2.default.right, null),
-      new Crate(new import_vector2.default(2, 5), null)
+      new Spawner(new import_vector2.default(3, 4), import_vector2.default.left, null),
+      new Crate(new import_vector2.default(2, 3), null)
     ]
   )),
   new Level("basic", "smol", 10, 5, new GameState(
@@ -11740,7 +11764,7 @@ var levels = [
     ]
   ))
 ];
-var state = 0 /* GAME */;
+var state = 0 /* INTRO */;
 var TAPE_SYMBOL = /* @__PURE__ */ ((TAPE_SYMBOL2) => {
   TAPE_SYMBOL2[TAPE_SYMBOL2["LEFT"] = 0] = "LEFT";
   TAPE_SYMBOL2[TAPE_SYMBOL2["RIGHT"] = 1] = "RIGHT";
@@ -11760,7 +11784,6 @@ var all_states;
 var level_offset = import_vector2.default.zero;
 var row_1 = 0;
 var row_2 = 0;
-var game_size = new import_vector2.default(800, 450);
 var row_1_background = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
 row_1_background.origin = import_vector2.default.zero;
 row_1_background.color = COLOR_TAPE;
@@ -11781,6 +11804,9 @@ function load_level(level) {
   initial_state = level.initial_state.nextStates().at(-1);
   all_states = gameLogic(initial_state, robot_tape);
   level_offset = new import_vector2.default(initial_state.wall.w, initial_state.wall.h).mul(TILE_SIZE).sub(game_size).add(TILE_SIZE, TILE_SIZE).mul(0.5);
+  if (level.dev_name === "first") {
+    level_offset.y += TILE_SIZE * 0.5;
+  }
 }
 function openCurInEditor() {
   let old_wall = initial_state.wall;
@@ -11894,11 +11920,6 @@ var background_effect = import_shaku.default.gfx.createEffect(BackgroundEffect);
 import_shaku.default.gfx.useEffect(background_effect);
 background_effect.uniforms["u_aspect_ratio"](MAIN_SCREEN_SPRITE.size.x / MAIN_SCREEN_SPRITE.size.y);
 import_shaku.default.gfx.useEffect(null);
-var LOWER_SCREEN_SPRITE = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
-LOWER_SCREEN_SPRITE.origin = import_vector2.default.zero;
-LOWER_SCREEN_SPRITE.size.set(800, 600 - game_size.y);
-LOWER_SCREEN_SPRITE.position.set(0, game_size.y);
-LOWER_SCREEN_SPRITE.color = import_color.default.fromHex("#2B849C");
 var FULL_SCREEN_SPRITE = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
 FULL_SCREEN_SPRITE.origin = import_vector2.default.zero;
 FULL_SCREEN_SPRITE.size = import_shaku.default.gfx.getCanvasSize();
@@ -11959,46 +11980,48 @@ var drawExtra = function() {
     if (EDITOR)
       return;
     if (cur_level_n === 0) {
-      import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
-      import_shaku.default.gfx.drawGroup(intro_text_left_1, false);
-      import_shaku.default.gfx.drawGroup(intro_text_right_1, false);
-      import_shaku.default.gfx.drawGroup(intro_text_left_3, false);
-      import_shaku.default.gfx.drawGroup(intro_text_right_3, false);
-      import_shaku.default.gfx.drawGroup(intro_text_2, false);
-      import_shaku.default.gfx.drawGroup(intro_text_4, false);
-      import_shaku.default.gfx.useEffect(null);
+      dirs_sprite.sourceRect.y = import_shaku.default.gameTime.elapsed % 2 < 1 ? 0 : 100;
+      undo_sprite.sourceRect.y = import_shaku.default.gameTime.elapsed % 2 < 1 ? 0 : 50;
+      import_shaku.default.gfx.drawSprite(dirs_sprite);
+      import_shaku.default.gfx.drawSprite(space_sprite);
+      import_shaku.default.gfx.drawSprite(undo_sprite);
     }
   };
 }();
-var generateText = (0, import_lodash.default)((text, x, y, size = 32, color = import_color.default.white, aligment = import_text_alignments.TextAlignments.Center) => {
+var generateText = (0, import_lodash.default)((text, x, y, size = 32, color = import_color.default.white, aligment = import_text_alignments.TextAlignments.Center, font = instructions_font) => {
   console.log("building text");
-  let group = import_shaku.default.gfx.buildText(instructions_font, text, size, color, aligment);
+  let group = import_shaku.default.gfx.buildText(font, text, size, color, aligment);
   group.position.set(x, y);
   return group;
 }, (text, x, y) => text + x.toString() + y.toString());
+var intro_exit_time = 0;
 var editor_button_looking_for_target = -1;
 function update() {
   import_shaku.default.startFrame();
   import_shaku.default.gfx.clear(import_shaku.default.utils.Color.darkslategray);
   import_shaku.default.gfx.useEffect(background_effect);
   background_effect.uniforms["u_time"](import_shaku.default.gameTime.elapsed);
+  background_effect.uniforms["u_alpha"](1);
   import_shaku.default.gfx.drawSprite(MAIN_SCREEN_SPRITE);
   import_shaku.default.gfx.useEffect(null);
+  if (state === 0 /* INTRO */) {
+    LOWER_SCREEN_SPRITE.color.a = 1;
+  }
   import_shaku.default.gfx.drawSprite(LOWER_SCREEN_SPRITE);
   if (selected_turn >= robot_tape.length) {
     FULL_SCREEN_SPRITE.color = new import_color.default(0, 0, 0, 0.4);
     import_shaku.default.gfx.drawSprite(FULL_SCREEN_SPRITE);
   }
   switch (state) {
-    case 0 /* GAME */:
+    case 1 /* GAME */:
       if (time_offset === 0 && !changing_level && import_shaku.default.input.pressed("escape")) {
         menu_selected_level = cur_level_n;
-        state = 1 /* MENU */;
+        state = 2 /* MENU */;
       }
       break;
-    case 1 /* MENU */:
+    case 2 /* MENU */:
       if (import_shaku.default.input.pressed("escape")) {
-        state = 0 /* GAME */;
+        state = 1 /* GAME */;
       } else if (import_shaku.default.input.pressed(["enter", "space"])) {
         initTransitionToLevel(menu_selected_level);
       }
@@ -12006,7 +12029,7 @@ function update() {
     default:
       break;
   }
-  if (state === 0 /* GAME */) {
+  if (state === 1 /* GAME */) {
     if (pressed_throttled(["q", "z"], import_shaku.default.gameTime.delta) && selected_turn > 0) {
       selected_turn -= 1;
     } else if (pressed_throttled(["e", "x"], import_shaku.default.gameTime.delta)) {
@@ -12097,7 +12120,7 @@ function update() {
   } else {
     all_states[cur_turn].draw(1);
   }
-  if (state === 0 /* GAME */ && EDITOR) {
+  if (state === 1 /* GAME */ && EDITOR) {
     let mouse_tile = import_shaku.default.input.mousePosition.add(level_offset).div(TILE_SIZE).round().sub(1, 1);
     import_shaku.default.gfx.outlineRect(
       new import_rectangle.default(
@@ -12265,7 +12288,7 @@ function update() {
     }
   }
   import_shaku.default.gfx.resetCamera();
-  if (state === 0 /* GAME */) {
+  if (state === 1 /* GAME */) {
     if (time_offset !== 0) {
       let turn_dist = Math.abs(all_states[cur_turn].major_turn - selected_turn);
       if (time_offset < 0) {
@@ -12299,7 +12322,7 @@ function update() {
     }
   }
   drawExtra();
-  if (state === 1 /* MENU */) {
+  if (state === 2 /* MENU */) {
     FULL_SCREEN_SPRITE.color = new import_color.default(0, 0, 0, 0.7);
     import_shaku.default.gfx.drawSprite(FULL_SCREEN_SPRITE);
     let menu_row_size = 6;
@@ -12340,6 +12363,35 @@ function update() {
     }
     import_shaku.default.gfx.useEffect(null);
   }
+  if (state === 0 /* INTRO */) {
+    if (intro_exit_time > 0) {
+      intro_exit_time += import_shaku.default.gameTime.delta * 1.5;
+      if (intro_exit_time >= 1) {
+        state = 1 /* GAME */;
+      }
+    }
+    import_shaku.default.gfx.useEffect(background_effect);
+    background_effect.uniforms["u_alpha"](1 - intro_exit_time * intro_exit_time);
+    import_shaku.default.gfx.drawSprite(MAIN_SCREEN_SPRITE);
+    import_shaku.default.gfx.useEffect(null);
+    logo_sprite.position.y = lerp(0, -400, intro_exit_time * intro_exit_time);
+    import_shaku.default.gfx.drawSprite(logo_sprite);
+    LOWER_SCREEN_SPRITE.color.a = 1 - intro_exit_time * intro_exit_time;
+    import_shaku.default.gfx.drawSprite(LOWER_SCREEN_SPRITE);
+    if (intro_exit_time === 0) {
+      logo_start_sprite.color.a = clamp(import_shaku.default.gameTime.elapsed - 0.8, 0, 1);
+    } else {
+      logo_start_sprite.color.a -= import_shaku.default.gameTime.delta;
+      logo_start_sprite.position.y = lerp(0, 200, intro_exit_time * intro_exit_time);
+    }
+    import_shaku.default.gfx.drawSprite(logo_start_sprite);
+    if (state === 1 /* GAME */) {
+      LOWER_SCREEN_SPRITE.color.a = 1;
+    }
+    if (import_shaku.default.input.anyKeyPressed || import_shaku.default.input.anyMouseButtonPressed) {
+      intro_exit_time += 1e-4;
+    }
+  }
   let level_name_spr = generateText(cur_level.public_name, 5, 0, 24, import_color.default.white, import_text_alignments.TextAlignments.Left);
   import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
   import_shaku.default.gfx.drawGroup(level_name_spr, false);
@@ -12357,7 +12409,7 @@ function initTransitionToLevel(n) {
     let prev = changing_level_time;
     changing_level_time = moveTowards(prev, 1, import_shaku.default.gameTime.delta * 3);
     if (prev < 0 && changing_level_time >= 0) {
-      state = 0 /* GAME */;
+      state = 1 /* GAME */;
       changing_level = false;
       cur_level_n = n;
       load_level(levels[n]);
@@ -12444,6 +12496,9 @@ function clamp(value, a, b) {
   if (value > b)
     return b;
   return value;
+}
+function lerp(a, b, t) {
+  return a * (1 - t) + b * t;
 }
 update();
 /**
