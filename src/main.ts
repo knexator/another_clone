@@ -1039,6 +1039,39 @@ let levels = [
             new Crate(new Vector2(6, 2), null),
         ],
     )),
+    new Level("left_right_both_up", "factory", 12, 4, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                #######...
+                #.....###.
+                #.....#.#.
+                #.....#.#.
+                #.......#.
+                #.......#.
+                #.......##
+                #........#
+                ##########
+            `),
+            new Targets([
+                new Vector2(1, 2),
+                new Vector2(2, 2),
+                new Vector2(3, 2),
+                new Vector2(4, 2),
+                new Vector2(5, 2),
+                new Vector2(7, 3),
+            ]),
+
+            new Spawner(new Vector2(3, 7), Vector2.up, null),
+
+            new Crate(new Vector2(1, 3), null),
+            new Crate(new Vector2(2, 3), null),
+            new Crate(new Vector2(3, 3), null),
+            new Crate(new Vector2(4, 3), null),
+            new Crate(new Vector2(5, 3), null),
+            new Crate(new Vector2(7, 4), null),
+        ],
+    )),
     new Level("tree", "trident", 14, 4, new GameState(
         -1, 0,
         [
