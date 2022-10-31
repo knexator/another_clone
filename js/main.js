@@ -10842,7 +10842,7 @@ var CONFIG = {
 };
 var gui = new GUI$1({});
 gui.remember(CONFIG);
-gui.add(CONFIG, "time", ["MANUAL", "AUTO"]);
+gui.add(CONFIG, "time", ["MANUAL", "SEMI", "AUTO"]);
 gui.add(CONFIG, "instant_reset");
 import_shaku.default.input.setTargetElement(() => import_shaku.default.gfx.canvas);
 await import_shaku.default.init();
@@ -11460,10 +11460,10 @@ var levels = [
     [
       Walls.fromString(`
                 ###########
-                #.........#
-                #.........#
-                #.........#
-                #.........#
+                #.#.......#
+                #.#.......#
+                #.#.......#
+                #.#.......#
                 #........##
                 ##########.
             `),
