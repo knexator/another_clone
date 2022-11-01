@@ -918,7 +918,7 @@ let levels = [
             new Crate(new Vector2(5, 3), null),
         ],
     )),
-    new Level("bistable_push_down", "lanes", 8, 2, new GameState(
+    /*new Level("bistable_push_down", "lanes", 8, 2, new GameState(
         -1, 0,
         [
             Walls.fromString(`
@@ -939,7 +939,7 @@ let levels = [
             new Crate(new Vector2(6, 3), null),
             new Crate(new Vector2(4, 5), null),
         ],
-    )),
+    )),*/ // unintended solution: same as trident, on the lower divider
     new Level("bistable_push", "prongs", 6, 2, new GameState(
         -1, 0,
         [
