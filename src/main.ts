@@ -16,7 +16,8 @@ import { BackgroundEffect } from "./background_effect";
 import { kalbakUpdate, doOnceOnTrue, doEveryFrameUntilTrue } from "./kalbak";
 import memoize from "lodash.memoize";
 import * as dat from 'dat.gui';
-import MsdfFontTextureAsset from "shaku/types/assets/msdf_font_texture_asset";
+import MsdfFontTextureAsset from "shaku/lib/assets/msdf_font_texture_asset";
+import GameTime from "shaku/lib/utils/game_time";
 
 let miniturn_duration = 0.25;
 let margin_fraction = 0.3;
@@ -56,6 +57,10 @@ const logo_start_texture = await Shaku.assets.loadTexture("imgs/start.png", { ge
 const logo_start_sprite = new Sprite(logo_start_texture);
 logo_start_sprite.origin.set(0, 0);
 
+const logo_loading_texture = await Shaku.assets.loadTexture("imgs/loading.png", { generateMipMaps: true });
+const logo_loading_sprite = new Sprite(logo_loading_texture);
+logo_loading_sprite.origin.set(0, 0);
+
 const LOWER_SCREEN_SPRITE = new Sprite(Shaku.gfx.whiteTexture);
 LOWER_SCREEN_SPRITE.origin = Vector2.zero;
 LOWER_SCREEN_SPRITE.size.set(800, 600 - game_size.y);
@@ -67,9 +72,12 @@ Shaku.startFrame();
 Shaku.gfx!.clear(Shaku.utils.Color.darkslategray);
 Shaku.gfx.drawSprite(logo_sprite);
 Shaku.gfx.drawSprite(LOWER_SCREEN_SPRITE);
+Shaku.gfx.drawSprite(logo_loading_sprite);
 // Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
 // Shaku.gfx.drawGroup(generateText("Another\nClone", 400, 200, 64, Color.wheat, TextAlignments.Center, logo_font), false);
 Shaku.endFrame();
+
+// await new Promise(r => setTimeout(r, 2000)); // to test loading screen
 
 let instructions_font = await Shaku.assets.loadMsdfFontTexture('fonts/Arial.ttf', { jsonUrl: 'fonts/Arial.json', textureUrl: 'fonts/Arial.png' });
 
@@ -1893,12 +1901,15 @@ function update() {
 
         if (intro_exit_time === 0) {
             // @ts-ignore
+            logo_loading_sprite.color.a -= Shaku.gameTime.delta * 2;
+            // @ts-ignore
             logo_start_sprite.color.a = clamp(Shaku.gameTime.elapsed - .8, 0, 1);
         } else {
             // @ts-ignore
             logo_start_sprite.color.a -= Shaku.gameTime.delta;
             logo_start_sprite.position.y = lerp(0, 200, intro_exit_time * intro_exit_time);
         }
+        Shaku.gfx.drawSprite(logo_loading_sprite);
         Shaku.gfx.drawSprite(logo_start_sprite);
 
         if (state === STATE.GAME) {
@@ -2133,5 +2144,6 @@ function lerp(a: number, b: number, t: number): number {
     return a * (1 - t) + b * t;
 }
 
+GameTime.reset();
 // start main loop
 update();

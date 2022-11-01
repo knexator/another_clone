@@ -2280,7 +2280,7 @@ var require_animator = __commonJS({
 var require_game_time = __commonJS({
   "../Shaku/lib/utils/game_time.js"(exports, module) {
     "use strict";
-    var GameTime = class {
+    var GameTime2 = class {
       constructor() {
         this.timestamp = _currElapsed;
         this.deltaTime = {
@@ -2328,7 +2328,7 @@ var require_game_time = __commonJS({
     var _prevTime = null;
     var _currDelta = 0;
     var _currElapsed = 0;
-    module.exports = GameTime;
+    module.exports = GameTime2;
   }
 });
 
@@ -7811,7 +7811,7 @@ var require_shaku = __commonJS({
     var assets = require_assets2();
     var collision = require_collision2();
     var utils = require_utils();
-    var GameTime = require_game_time();
+    var GameTime2 = require_game_time();
     var _logger = logger.getLogger("shaku");
     var _usedManagers = null;
     var _prevUpdateTime = null;
@@ -7842,12 +7842,12 @@ var require_shaku = __commonJS({
             throw new Error("Already initialized!");
           }
           _logger.info(`Initialize Shaku v${version}.`);
-          GameTime.reset();
+          GameTime2.reset();
           _usedManagers = managers || (isBrowser ? [assets, sfx, gfx, input, collision] : [assets, collision]);
           for (let i = 0; i < _usedManagers.length; ++i) {
             await _usedManagers[i].setup();
           }
-          _prevUpdateTime = new GameTime();
+          _prevUpdateTime = new GameTime2();
           resolve();
         });
       }
@@ -7869,15 +7869,15 @@ var require_shaku = __commonJS({
         }
         if (this._wasPaused) {
           this._wasPaused = false;
-          GameTime.resetDelta();
+          GameTime2.resetDelta();
         }
         if (this.pauseTime) {
-          GameTime.resetDelta();
+          GameTime2.resetDelta();
         } else {
-          GameTime.update();
+          GameTime2.update();
         }
-        _startFrameTime = GameTime.rawTimestamp();
-        this._gameTime = new GameTime();
+        _startFrameTime = GameTime2.rawTimestamp();
+        this._gameTime = new GameTime2();
         utils.Animator.updateAutos(this._gameTime.delta);
         for (let i = 0; i < _usedManagers.length; ++i) {
           _usedManagers[i].startFrame();
@@ -7909,7 +7909,7 @@ var require_shaku = __commonJS({
           _totalFrameTimes = this.getAverageFrameTime();
           _frameTimeMeasuresCount = 1;
         }
-        let _endFrameTime = GameTime.rawTimestamp();
+        let _endFrameTime = GameTime2.rawTimestamp();
         _frameTimeMeasuresCount++;
         _totalFrameTimes += _endFrameTime - _startFrameTime;
       }
@@ -10834,6 +10834,7 @@ function updateDisplays(controllerArray) {
 var GUI$1 = GUI;
 
 // src/main.ts
+var import_game_time = __toESM(require_game_time());
 var miniturn_duration = 0.25;
 var margin_fraction = 0.3;
 var TILE_SIZE = 50;
@@ -10858,6 +10859,9 @@ logo_sprite.origin.set(0, 0);
 var logo_start_texture = await import_shaku.default.assets.loadTexture("imgs/start.png", { generateMipMaps: true });
 var logo_start_sprite = new import_sprite.default(logo_start_texture);
 logo_start_sprite.origin.set(0, 0);
+var logo_loading_texture = await import_shaku.default.assets.loadTexture("imgs/loading.png", { generateMipMaps: true });
+var logo_loading_sprite = new import_sprite.default(logo_loading_texture);
+logo_loading_sprite.origin.set(0, 0);
 var LOWER_SCREEN_SPRITE = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
 LOWER_SCREEN_SPRITE.origin = import_vector2.default.zero;
 LOWER_SCREEN_SPRITE.size.set(800, 600 - game_size.y);
@@ -10867,6 +10871,7 @@ import_shaku.default.startFrame();
 import_shaku.default.gfx.clear(import_shaku.default.utils.Color.darkslategray);
 import_shaku.default.gfx.drawSprite(logo_sprite);
 import_shaku.default.gfx.drawSprite(LOWER_SCREEN_SPRITE);
+import_shaku.default.gfx.drawSprite(logo_loading_sprite);
 import_shaku.default.endFrame();
 var instructions_font = await import_shaku.default.assets.loadMsdfFontTexture("fonts/Arial.ttf", { jsonUrl: "fonts/Arial.json", textureUrl: "fonts/Arial.png" });
 var dirs_texture = await import_shaku.default.assets.loadTexture("imgs/directions.png", { generateMipMaps: true });
@@ -12376,11 +12381,13 @@ function update() {
     LOWER_SCREEN_SPRITE.color.a = 1 - intro_exit_time * intro_exit_time;
     import_shaku.default.gfx.drawSprite(LOWER_SCREEN_SPRITE);
     if (intro_exit_time === 0) {
+      logo_loading_sprite.color.a -= import_shaku.default.gameTime.delta * 2;
       logo_start_sprite.color.a = clamp(import_shaku.default.gameTime.elapsed - 0.8, 0, 1);
     } else {
       logo_start_sprite.color.a -= import_shaku.default.gameTime.delta;
       logo_start_sprite.position.y = lerp(0, 200, intro_exit_time * intro_exit_time);
     }
+    import_shaku.default.gfx.drawSprite(logo_loading_sprite);
     import_shaku.default.gfx.drawSprite(logo_start_sprite);
     if (state === 1 /* GAME */) {
       LOWER_SCREEN_SPRITE.color.a = 1;
@@ -12520,6 +12527,7 @@ function clamp(value, a, b) {
 function lerp(a, b, t) {
   return a * (1 - t) + b * t;
 }
+import_game_time.default.reset();
 update();
 /**
  * A utility to hold gametime.
