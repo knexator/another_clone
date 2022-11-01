@@ -826,6 +826,26 @@ let levels = [
             new Crate(new Vector2(8, 2), null),
         ],
     )),
+    new Level("microban", "microban", 8, 5, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ####..
+                #..#..
+                #..###
+                #....#
+                #....#
+                #..###
+                ####..
+            `),
+            new Targets([
+                new Vector2(2, 1),
+            ]),
+
+            new Spawner(new Vector2(1, 3), Vector2.right, null),
+            new Crate(new Vector2(3, 4), null),
+        ],
+    )),
     new Level("filler", "whale", 11, 2, new GameState(
         -1, 0,
         [
@@ -856,24 +876,68 @@ let levels = [
             new Crate(new Vector2(8, 4), null),
         ],
     )),
-    new Level("microban", "microban", 8, 5, new GameState(
+    /*new Level("push_wall_direct", "u-shape", 7, 5, new GameState(
         -1, 0,
         [
             Walls.fromString(`
-                ####..
-                #..#..
-                #..###
-                #....#
-                #....#
-                #..###
-                ####..
+                ..###....
+                ..#.#.###
+                ###.#.#.#
+                #...###.#
+                ###.....#
+                ..#######
             `),
             new Targets([
-                new Vector2(2, 1),
+                new Vector2(3, 1),
+                new Vector2(7, 2),
             ]),
 
             new Spawner(new Vector2(1, 3), Vector2.right, null),
-            new Crate(new Vector2(3, 4), null),
+            new Crate(new Vector2(3, 2), null),
+            new Crate(new Vector2(7, 3), null),
+        ],
+    )),*/
+    new Level("push_wall_subtle", "camera", 10, 4, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ######.
+                #....##
+                #..##.#
+                #..##.#
+                ##....#
+                .######
+            `),
+            new Targets([
+                new Vector2(1, 1),
+                new Vector2(5, 2),
+            ]),
+
+            new Spawner(new Vector2(4, 1), Vector2.left, null),
+            new Crate(new Vector2(2, 2), null),
+            new Crate(new Vector2(5, 3), null),
+        ],
+    )),
+    new Level("bistable_push_down", "lanes", 8, 2, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ..###.......
+                ###.#.......
+                #...########
+                ###........#
+                ..#.########
+                ..#.......#.
+                ..#########.
+            `),
+            new Targets([
+                new Vector2(9, 3),
+                new Vector2(8, 5),
+            ]),
+
+            new Spawner(new Vector2(1, 2), Vector2.right, null),
+            new Crate(new Vector2(6, 3), null),
+            new Crate(new Vector2(4, 5), null),
         ],
     )),
     new Level("bistable_push", "prongs", 6, 2, new GameState(
@@ -900,21 +964,21 @@ let levels = [
         -1, 0,
         [
             Walls.fromString(`
-                .........###
-                ....######.#
-                ....#......#
-                #####......#
-                #..........#
-                ############
+                ..........###
+                .....######.#
+                .....#......#
+                ######......#
+                #...........#
+                #############
             `),
             new Targets([
-                new Vector2(10, 1),
-                new Vector2(1, 4),
+                new Vector2(11, 1),
+                new Vector2(2, 4),
             ]),
 
-            new Spawner(new Vector2(6, 3), Vector2.up, null),
-            new Crate(new Vector2(10, 2), null),
-            new Crate(new Vector2(2, 4), null),
+            new Spawner(new Vector2(7, 3), Vector2.up, null),
+            new Crate(new Vector2(11, 2), null),
+            new Crate(new Vector2(3, 4), null),
         ],
     )),
     new Level("bistable", "claw", 8, 3, new GameState(
@@ -1047,17 +1111,17 @@ let levels = [
         [
             Walls.fromString(`
                 .####.....
-                .#..######
-                ##.......#
-                #...##...#
-                ##...#####
+                ##..######
+                #........#
+                ##..##...#
+                .#...#####
                 .#####....
             `),
             new Targets([
                 new Vector2(4, 4),
             ]),
 
-            new Spawner(new Vector2(1, 3), Vector2.right, null),
+            new Spawner(new Vector2(1, 2), Vector2.right, null),
             new Crate(new Vector2(7, 2), null),
         ],
     )),
