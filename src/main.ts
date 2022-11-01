@@ -148,6 +148,7 @@ const tape_border_right = new Sprite(tape_borders_texture, new Rectangle(SYMBOL_
 tape_border_right.origin.set(0, 0);
 
 const COLOR_TAPE = Color.fromHex("#E5B35B");
+const COLOR_TAPE_DELAY = Color.fromHex("#f5ca7f");
 const COLOR_HIGH = Color.fromHex("#99F3ED");
 const COLOR_LOW = Color.fromHex("#6AC2BC");
 const COLOR_SYMBOL = Color.fromHex("#B84B4B");
@@ -1689,8 +1690,8 @@ function update() {
 
     Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_1 * SYMBOL_SIZE, -450));
     Shaku.gfx.drawSprite(row_1_background);
-    if (EDITOR && robot_delay < row_1) {
-        Shaku.gfx.fillRect(new Rectangle(robot_delay * SYMBOL_SIZE, 8, SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16), Color.blue);
+    if (robot_delay < row_1) {
+        Shaku.gfx.fillRect(new Rectangle(robot_delay * SYMBOL_SIZE, 8, SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16), COLOR_TAPE_DELAY);
     }
     for (let k = selected_turn; k >= 0; k -= robot_delay) {
         if (k >= row_1) continue;
@@ -1720,8 +1721,8 @@ function update() {
             new Rectangle(-SYMBOL_SIZE * .5 + 8, 8, SYMBOL_SIZE * (row_2 + 1) - 16, SYMBOL_SIZE * 1.5 - 16),
             COLOR_TAPE
         )
-        if (EDITOR && robot_delay >= row_1) {
-            Shaku.gfx.fillRect(new Rectangle((robot_delay - row_1) * SYMBOL_SIZE, 8, SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16), Color.blue);
+        if (robot_delay >= row_1) {
+            Shaku.gfx.fillRect(new Rectangle((robot_delay - row_1) * SYMBOL_SIZE, 8, SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16), COLOR_TAPE_DELAY);
         }
         for (let k = selected_turn; k >= row_1; k -= robot_delay) {
             if (k >= row_1 + row_2) continue;

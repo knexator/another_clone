@@ -10915,6 +10915,7 @@ tape_border.origin.set(0, 0);
 var tape_border_right = new import_sprite.default(tape_borders_texture, new import_rectangle.default(SYMBOL_SIZE * 1.5, 0, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
 tape_border_right.origin.set(0, 0);
 var COLOR_TAPE = import_color.default.fromHex("#E5B35B");
+var COLOR_TAPE_DELAY = import_color.default.fromHex("#f5ca7f");
 var COLOR_HIGH = import_color.default.fromHex("#99F3ED");
 var COLOR_LOW = import_color.default.fromHex("#6AC2BC");
 var COLOR_SYMBOL = import_color.default.fromHex("#B84B4B");
@@ -12209,8 +12210,8 @@ function update() {
   }
   import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_1 * SYMBOL_SIZE, -450));
   import_shaku.default.gfx.drawSprite(row_1_background);
-  if (EDITOR && robot_delay < row_1) {
-    import_shaku.default.gfx.fillRect(new import_rectangle.default(robot_delay * SYMBOL_SIZE, 8, SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16), import_color.default.blue);
+  if (robot_delay < row_1) {
+    import_shaku.default.gfx.fillRect(new import_rectangle.default(robot_delay * SYMBOL_SIZE, 8, SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16), COLOR_TAPE_DELAY);
   }
   for (let k = selected_turn; k >= 0; k -= robot_delay) {
     if (k >= row_1)
@@ -12241,8 +12242,8 @@ function update() {
       new import_rectangle.default(-SYMBOL_SIZE * 0.5 + 8, 8, SYMBOL_SIZE * (row_2 + 1) - 16, SYMBOL_SIZE * 1.5 - 16),
       COLOR_TAPE
     );
-    if (EDITOR && robot_delay >= row_1) {
-      import_shaku.default.gfx.fillRect(new import_rectangle.default((robot_delay - row_1) * SYMBOL_SIZE, 8, SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16), import_color.default.blue);
+    if (robot_delay >= row_1) {
+      import_shaku.default.gfx.fillRect(new import_rectangle.default((robot_delay - row_1) * SYMBOL_SIZE, 8, SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16), COLOR_TAPE_DELAY);
     }
     for (let k = selected_turn; k >= row_1; k -= robot_delay) {
       if (k >= row_1 + row_2)
