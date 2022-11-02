@@ -11628,22 +11628,22 @@ var levels = [
       new Crate(new import_vector2.default(11, 2), null)
     ]
   )),
-  new Level("twice", "spaceship", 19, 13, new GameState(
+  new Level("compose", "nose", 19, 11, new GameState(
     -1,
     0,
     [
       Walls.fromString(`
-                ..###.....
-                ..#.######
-                ###......#
-                #...##...#
-                ##...#####
+                .####.....
+                ##..######
+                #........#
+                ##..##...#
+                .#...#####
                 .#####....
             `),
       new Targets([
         new import_vector2.default(4, 4)
       ]),
-      new Spawner(new import_vector2.default(1, 3), import_vector2.default.right, null),
+      new Spawner(new import_vector2.default(1, 2), import_vector2.default.right, null),
       new Crate(new import_vector2.default(7, 2), null)
     ]
   )),
@@ -11675,25 +11675,6 @@ var levels = [
       new Crate(new import_vector2.default(6, 4), null),
       new Crate(new import_vector2.default(7, 4), null),
       new Crate(new import_vector2.default(8, 4), null)
-    ]
-  )),
-  new Level("compose", "nose", 19, 11, new GameState(
-    -1,
-    0,
-    [
-      Walls.fromString(`
-                .####.....
-                ##..######
-                #........#
-                ##..##...#
-                .#...#####
-                .#####....
-            `),
-      new Targets([
-        new import_vector2.default(4, 4)
-      ]),
-      new Spawner(new import_vector2.default(1, 2), import_vector2.default.right, null),
-      new Crate(new import_vector2.default(7, 2), null)
     ]
   )),
   new Level("basic_reversed", "duck", 17, 3, new GameState(
