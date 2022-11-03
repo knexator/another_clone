@@ -10835,8 +10835,10 @@ var GUI$1 = GUI;
 
 // src/main.ts
 var import_game_time = __toESM(require_game_time());
-var miniturn_duration = 0.25;
-var margin_fraction = 0.3;
+var power_thing = 1 / 1.2;
+var max_miniturns = 4;
+var miniturn_duration = 0.2;
+var margin_fraction = 0.4;
 var TILE_SIZE = 50;
 var SYMBOL_SIZE = 50;
 var CONFIG = {
@@ -10950,10 +10952,12 @@ var GameState = class {
     this.empty = false;
     this.someChanges = true;
     this.won = false;
+    this.miniturn_siblings_count = -1;
   }
   empty;
   someChanges;
   won;
+  miniturn_siblings_count;
   draw(turn_time) {
     this.things.forEach((x) => x.draw(turn_time));
     this.spawner.draw(turn_time);
@@ -11051,6 +11055,9 @@ var GameState = class {
     }
     let filler_state = new GameState(cur_state.major_turn + 1, 0, cur_state.things.map((x) => x.clone()));
     filler_state.empty = true;
+    result2.forEach((x) => {
+      x.miniturn_siblings_count = result2.length;
+    });
     filler_state.someChanges = result2.length > 0;
     result2.push(filler_state);
     filler_state.won = filler_state.isWon();
@@ -12039,11 +12046,6 @@ function update() {
         all_states = gameLogic(initial_state, robot_tape);
       }
     }
-    if (time_offset === 0 && (all_states[cur_turn].major_turn !== selected_turn || all_states[cur_turn].minor_turn !== 0)) {
-      let dir = Math.sign(selected_turn - all_states[cur_turn].major_turn - 0.5);
-      cur_turn += dir;
-      time_offset -= dir * 0.99;
-    }
     if (import_shaku.default.input?.pressed(["t"])) {
       console.log("cur_turn: ", cur_turn);
       console.log("selected_turn: ", selected_turn);
@@ -12290,27 +12292,45 @@ function update() {
     }
   }
   if (state === 1 /* GAME */) {
-    if (time_offset !== 0) {
-      let turn_dist = Math.abs(all_states[cur_turn].major_turn - selected_turn);
+    let delta_time_left = import_shaku.default.gameTime.delta;
+    while (delta_time_left > 0) {
       if (time_offset < 0) {
         if (all_states[cur_turn].empty) {
           time_offset = 0;
         }
-      } else {
-        turn_dist += 1;
+      } else if (time_offset > 0) {
         if (all_states[cur_turn + 1].empty) {
           time_offset = 0;
         }
       }
-      let boost = turn_dist + 1;
-      boost *= boost * 0.85;
-      if (CONFIG.time === "AUTO" && selected_turn >= robot_tape.length) {
-        boost *= ending_boost;
-        ending_boost += import_shaku.default.gameTime.delta;
-      } else {
-        ending_boost = 1.5;
+      if (time_offset !== 0) {
+        let major_turn_dist = Math.abs(all_states[cur_turn].major_turn - selected_turn);
+        if (time_offset > 0)
+          major_turn_dist++;
+        let major_turn_duration = 1;
+        for (let k = 1; k < major_turn_dist; k++) {
+          major_turn_duration *= power_thing;
+        }
+        let miniturn_count = all_states[time_offset > 0 ? cur_turn + 1 : cur_turn].miniturn_siblings_count;
+        let miniturn_scaling = Math.min(max_miniturns / miniturn_count, 1);
+        let boost = 1;
+        if (CONFIG.time === "AUTO" && selected_turn >= robot_tape.length) {
+          boost *= ending_boost;
+          ending_boost += import_shaku.default.gameTime.delta;
+        } else {
+          ending_boost = 1.5;
+        }
+        let speed = boost / (miniturn_scaling * miniturn_duration * major_turn_duration);
+        delta_time_left -= Math.abs(time_offset / speed);
+        time_offset = moveTowards(time_offset, 0, import_shaku.default.gameTime.delta * speed);
       }
-      time_offset = moveTowards(time_offset, 0, import_shaku.default.gameTime.delta * boost / miniturn_duration);
+      if (time_offset === 0 && (all_states[cur_turn].major_turn !== selected_turn || all_states[cur_turn].minor_turn !== 0)) {
+        let dir = Math.sign(selected_turn - all_states[cur_turn].major_turn - 0.5);
+        cur_turn += dir;
+        time_offset -= dir * 0.99;
+      }
+      if (time_offset === 0)
+        break;
     }
     if (!exiting_level && !EDITOR && import_shaku.default.input.pressed("dash")) {
       EDITOR = true;

@@ -19,8 +19,11 @@ import * as dat from 'dat.gui';
 import MsdfFontTextureAsset from "shaku/lib/assets/msdf_font_texture_asset";
 import GameTime from "shaku/lib/utils/game_time";
 
-let miniturn_duration = 0.25;
-let margin_fraction = 0.3;
+// all queued turns wont take any longer than turn_duration / power_thing
+let power_thing = 1 / 1.2;
+let max_miniturns = 4;
+let miniturn_duration = 0.20;
+let margin_fraction = 0.4;
 const TILE_SIZE = 50;
 const SYMBOL_SIZE = 50;
 
@@ -187,6 +190,8 @@ class GameState {
     public empty: boolean;
     public someChanges: boolean;
     public won: boolean;
+    /** not defined for miniturn == 0 */
+    public miniturn_siblings_count: number;
     constructor(
         public major_turn: number,
         public minor_turn: number,
@@ -195,6 +200,7 @@ class GameState {
         this.empty = false;
         this.someChanges = true;
         this.won = false;
+        this.miniturn_siblings_count = -1;
     }
 
     draw(turn_time: number) {
@@ -307,6 +313,9 @@ class GameState {
         // }
         let filler_state = new GameState(cur_state.major_turn + 1, 0, cur_state.things.map(x => x.clone()));
         filler_state.empty = true;
+        result.forEach(x => {
+            x.miniturn_siblings_count = result.length;
+        });
         filler_state.someChanges = result.length > 0;
         result.push(filler_state);
         filler_state.won = filler_state.isWon();
@@ -1600,18 +1609,14 @@ function update() {
             }
         }
 
-        if (time_offset === 0 && (all_states[cur_turn].major_turn !== selected_turn || all_states[cur_turn].minor_turn !== 0)) {
-            let dir = Math.sign(selected_turn - all_states[cur_turn].major_turn - .5); // -.5 is for minor_turn !== 0
-            cur_turn += dir;
-            time_offset -= dir * .99;
-        }
-
         if (Shaku.input?.pressed(["t"])) {
             console.log("cur_turn: ", cur_turn);
             console.log("selected_turn: ", selected_turn);
             console.log("cur_state: ", all_states[cur_turn]);
             console.log("all states: ", all_states);
         }
+
+        // console.log("cur_turn: ", cur_turn, "selected_turn: ", selected_turn, "offset: ", time_offset);
 
         let input_symbol = selectFromInput([
             [["w", "up"], TAPE_SYMBOL.UP],
@@ -1863,33 +1868,56 @@ function update() {
     }
 
     if (state === STATE.GAME) {
-        // console.log(Math.abs(all_states[cur_turn].major_turn - selected_turn));
-        // time_offset = moveTowards(time_offset, 0, Shaku.gameTime.delta! / miniturn_duration);
-        // console.log(all_states[cur_turn].major_turn, all_states[cur_turn].minor_turn, all_states[cur_turn].empty);
-        if (time_offset !== 0) {
-            let turn_dist = Math.abs(all_states[cur_turn].major_turn - selected_turn);
+        let delta_time_left = Shaku.gameTime.delta;
 
+        while (delta_time_left > 0) {
+            // Skip empty turns
             if (time_offset < 0) { // forwards                
                 if (all_states[cur_turn].empty) {
                     time_offset = 0;
                 }
-            } else {
-                turn_dist += 1;
+            } else if (time_offset > 0) {
                 if (all_states[cur_turn + 1].empty) {
                     time_offset = 0;
                 }
             }
 
-            let boost = turn_dist + 1;
-            boost *= boost * .85;
-            if (CONFIG.time === "AUTO" && selected_turn >= robot_tape.length) {
-                boost *= ending_boost;
-                ending_boost += Shaku.gameTime.delta!;
-            } else {
-                ending_boost = 1.5;
+            if (time_offset !== 0) {
+                let major_turn_dist = Math.abs(all_states[cur_turn].major_turn - selected_turn);
+                if (time_offset > 0) major_turn_dist++; // backwards
+
+                let major_turn_duration = 1;
+                for (let k = 1; k < major_turn_dist; k++) {
+                    major_turn_duration *= power_thing;
+                }
+
+                let miniturn_count = all_states[(time_offset > 0) ? cur_turn + 1 : cur_turn].miniturn_siblings_count;
+                // Note: miniturn_count * miniturn_scaling must be at most max_miniturns
+                let miniturn_scaling = Math.min(max_miniturns / miniturn_count, 1);
+
+                // let boost = turn_dist + 1;
+                // boost *= boost * .85;
+                let boost = 1;
+                if (CONFIG.time === "AUTO" && selected_turn >= robot_tape.length) {
+                    boost *= ending_boost;
+                    ending_boost += Shaku.gameTime.delta!;
+                } else {
+                    ending_boost = 1.5;
+                }
+
+                let speed = boost / (miniturn_scaling * miniturn_duration * major_turn_duration);
+                delta_time_left -= Math.abs(time_offset / speed);
+                time_offset = moveTowards(time_offset, 0, Shaku.gameTime.delta! * speed);
             }
 
-            time_offset = moveTowards(time_offset, 0, Shaku.gameTime.delta! * boost / miniturn_duration);
+            // advance turn, maybe
+            if (time_offset === 0 && (all_states[cur_turn].major_turn !== selected_turn || all_states[cur_turn].minor_turn !== 0)) {
+                let dir = Math.sign(selected_turn - all_states[cur_turn].major_turn - .5); // -.5 is for minor_turn !== 0
+                cur_turn += dir;
+                time_offset -= dir * .99;
+            }
+
+            if (time_offset === 0) break; // nothing left to do
         }
 
         if (!exiting_level && !EDITOR && Shaku.input.pressed("dash")) {
