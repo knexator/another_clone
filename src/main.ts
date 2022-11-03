@@ -1067,7 +1067,7 @@ let levels = [
             new Crate(new Vector2(11, 2), null),
         ],
     )),
-    new Level("compose", "nose", 19, 11, new GameState(
+    new Level("compose", "nose", 20, 11, new GameState(
         -1, 0,
         [
             Walls.fromString(`
