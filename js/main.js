@@ -11510,25 +11510,24 @@ var levels = [
       new Crate(new import_vector2.default(8, 4), null)
     ]
   )),
-  new Level("push_wall_subtle", "camera", 10, 4, new GameState(
+  new Level("push_wall_mid", "eight", 17, 9, new GameState(
     -1,
     0,
     [
       Walls.fromString(`
-                ######.
-                #....##
-                #..##.#
-                #..##.#
-                ##....#
-                .######
+                #########
+                #.......#
+                ####.##.#
+                ..#.....#
+                ..#.##.##
+                ..#....#.
+                ..######.
             `),
       new Targets([
-        new import_vector2.default(1, 1),
-        new import_vector2.default(5, 2)
+        new import_vector2.default(5, 3)
       ]),
-      new Spawner(new import_vector2.default(4, 1), import_vector2.default.left, null),
-      new Crate(new import_vector2.default(2, 2), null),
-      new Crate(new import_vector2.default(5, 3), null)
+      new Spawner(new import_vector2.default(1, 1), import_vector2.default.right, null),
+      new Crate(new import_vector2.default(4, 2), null)
     ]
   )),
   new Level("bistable_push", "prongs", 6, 2, new GameState(
