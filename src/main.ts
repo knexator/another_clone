@@ -20,10 +20,10 @@ import MsdfFontTextureAsset from "shaku/lib/assets/msdf_font_texture_asset";
 import GameTime from "shaku/lib/utils/game_time";
 
 // all queued turns wont take any longer than turn_duration / power_thing
-let power_thing = 1 / 2.5;
-let max_miniturns = 2;
-let miniturn_duration = 0.20;
-let margin_fraction = 0.50;
+let power_thing = 1 / 4.0;
+let max_miniturns = 2.5;
+let miniturn_duration = 0.15;
+let margin_fraction = 0.40;
 const TILE_SIZE = 50;
 const SYMBOL_SIZE = 50;
 
@@ -1487,6 +1487,7 @@ let drawExtra = function () {
     permanent_text_right.position.set(770, 420);
 
     return function () {
+        if (state === STATE.END) return;
         if (CONFIG.time === "MANUAL" && selected_turn >= robot_tape.length) {
             Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
             Shaku.gfx.drawGroup(permanent_text_left, false);

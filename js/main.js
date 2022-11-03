@@ -10835,10 +10835,10 @@ var GUI$1 = GUI;
 
 // src/main.ts
 var import_game_time = __toESM(require_game_time());
-var power_thing = 1 / 2.5;
-var max_miniturns = 2;
-var miniturn_duration = 0.2;
-var margin_fraction = 0.5;
+var power_thing = 1 / 4;
+var max_miniturns = 2.5;
+var miniturn_duration = 0.15;
+var margin_fraction = 0.4;
 var TILE_SIZE = 50;
 var SYMBOL_SIZE = 50;
 var CONFIG = {
@@ -11966,6 +11966,8 @@ var drawExtra = function() {
   let permanent_text_right = import_shaku.default.gfx.buildText(instructions_font, "E/X", 32, import_color.default.lightgrey, import_text_alignments.TextAlignments.Center);
   permanent_text_right.position.set(770, 420);
   return function() {
+    if (state === 3 /* END */)
+      return;
     if (CONFIG.time === "MANUAL" && selected_turn >= robot_tape.length) {
       import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
       import_shaku.default.gfx.drawGroup(permanent_text_left, false);
