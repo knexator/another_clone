@@ -20,10 +20,10 @@ import MsdfFontTextureAsset from "shaku/lib/assets/msdf_font_texture_asset";
 import GameTime from "shaku/lib/utils/game_time";
 
 // all queued turns wont take any longer than turn_duration / power_thing
-let power_thing = 1 / 1.2;
-let max_miniturns = 4;
+let power_thing = 1 / 2.5;
+let max_miniturns = 2;
 let miniturn_duration = 0.20;
-let margin_fraction = 0.4;
+let margin_fraction = 0.50;
 const TILE_SIZE = 50;
 const SYMBOL_SIZE = 50;
 

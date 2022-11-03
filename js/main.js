@@ -10835,10 +10835,10 @@ var GUI$1 = GUI;
 
 // src/main.ts
 var import_game_time = __toESM(require_game_time());
-var power_thing = 1 / 1.2;
-var max_miniturns = 4;
+var power_thing = 1 / 2.5;
+var max_miniturns = 2;
 var miniturn_duration = 0.2;
-var margin_fraction = 0.4;
+var margin_fraction = 0.5;
 var TILE_SIZE = 50;
 var SYMBOL_SIZE = 50;
 var CONFIG = {
