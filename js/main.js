@@ -11683,23 +11683,24 @@ var levels = [
       new Crate(new import_vector2.default(8, 4), null)
     ]
   )),
-  new Level("basic_reversed", "duck", 17, 3, new GameState(
+  new Level("basic_reversed", "duck", 10, 3, new GameState(
     -1,
     0,
     [
       Walls.fromString(`
-                #######..
-                #...#.###
-                #...#...#
-                #.......#
-                #.#######
-                ###......
+                .####.
+                .#..#.
+                .#..##
+                .#...#
+                ##.###
+                #..#..
+                ####..
             `),
       new Targets([
-        new import_vector2.default(6, 3)
+        new import_vector2.default(2, 2)
       ]),
-      new Spawner(new import_vector2.default(1, 2), import_vector2.default.right, null),
-      new Crate(new import_vector2.default(6, 2), null)
+      new Spawner(new import_vector2.default(1, 5), import_vector2.default.right, null),
+      new Crate(new import_vector2.default(3, 2), null)
     ]
   )),
   new Level("left_right_both_up", "factory", 12, 4, new GameState(

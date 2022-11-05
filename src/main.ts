@@ -1154,23 +1154,24 @@ let levels = [
             new Crate(new Vector2(4, 2), null),
         ],
     )),*/
-    new Level("basic_reversed", "duck", 17, 3, new GameState(
+    new Level("basic_reversed", "duck", 10, 3, new GameState(
         -1, 0,
         [
             Walls.fromString(`
-                #######..
-                #...#.###
-                #...#...#
-                #.......#
-                #.#######
-                ###......
+                .####.
+                .#..#.
+                .#..##
+                .#...#
+                ##.###
+                #..#..
+                ####..
             `),
             new Targets([
-                new Vector2(6, 3),
+                new Vector2(2, 2),
             ]),
 
-            new Spawner(new Vector2(1, 2), Vector2.right, null),
-            new Crate(new Vector2(6, 2), null),
+            new Spawner(new Vector2(1, 5), Vector2.right, null),
+            new Crate(new Vector2(3, 2), null),
         ],
     )),
     new Level("left_right_both_up", "factory", 12, 4, new GameState(
