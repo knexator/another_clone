@@ -11432,7 +11432,7 @@ var levels = [
       ]),
       new Spawner(new import_vector2.default(7, 3), import_vector2.default.up, null),
       new Crate(new import_vector2.default(6, 1), null),
-      new Crate(new import_vector2.default(8, 2), null)
+      new Crate(new import_vector2.default(7, 2), null)
     ]
   )),
   new Level("move_spawner", "hat", 6, 4, new GameState(
@@ -11515,6 +11515,25 @@ var levels = [
       new Crate(new import_vector2.default(6, 4), null),
       new Crate(new import_vector2.default(7, 4), null),
       new Crate(new import_vector2.default(8, 4), null)
+    ]
+  )),
+  new Level("basic_reversed", "house", 15, 10, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                ...###.
+                ####.#.
+                #....#.
+                #.#..##
+                #.#...#-
+                #######
+            `),
+      new Targets([
+        new import_vector2.default(5, 4)
+      ]),
+      new Spawner(new import_vector2.default(1, 4), import_vector2.default.up, null),
+      new Crate(new import_vector2.default(3, 3), null)
     ]
   )),
   new Level("push_wall_mid", "eight", 17, 9, new GameState(
@@ -11634,25 +11653,6 @@ var levels = [
       new Crate(new import_vector2.default(11, 2), null)
     ]
   )),
-  new Level("compose", "nose", 20, 11, new GameState(
-    -1,
-    0,
-    [
-      Walls.fromString(`
-                .####.....
-                ##..######
-                #........#
-                ##..##...#
-                .#...#####
-                .#####....
-            `),
-      new Targets([
-        new import_vector2.default(4, 4)
-      ]),
-      new Spawner(new import_vector2.default(1, 2), import_vector2.default.right, null),
-      new Crate(new import_vector2.default(7, 2), null)
-    ]
-  )),
   new Level("u_chain", "eyes", 16, 2, new GameState(
     -1,
     0,
@@ -11683,7 +11683,7 @@ var levels = [
       new Crate(new import_vector2.default(8, 4), null)
     ]
   )),
-  new Level("basic_reversed", "duck", 10, 3, new GameState(
+  new Level("basic_push_diverge", "duck", 10, 3, new GameState(
     -1,
     0,
     [
@@ -11703,36 +11703,34 @@ var levels = [
       new Crate(new import_vector2.default(3, 2), null)
     ]
   )),
-  new Level("left_right_both_up", "factory", 12, 4, new GameState(
+  new Level("double_move_spawner", "factory", 14, 4, new GameState(
     -1,
     0,
     [
       Walls.fromString(`
-                #######...
-                #.....###.
-                #.....#.#.
-                #.....#.#.
-                #.......#.
-                #.......#.
-                #.......##
-                #........#
-                ##########
+                ..###########..
+                ###.#.#.#.#.#..
+                #...........##.
+                #............#.
+                #............#.
+                #............#.
+                #............##
+                #.............#
+                ###############
             `),
       new Targets([
-        new import_vector2.default(1, 2),
-        new import_vector2.default(2, 2),
-        new import_vector2.default(3, 2),
-        new import_vector2.default(4, 2),
-        new import_vector2.default(5, 2),
-        new import_vector2.default(7, 3)
+        new import_vector2.default(2, 3),
+        new import_vector2.default(4, 3),
+        new import_vector2.default(6, 3),
+        new import_vector2.default(8, 3),
+        new import_vector2.default(10, 3)
       ]),
-      new Spawner(new import_vector2.default(3, 7), import_vector2.default.up, null),
-      new Crate(new import_vector2.default(1, 3), null),
-      new Crate(new import_vector2.default(2, 3), null),
-      new Crate(new import_vector2.default(3, 3), null),
-      new Crate(new import_vector2.default(4, 3), null),
-      new Crate(new import_vector2.default(5, 3), null),
-      new Crate(new import_vector2.default(7, 4), null)
+      new Spawner(new import_vector2.default(2, 7), import_vector2.default.up, null),
+      new Crate(new import_vector2.default(2, 2), null),
+      new Crate(new import_vector2.default(4, 2), null),
+      new Crate(new import_vector2.default(6, 2), null),
+      new Crate(new import_vector2.default(8, 2), null),
+      new Crate(new import_vector2.default(10, 2), null)
     ]
   )),
   new Level("tree", "trident", 14, 4, new GameState(
