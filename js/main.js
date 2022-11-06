@@ -11843,6 +11843,9 @@ var TAPE_SYMBOL = /* @__PURE__ */ ((TAPE_SYMBOL2) => {
   TAPE_SYMBOL2[TAPE_SYMBOL2["NONE"] = 4] = "NONE";
   return TAPE_SYMBOL2;
 })(TAPE_SYMBOL || {});
+var waiting_for_final_input = false;
+var exiting_level = false;
+var EDITOR = false;
 var robot_delay = 5;
 var robot_tape = [];
 var selected_turn = 0;
@@ -11876,6 +11879,12 @@ function load_level(level) {
   level_offset = new import_vector2.default(initial_state.wall.w, initial_state.wall.h).mul(TILE_SIZE).sub(game_size).add(TILE_SIZE, TILE_SIZE).mul(0.5);
   if (level.dev_name === "first") {
     level_offset.y += TILE_SIZE * 0.5;
+  }
+  waiting_for_final_input = false;
+  exiting_level = false;
+  EDITOR = false;
+  for (let key in _cooling_time_left) {
+    _cooling_time_left[key] = Infinity;
   }
 }
 function openCurInEditor() {
@@ -12020,8 +12029,6 @@ function drawSymbolsChanging(dt, lower_row) {
     }
   }
 }
-var exiting_level = false;
-var EDITOR = false;
 var menu_selected_level = 0;
 var drawExtra = function() {
   let intro_text_left_1 = import_shaku.default.gfx.buildText(instructions_font, "WASD to\nmove", 32, import_color.default.white, import_text_alignments.TextAlignments.Center);
@@ -12105,9 +12112,13 @@ function update() {
     if (pressed_throttled(["q", "z"], import_shaku.default.gameTime.delta) && selected_turn > 0) {
       selected_turn -= 1;
     } else if (pressed_throttled(["e", "x"], import_shaku.default.gameTime.delta)) {
-      selected_turn += 1;
-      if (selected_turn >= all_states.at(-1).major_turn) {
-        all_states = gameLogic(initial_state, robot_tape);
+      if (waiting_for_final_input) {
+        waiting_for_final_input = false;
+      } else {
+        selected_turn += 1;
+        if (selected_turn >= all_states.at(-1).major_turn) {
+          all_states = gameLogic(initial_state, robot_tape);
+        }
       }
     }
     if (!exiting_level && import_shaku.default.input?.pressed(["r"])) {
@@ -12137,7 +12148,9 @@ function update() {
       ["space", 4 /* NONE */]
     ], import_shaku.default.gameTime.delta);
     if (input_symbol !== null) {
-      if (selected_turn < robot_tape.length) {
+      if (waiting_for_final_input) {
+        waiting_for_final_input = false;
+      } else if (selected_turn < robot_tape.length) {
         robot_tape[selected_turn] = input_symbol;
         setSymbolChanging(selected_turn);
         selected_turn += 1;
@@ -12413,6 +12426,14 @@ function update() {
         let dir = Math.sign(selected_turn - all_states[cur_turn].major_turn - 0.5);
         cur_turn += dir;
         time_offset -= dir * 0.99;
+        if (!EDITOR && !exiting_level && all_states[cur_turn].won && !waiting_for_final_input) {
+          time_offset = 0;
+          selected_turn = all_states[cur_turn].major_turn;
+          waiting_for_final_input = true;
+          ["ex", "aleft", "dright", "sdown", "space", "wup"].forEach((x) => {
+            _cooling_time_left[x] += 0.25;
+          });
+        }
       }
       if (time_offset === 0)
         break;
@@ -12421,7 +12442,7 @@ function update() {
       EDITOR = true;
       openCurInEditor();
     }
-    if (!EDITOR && !exiting_level && time_offset === 0 && all_states[cur_turn].won) {
+    if (!EDITOR && !exiting_level && time_offset === 0 && all_states[cur_turn].won && !waiting_for_final_input) {
       if (cur_level_n < levels.length - 1) {
         initTransitionToLevel(cur_level_n + 1);
       } else {

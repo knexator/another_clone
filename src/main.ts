@@ -1429,6 +1429,9 @@ enum TAPE_SYMBOL {
     NONE,
 }
 
+let waiting_for_final_input = false;
+let exiting_level = false;
+let EDITOR = false;
 
 let robot_delay = 5;
 
@@ -1476,6 +1479,12 @@ function load_level(level: Level) {
     level_offset = new Vector2(initial_state.wall.w, initial_state.wall.h).mul(TILE_SIZE).sub(game_size).add(TILE_SIZE, TILE_SIZE).mul(.5);
     if (level.dev_name === "first") {
         level_offset.y += TILE_SIZE * .5;
+    }
+    waiting_for_final_input = false;
+    exiting_level = false;
+    EDITOR = false;
+    for (let key in _cooling_time_left) {
+        _cooling_time_left[key] = Infinity;
     }
 }
 
@@ -1631,9 +1640,6 @@ function drawSymbolsChanging(dt: number, lower_row: boolean) {
     }
 }
 
-let exiting_level = false;
-let EDITOR = false;
-
 let menu_selected_level = 0;
 
 let drawExtra = function () {
@@ -1769,9 +1775,13 @@ function update() {
         if (pressed_throttled(["q", "z"], Shaku.gameTime.delta) && selected_turn > 0) {
             selected_turn -= 1;
         } else if (pressed_throttled(["e", "x"], Shaku.gameTime.delta)) {
-            selected_turn += 1;
-            if (selected_turn >= all_states.at(-1)!.major_turn) {
-                all_states = gameLogic(initial_state, robot_tape);
+            if (waiting_for_final_input) {
+                waiting_for_final_input = false;
+            } else {
+                selected_turn += 1;
+                if (selected_turn >= all_states.at(-1)!.major_turn) {
+                    all_states = gameLogic(initial_state, robot_tape);
+                }
             }
         }
 
@@ -1808,7 +1818,9 @@ function update() {
         ], Shaku.gameTime.delta)
         // if (input_symbol !== null && time_offset === 0) {
         if (input_symbol !== null) {
-            if (selected_turn < robot_tape.length) {
+            if (waiting_for_final_input) {
+                waiting_for_final_input = false;
+            } else if (selected_turn < robot_tape.length) {
                 robot_tape[selected_turn] = input_symbol;
                 setSymbolChanging(selected_turn);
                 selected_turn += 1;
@@ -2104,6 +2116,19 @@ function update() {
                 let dir = Math.sign(selected_turn - all_states[cur_turn].major_turn - .5); // -.5 is for minor_turn !== 0
                 cur_turn += dir;
                 time_offset -= dir * .99;
+
+                if (!EDITOR && !exiting_level && all_states[cur_turn].won && !waiting_for_final_input) {
+                    time_offset = 0;
+                    selected_turn = all_states[cur_turn].major_turn;
+                    waiting_for_final_input = true;
+                    ["ex", "aleft", "dright", "sdown", "space", "wup"].forEach(x => {
+                        _cooling_time_left[x] += .25;
+                    })
+                    /*setTimeout(() => {
+                        waiting_for_final_input = false;
+                        console.log("no longer waiting for final input")
+                    }, 10000);*/
+                }
             }
 
             if (time_offset === 0) break; // nothing left to do
@@ -2114,7 +2139,7 @@ function update() {
             openCurInEditor();
         }
 
-        if (!EDITOR && !exiting_level && time_offset === 0 && all_states[cur_turn].won) {
+        if (!EDITOR && !exiting_level && time_offset === 0 && all_states[cur_turn].won && !waiting_for_final_input) {
             if (cur_level_n < levels.length - 1) {
                 initTransitionToLevel(cur_level_n + 1);
             } else {
