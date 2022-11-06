@@ -11027,13 +11027,10 @@ var menu_off_y = (game_size.y - menu_button_spacing * 2 - menu_button_size) * 0.
 var instructions_font = await import_shaku.default.assets.loadMsdfFontTexture("fonts/Arial.ttf", { jsonUrl: "fonts/Arial.json", textureUrl: "fonts/Arial.png" });
 var dirs_texture = await import_shaku.default.assets.loadTexture("imgs/directions.png", { generateMipMaps: true });
 var dirs_sprite = new import_sprite.default(dirs_texture, new import_rectangle.default(0, 0, 150, 100));
-dirs_sprite.position.set(400, 375);
 var space_texture = await import_shaku.default.assets.loadTexture("imgs/spacebar.png", { generateMipMaps: true });
 var space_sprite = new import_sprite.default(space_texture);
-space_sprite.position.set(150, 400);
 var undo_texture = await import_shaku.default.assets.loadTexture("imgs/undo_redo.png", { generateMipMaps: true });
 var undo_sprite = new import_sprite.default(undo_texture, new import_rectangle.default(0, 0, 200, 50));
-undo_sprite.position.set(650, 400);
 var player_texture = await import_shaku.default.assets.loadTexture("imgs/player.png", { generateMipMaps: true });
 var player_sprite = new import_sprite.default(player_texture);
 player_sprite.size.set(TILE_SIZE, TILE_SIZE);
@@ -12190,9 +12187,9 @@ var drawExtra = function() {
     if (cur_level_n === 0) {
       dirs_sprite.sourceRect.y = import_shaku.default.gameTime.elapsed % 2 < 1 ? 0 : 100;
       undo_sprite.sourceRect.y = import_shaku.default.gameTime.elapsed % 2 < 1 ? 0 : 50;
-      dirs_sprite.position.set(400, 375);
-      space_sprite.position.set(150, 400);
-      undo_sprite.position.set(650, 400);
+      dirs_sprite.position.set(400, 360);
+      space_sprite.position.set(150, 385);
+      undo_sprite.position.set(650, 385);
       import_shaku.default.gfx.drawSprite(dirs_sprite);
       import_shaku.default.gfx.drawSprite(space_sprite);
       import_shaku.default.gfx.drawSprite(undo_sprite);

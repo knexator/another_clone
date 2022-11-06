@@ -102,13 +102,10 @@ let instructions_font = await Shaku.assets.loadMsdfFontTexture('fonts/Arial.ttf'
 
 const dirs_texture = await Shaku.assets.loadTexture("imgs/directions.png", { generateMipMaps: true });
 const dirs_sprite = new Sprite(dirs_texture, new Rectangle(0, 0, 150, 100));
-dirs_sprite.position.set(400, 375);
 const space_texture = await Shaku.assets.loadTexture("imgs/spacebar.png", { generateMipMaps: true });
 const space_sprite = new Sprite(space_texture);
-space_sprite.position.set(150, 400);
 const undo_texture = await Shaku.assets.loadTexture("imgs/undo_redo.png", { generateMipMaps: true });
 const undo_sprite = new Sprite(undo_texture, new Rectangle(0, 0, 200, 50));
-undo_sprite.position.set(650, 400);
 
 const player_texture = await Shaku.assets.loadTexture("imgs/player.png", { generateMipMaps: true });
 // player_texture.filter = TextureFilterModes.LinearMipmapLinear;
@@ -1724,9 +1721,9 @@ let drawExtra = function () {
 
             dirs_sprite.sourceRect.y = (Shaku.gameTime.elapsed % 2) < 1 ? 0 : 100;
             undo_sprite.sourceRect.y = (Shaku.gameTime.elapsed % 2) < 1 ? 0 : 50;
-            dirs_sprite.position.set(400, 375);
-            space_sprite.position.set(150, 400);
-            undo_sprite.position.set(650, 400);
+            dirs_sprite.position.set(400, 360);
+            space_sprite.position.set(150, 385);
+            undo_sprite.position.set(650, 385);
 
             Shaku.gfx.drawSprite(dirs_sprite);
             Shaku.gfx.drawSprite(space_sprite);
