@@ -5,8 +5,8 @@ var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+var __commonJS = (cb, mod2) => function __require() {
+  return mod2 || (0, cb[__getOwnPropNames(cb)[0]])((mod2 = { exports: {} }).exports, mod2), mod2.exports;
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
@@ -16,9 +16,9 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
+var __toESM = (mod2, isNodeMode, target) => (target = mod2 != null ? __create(__getProtoOf(mod2)) : {}, __copyProps(
+  isNodeMode || !mod2 || !mod2.__esModule ? __defProp(target, "default", { value: mod2, enumerable: true }) : target,
+  mod2
 ));
 var __publicField = (obj, key, value) => {
   __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
@@ -11834,6 +11834,7 @@ var levels = [
     ]
   ))
 ];
+var in_end_screen = false;
 var state = 0 /* INTRO */;
 var TAPE_SYMBOL = /* @__PURE__ */ ((TAPE_SYMBOL2) => {
   TAPE_SYMBOL2[TAPE_SYMBOL2["LEFT"] = 0] = "LEFT";
@@ -11886,6 +11887,7 @@ function load_level(level) {
   for (let key in _cooling_time_left) {
     _cooling_time_left[key] = Infinity;
   }
+  in_end_screen = false;
 }
 function openCurInEditor() {
   let old_wall = initial_state.wall;
@@ -12048,7 +12050,7 @@ var drawExtra = function() {
   let permanent_text_right = import_shaku.default.gfx.buildText(instructions_font, "E/X", 32, import_color.default.lightgrey, import_text_alignments.TextAlignments.Center);
   permanent_text_right.position.set(770, 420);
   return function() {
-    if (state === 3 /* END */)
+    if (in_end_screen)
       return;
     if (CONFIG.time === "MANUAL" && selected_turn >= robot_tape.length) {
       import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
@@ -12108,7 +12110,7 @@ function update() {
     default:
       break;
   }
-  if (state === 1 /* GAME */) {
+  if (state === 1 /* GAME */ && !in_end_screen) {
     if (pressed_throttled(["q", "z"], import_shaku.default.gameTime.delta) && selected_turn > 0) {
       selected_turn -= 1;
     } else if (pressed_throttled(["e", "x"], import_shaku.default.gameTime.delta)) {
@@ -12208,7 +12210,7 @@ function update() {
   } else {
     all_states[cur_turn].draw(1);
   }
-  if (state === 1 /* GAME */ && EDITOR) {
+  if (state === 1 /* GAME */ && EDITOR && !in_end_screen) {
     let mouse_tile = import_shaku.default.input.mousePosition.add(level_offset).div(TILE_SIZE).round().sub(1, 1);
     import_shaku.default.gfx.outlineRect(
       new import_rectangle.default(
@@ -12376,7 +12378,7 @@ function update() {
     }
   }
   import_shaku.default.gfx.resetCamera();
-  if (state === 3 /* END */) {
+  if (in_end_screen) {
     import_shaku.default.gfx.useEffect(background_effect);
     background_effect.uniforms["u_aspect_ratio"](FULL_SCREEN_SPRITE.size.x / FULL_SCREEN_SPRITE.size.y);
     import_shaku.default.gfx.drawSprite(FULL_SCREEN_SPRITE);
@@ -12384,12 +12386,8 @@ function update() {
     import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
     import_shaku.default.gfx.drawGroup(generateText("Thanks for\nplaying!", 400, 100, 112, import_color.default.white), false);
     import_shaku.default.gfx.useEffect(null);
-    if (import_shaku.default.input.pressed("escape")) {
-      menu_selected_level = -1;
-      state = 2 /* MENU */;
-    }
   }
-  if (state === 1 /* GAME */) {
+  if (state === 1 /* GAME */ && !in_end_screen) {
     let delta_time_left = import_shaku.default.gameTime.delta;
     while (delta_time_left > 0) {
       if (time_offset < 0) {
@@ -12466,10 +12464,7 @@ function update() {
       [["a", "left"], -1]
     ], import_shaku.default.gameTime.delta);
     if (delta_level !== null) {
-      let new_menu_selected_level = menu_selected_level + delta_level;
-      if (new_menu_selected_level >= 0 && new_menu_selected_level < levels.length) {
-        menu_selected_level = new_menu_selected_level;
-      }
+      menu_selected_level = mod(menu_selected_level + delta_level, levels.length);
     }
     let menu_button_spacing = 100;
     let menu_button_size = 75;
@@ -12564,7 +12559,7 @@ function initTransitionToEnterLevel(n) {
 }
 function initTransitionToEnterEnd() {
   let enter_end_time = 0;
-  state = 3 /* END */;
+  in_end_screen = true;
   doEveryFrameUntilTrue(() => {
     FULL_SCREEN_SPRITE.color = new import_color.default(0, 0, 0, 1 - enter_end_time);
     import_shaku.default.gfx.drawSprite(FULL_SCREEN_SPRITE);
@@ -12657,6 +12652,9 @@ function clamp(value, a, b) {
 }
 function lerp(a, b, t) {
   return a * (1 - t) + b * t;
+}
+function mod(n, m) {
+  return (n % m + m) % m;
 }
 import_game_time.default.reset();
 update();

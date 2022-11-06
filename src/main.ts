@@ -1416,8 +1416,9 @@ enum STATE {
     INTRO,
     GAME,
     MENU,
-    END,
 }
+
+let in_end_screen = false;
 
 let state = STATE.INTRO;
 
@@ -1486,6 +1487,7 @@ function load_level(level: Level) {
     for (let key in _cooling_time_left) {
         _cooling_time_left[key] = Infinity;
     }
+    in_end_screen = false;
 }
 
 function openCurInEditor() {
@@ -1673,7 +1675,7 @@ let drawExtra = function () {
     permanent_text_right.position.set(770, 420);
 
     return function () {
-        if (state === STATE.END) return;
+        if (in_end_screen) return;
         if (CONFIG.time === "MANUAL" && selected_turn >= robot_tape.length) {
             Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
             Shaku.gfx.drawGroup(permanent_text_left, false);
@@ -1771,7 +1773,7 @@ function update() {
             break;
     }
 
-    if (state === STATE.GAME) {
+    if (state === STATE.GAME && !in_end_screen) {
         if (pressed_throttled(["q", "z"], Shaku.gameTime.delta) && selected_turn > 0) {
             selected_turn -= 1;
         } else if (pressed_throttled(["e", "x"], Shaku.gameTime.delta)) {
@@ -1882,7 +1884,7 @@ function update() {
     }
 
     // editor
-    if (state === STATE.GAME && EDITOR) {
+    if (state === STATE.GAME && EDITOR && !in_end_screen) {
         let mouse_tile = Shaku.input!.mousePosition.add(level_offset).div(TILE_SIZE).round().sub(1, 1);
         Shaku.gfx!.outlineRect(
             new Rectangle(
@@ -2048,7 +2050,7 @@ function update() {
 
     Shaku.gfx.resetCamera()
 
-    if (state === STATE.END) {
+    if (in_end_screen) {
         Shaku.gfx.useEffect(background_effect);
         // @ts-ignore
         background_effect.uniforms["u_aspect_ratio"](FULL_SCREEN_SPRITE.size.x / FULL_SCREEN_SPRITE.size.y);
@@ -2061,14 +2063,9 @@ function update() {
         Shaku.gfx.drawGroup(generateText("Thanks for\nplaying!", 400, 100, 112, Color.white), false);
         // @ts-ignore
         Shaku.gfx.useEffect(null);
-
-        if (Shaku.input.pressed("escape")) {
-            menu_selected_level = -1;
-            state = STATE.MENU;
-        }
     }
 
-    if (state === STATE.GAME) {
+    if (state === STATE.GAME && !in_end_screen) {
         let delta_time_left = Shaku.gameTime.delta;
 
         while (delta_time_left > 0) {
@@ -2162,10 +2159,7 @@ function update() {
             [["a", "left"], -1],
         ], Shaku.gameTime.delta);
         if (delta_level !== null) {
-            let new_menu_selected_level = menu_selected_level + delta_level;
-            if (new_menu_selected_level >= 0 && new_menu_selected_level < levels.length) {
-                menu_selected_level = new_menu_selected_level;
-            }
+            menu_selected_level = mod(menu_selected_level + delta_level, levels.length);
         }
 
         let menu_button_spacing = 100;
@@ -2304,7 +2298,7 @@ function initTransitionToEnterLevel(n: number) {
 
 function initTransitionToEnterEnd() {
     let enter_end_time = 0;
-    state = STATE.END;
+    in_end_screen = true;
     doEveryFrameUntilTrue(() => {
         // todo: cooler transition
         FULL_SCREEN_SPRITE.color = new Color(0, 0, 0, 1 - enter_end_time);
@@ -2468,6 +2462,10 @@ function clamp(value: number, a: number, b: number) {
 
 function lerp(a: number, b: number, t: number): number {
     return a * (1 - t) + b * t;
+}
+
+function mod(n: number, m: number) {
+    return ((n % m) + m) % m;
 }
 
 GameTime.reset();
