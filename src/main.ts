@@ -800,7 +800,7 @@ let levels = [
 
             new Spawner(new Vector2(7, 3), Vector2.up, null),
             new Crate(new Vector2(6, 1), null),
-            new Crate(new Vector2(7, 2), null),
+            new Crate(new Vector2(8, 2), null),
         ],
     )),
     new Level("move_spawner", "hat", 6, 4, new GameState(

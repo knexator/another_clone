@@ -11431,7 +11431,7 @@ var levels = [
       ]),
       new Spawner(new import_vector2.default(7, 3), import_vector2.default.up, null),
       new Crate(new import_vector2.default(6, 1), null),
-      new Crate(new import_vector2.default(7, 2), null)
+      new Crate(new import_vector2.default(8, 2), null)
     ]
   )),
   new Level("move_spawner", "hat", 6, 4, new GameState(
