@@ -18,6 +18,7 @@ import memoize from "lodash.memoize";
 import * as dat from 'dat.gui';
 import MsdfFontTextureAsset from "shaku/lib/assets/msdf_font_texture_asset";
 import GameTime from "shaku/lib/utils/game_time";
+import { BarEffect } from "./bar_effect";
 
 // all queued turns wont take any longer than turn_duration / power_thing
 let power_thing = 1 / 4.0;
@@ -50,7 +51,7 @@ Shaku.gfx!.centerCanvas();
 // Shaku.gfx!.maximizeCanvasSize(false, false);
 
 // let game_size = new Vector2(800, 400);
-let game_size = new Vector2(800, 450);
+let game_size = new Vector2(800, 430);
 
 const logo_texture = await Shaku.assets.loadTexture("imgs/logo.png", { generateMipMaps: true });
 const logo_sprite = new Sprite(logo_texture);
@@ -70,15 +71,30 @@ LOWER_SCREEN_SPRITE.size.set(800, 600 - game_size.y);
 LOWER_SCREEN_SPRITE.position.set(0, game_size.y);
 LOWER_SCREEN_SPRITE.color = Color.fromHex("#2B849C")
 
+const MID_LINE_SPRITE = new Sprite(Shaku.gfx.whiteTexture);
+MID_LINE_SPRITE.origin = Vector2.zero;
+MID_LINE_SPRITE.size.set(800, 8);
+MID_LINE_SPRITE.position.set(0, game_size.y);
+MID_LINE_SPRITE.color = Color.fromHex("#12679B");
 
 Shaku.startFrame();
 Shaku.gfx!.clear(Shaku.utils.Color.darkslategray);
 Shaku.gfx.drawSprite(logo_sprite);
 Shaku.gfx.drawSprite(LOWER_SCREEN_SPRITE);
+Shaku.gfx.drawSprite(MID_LINE_SPRITE);
 Shaku.gfx.drawSprite(logo_loading_sprite);
 // Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
 // Shaku.gfx.drawGroup(generateText("Another\nClone", 400, 200, 64, Color.wheat, TextAlignments.Center, logo_font), false);
 Shaku.endFrame();
+
+// @ts-ignore
+const storage = new Shaku.utils.Storage();
+
+const menu_row_size = 6;
+const menu_button_spacing = 125;
+const menu_button_size = 100;
+const menu_off_x = (game_size.x - menu_button_spacing * (menu_row_size - 1) - menu_button_size) * .5;
+const menu_off_y = (game_size.y - menu_button_spacing * 2 - menu_button_size) * .5;
 
 // await new Promise(r => setTimeout(r, 2000)); // to test loading screen
 
@@ -783,7 +799,7 @@ let levels = [
             new Crate(new Vector2(4, 2), null),
         ],
     )),
-    new Level("auto", "sausage", 2, 1, new GameState(
+    /*new Level("auto", "sausage", 2, 1, new GameState(
         -1, 0,
         [
             Walls.fromString(`
@@ -802,7 +818,7 @@ let levels = [
             new Crate(new Vector2(6, 1), null),
             new Crate(new Vector2(8, 2), null),
         ],
-    )),
+    )),*/
     new Level("move_spawner", "hat", 6, 4, new GameState(
         -1, 0,
         [
@@ -835,7 +851,7 @@ let levels = [
             new Crate(new Vector2(8, 2), null),
         ],
     )),
-    new Level("microban", "microban", 8, 5, new GameState(
+    new Level("microban", "sokoban", 8, 5, new GameState(
         -1, 0,
         [
             Walls.fromString(`
@@ -1609,6 +1625,13 @@ background_effect.uniforms["u_aspect_ratio"](MAIN_SCREEN_SPRITE.size.x / MAIN_SC
 // @ts-ignore
 Shaku.gfx.useEffect(null);
 
+const bar_effect = Shaku.gfx.createEffect(BarEffect);
+Shaku.gfx.useEffect(bar_effect);
+// @ts-ignore
+bar_effect.uniforms["u_aspect_ratio"](LOWER_SCREEN_SPRITE.size.x / LOWER_SCREEN_SPRITE.size.y);
+// @ts-ignore
+Shaku.gfx.useEffect(null);
+
 const FULL_SCREEN_SPRITE = new Sprite(Shaku.gfx.whiteTexture);
 FULL_SCREEN_SPRITE.origin = Vector2.zero;
 FULL_SCREEN_SPRITE.size = Shaku.gfx.getCanvasSize();
@@ -1676,13 +1699,13 @@ let drawExtra = function () {
 
     return function () {
         if (in_end_screen) return;
-        if (CONFIG.time === "MANUAL" && selected_turn >= robot_tape.length) {
+        /*if (CONFIG.time === "MANUAL" && selected_turn >= robot_tape.length) {
             Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
             Shaku.gfx.drawGroup(permanent_text_left, false);
             Shaku.gfx.drawGroup(permanent_text_right, false);
             // @ts-ignore
             Shaku.gfx.useEffect(null);
-        }
+        }*/
         if (EDITOR) return;
         if (cur_level_n === 0) {
             // Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
@@ -1701,6 +1724,9 @@ let drawExtra = function () {
 
             dirs_sprite.sourceRect.y = (Shaku.gameTime.elapsed % 2) < 1 ? 0 : 100;
             undo_sprite.sourceRect.y = (Shaku.gameTime.elapsed % 2) < 1 ? 0 : 50;
+            dirs_sprite.position.set(400, 375);
+            space_sprite.position.set(150, 400);
+            undo_sprite.position.set(650, 400);
 
             Shaku.gfx.drawSprite(dirs_sprite);
             Shaku.gfx.drawSprite(space_sprite);
@@ -1745,7 +1771,16 @@ function update() {
         // @ts-ignore
         LOWER_SCREEN_SPRITE.color.a = 1;
     }
+    Shaku.gfx.useEffect(bar_effect);
+    // @ts-ignore
+    bar_effect.uniforms["u_time"](Shaku.gameTime.elapsed);
+    // @ts-ignore
+    bar_effect.uniforms["u_alpha"](1);
+    // @ts-ignore
+    bar_effect.uniforms["u_dark"](1);
     Shaku.gfx.drawSprite(LOWER_SCREEN_SPRITE);
+    // @ts-ignore
+    Shaku.gfx.useEffect(null);
 
     if (selected_turn >= robot_tape.length) {
         FULL_SCREEN_SPRITE.color = new Color(0, 0, 0, .4);
@@ -1988,7 +2023,7 @@ function update() {
         }
     }
 
-    Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_1 * SYMBOL_SIZE, -450));
+    Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_1 * SYMBOL_SIZE, -445));
     Shaku.gfx.drawSprite(row_1_background);
     if (robot_delay < row_1) {
         Shaku.gfx.fillRect(new Rectangle(robot_delay * SYMBOL_SIZE, 8, SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16), COLOR_TAPE_DELAY);
@@ -2016,7 +2051,7 @@ function update() {
         drawSymbol(cur_symbol, new Vector2((k + .5) * SYMBOL_SIZE, SYMBOL_SIZE * .75));
     }
     if (row_2 > 0) {
-        Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_2 * SYMBOL_SIZE, -525));
+        Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_2 * SYMBOL_SIZE, -445 - 75));
         Shaku.gfx?.fillRect(
             new Rectangle(-SYMBOL_SIZE * .5 + 8, 8, SYMBOL_SIZE * (row_2 + 1) - 16, SYMBOL_SIZE * 1.5 - 16),
             COLOR_TAPE
@@ -2115,6 +2150,7 @@ function update() {
                 time_offset -= dir * .99;
 
                 if (!EDITOR && !exiting_level && all_states[cur_turn].won && !waiting_for_final_input) {
+                    storage.setItem(cur_level.dev_name, "y");
                     time_offset = 0;
                     selected_turn = all_states[cur_turn].major_turn;
                     waiting_for_final_input = true;
@@ -2150,7 +2186,6 @@ function update() {
     if (state === STATE.MENU) {
         FULL_SCREEN_SPRITE.color = new Color(0, 0, 0, .7);
         Shaku.gfx.drawSprite(FULL_SCREEN_SPRITE);
-        let menu_row_size = 6;
 
         let delta_level = selectFromInput([
             [["w", "up"], -menu_row_size],
@@ -2162,15 +2197,16 @@ function update() {
             menu_selected_level = mod(menu_selected_level + delta_level, levels.length);
         }
 
-        let menu_button_spacing = 100;
-        let menu_button_size = 75;
         for (let k = 0; k < levels.length; k++) {
+            let solved = storage.getItem(levels[k].dev_name) === "y";
             Shaku.gfx.fillRect(
                 new Rectangle(
-                    (k % menu_row_size) * menu_button_spacing + menu_button_spacing / 3,
-                    Math.floor(k / menu_row_size) * menu_button_spacing + menu_button_spacing / 3,
+                    (k % menu_row_size) * menu_button_spacing + menu_off_x,
+                    Math.floor(k / menu_row_size) * menu_button_spacing + menu_off_y,
                     menu_button_size, menu_button_size
-                ), k === menu_selected_level ? Color.cyan : Color.darkcyan
+                ), solved
+                ? (k === menu_selected_level ? Color.chartreuse : Color.darkgreen)
+                : (k === menu_selected_level ? Color.cyan : Color.darkcyan)
             )
         }
         Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
@@ -2182,14 +2218,30 @@ function update() {
             );
             Shaku.gfx.drawGroup(text_spr, false);*/
             let name_spr = generateText(levels[k].public_name,
-                (k % menu_row_size) * menu_button_spacing + menu_button_spacing / 3 + menu_button_size / 2,
-                Math.floor(k / menu_row_size) * menu_button_spacing + menu_button_spacing / 3 + menu_button_size / 5,
-                18
+                (k % menu_row_size) * menu_button_spacing + menu_off_x + menu_button_size / 2,
+                Math.floor(k / menu_row_size) * menu_button_spacing + menu_off_y + menu_button_size / 5,
+                24
             );
             Shaku.gfx.drawGroup(name_spr, false);
         }
+
+        // @ts-ignore
+        Shaku.gfx.useEffect(bar_effect);
+        // @ts-ignore
+        bar_effect.uniforms["u_dark"](.7);
+        Shaku.gfx.drawSprite(LOWER_SCREEN_SPRITE);
         // @ts-ignore
         Shaku.gfx.useEffect(null);
+
+        dirs_sprite.sourceRect.y = (Shaku.gameTime.elapsed % 2) < 1 ? 0 : 100;
+        undo_sprite.sourceRect.y = (Shaku.gameTime.elapsed % 2) < 1 ? 0 : 50;
+        dirs_sprite.position.set(400, 525);
+        space_sprite.position.set(150, 550);
+        undo_sprite.position.set(650, 550);
+
+        Shaku.gfx.drawSprite(dirs_sprite);
+        Shaku.gfx.drawSprite(space_sprite);
+        Shaku.gfx.drawSprite(undo_sprite);
     }
 
     if (state === STATE.INTRO) {
@@ -2207,17 +2259,18 @@ function update() {
         Shaku.gfx.useEffect(background_effect);
         // @ts-ignore
         background_effect.uniforms["u_alpha"](1 - intro_exit_time * intro_exit_time);
-        // @ts-ignore
         Shaku.gfx.drawSprite(MAIN_SCREEN_SPRITE);
+
+        Shaku.gfx.useEffect(bar_effect);
+        // @ts-ignore
+        bar_effect.uniforms["u_alpha"](1 - intro_exit_time * intro_exit_time);
+        Shaku.gfx.drawSprite(LOWER_SCREEN_SPRITE);
+
         // @ts-ignore
         Shaku.gfx.useEffect(null);
 
         logo_sprite.position.y = lerp(0, -400, intro_exit_time * intro_exit_time);
         Shaku.gfx.drawSprite(logo_sprite);
-
-        // @ts-ignore
-        LOWER_SCREEN_SPRITE.color.a = 1 - intro_exit_time * intro_exit_time;
-        Shaku.gfx.drawSprite(LOWER_SCREEN_SPRITE);
 
         if (intro_exit_time === 0) {
             // @ts-ignore
