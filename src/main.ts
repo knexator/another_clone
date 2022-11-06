@@ -904,6 +904,27 @@ let levels = [
             new Crate(new Vector2(3, 3), null),
         ],
     )),
+    new Level("two_directions", "stairs", 5, 2, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ..........###
+                .....######.#
+                .....#......#
+                ######......#
+                #...........#
+                #############
+            `),
+            new Targets([
+                new Vector2(11, 1),
+                new Vector2(2, 4),
+            ]),
+
+            new Spawner(new Vector2(7, 3), Vector2.up, null),
+            new Crate(new Vector2(11, 2), null),
+            new Crate(new Vector2(3, 4), null),
+        ],
+    )),
     /*new Level("push_wall_direct", "u-shape", 7, 5, new GameState(
         -1, 0,
         [
@@ -1029,27 +1050,6 @@ let levels = [
             new Crate(new Vector2(1, 3), null),
             new Crate(new Vector2(4, 3), null),
             new Crate(new Vector2(5, 4), null),
-        ],
-    )),
-    new Level("two_directions", "stairs", 5, 2, new GameState(
-        -1, 0,
-        [
-            Walls.fromString(`
-                ..........###
-                .....######.#
-                .....#......#
-                ######......#
-                #...........#
-                #############
-            `),
-            new Targets([
-                new Vector2(11, 1),
-                new Vector2(2, 4),
-            ]),
-
-            new Spawner(new Vector2(7, 3), Vector2.up, null),
-            new Crate(new Vector2(11, 2), null),
-            new Crate(new Vector2(3, 4), null),
         ],
     )),
     new Level("bistable", "claw", 8, 3, new GameState(
@@ -1197,6 +1197,36 @@ let levels = [
             new Crate(new Vector2(6, 2), null),
         ],
     )),
+    new Level("double_move_spawner", "factory", 13, 4, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ..###########..
+                ###.#.#.#.#.#..
+                #...........##.
+                #............#.
+                #............#.
+                #............##
+                #.............#
+                ###############
+            `),
+            new Targets([
+                new Vector2(2, 3),
+                new Vector2(4, 3),
+                new Vector2(6, 3),
+                new Vector2(8, 3),
+                new Vector2(10, 3),
+            ]),
+
+            new Spawner(new Vector2(2, 6), Vector2.up, null),
+
+            new Crate(new Vector2(2, 2), null),
+            new Crate(new Vector2(4, 2), null),
+            new Crate(new Vector2(6, 2), null),
+            new Crate(new Vector2(8, 2), null),
+            new Crate(new Vector2(10, 2), null),
+        ],
+    )),
     new Level("loop_init", "pipe", 11, 8, new GameState(
         -1, 0,
         [
@@ -1305,61 +1335,7 @@ let levels = [
             new Crate(new Vector2(8, 3), null),
             new Crate(new Vector2(10, 4), null),
         ],
-    )),*/ // very broken
-    new Level("double_move_spawner", "factory", 13, 4, new GameState(
-        -1, 0,
-        [
-            Walls.fromString(`
-                ..###########..
-                ###.#.#.#.#.#..
-                #...........##.
-                #............#.
-                #............#.
-                #............##
-                #.............#
-                ###############
-            `),
-            new Targets([
-                new Vector2(2, 3),
-                new Vector2(4, 3),
-                new Vector2(6, 3),
-                new Vector2(8, 3),
-                new Vector2(10, 3),
-            ]),
-
-            new Spawner(new Vector2(2, 6), Vector2.up, null),
-
-            new Crate(new Vector2(2, 2), null),
-            new Crate(new Vector2(4, 2), null),
-            new Crate(new Vector2(6, 2), null),
-            new Crate(new Vector2(8, 2), null),
-            new Crate(new Vector2(10, 2), null),
-        ],
-    )),
-    new Level("tree", "trident", 14, 4, new GameState(
-        -1, 0,
-        [
-            Walls.fromString(`
-                ..##########...
-                .##........#...
-                ##..########...
-                #..........#...
-                ###..##########
-                ..##..........#
-                ...############
-            `),
-            new Targets([
-                new Vector2(9, 1),
-                new Vector2(9, 3),
-                new Vector2(12, 5),
-            ]),
-
-            new Spawner(new Vector2(1, 3), Vector2.right, null),
-            new Crate(new Vector2(6, 1), null),
-            new Crate(new Vector2(6, 3), null),
-            new Crate(new Vector2(6, 5), null),
-        ],
-    )),
+    )),*/ // very broken    
     new Level("mini_avoid_avoiding", "worm", 7, 3, new GameState(
         -1, 0,
         [
@@ -1410,6 +1386,30 @@ let levels = [
             new Crate(new Vector2(7, 4), null),
         ],
     )),*/
+    new Level("tree", "trident", 14, 4, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ..##########...
+                .##........#...
+                ##..########...
+                #..........#...
+                ###..##########
+                ..##..........#
+                ...############
+            `),
+            new Targets([
+                new Vector2(9, 1),
+                new Vector2(9, 3),
+                new Vector2(12, 5),
+            ]),
+
+            new Spawner(new Vector2(1, 3), Vector2.right, null),
+            new Crate(new Vector2(6, 1), null),
+            new Crate(new Vector2(6, 3), null),
+            new Crate(new Vector2(6, 5), null),
+        ],
+    )),
 ]
 
 enum STATE {
@@ -2124,10 +2124,10 @@ function update() {
                     ["ex", "aleft", "dright", "sdown", "space", "wup"].forEach(x => {
                         _cooling_time_left[x] += .25;
                     })
-                    /*setTimeout(() => {
+                    setTimeout(() => {
                         waiting_for_final_input = false;
                         console.log("no longer waiting for final input")
-                    }, 10000);*/
+                    }, 400);
                 }
             }
 

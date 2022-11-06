@@ -11535,6 +11535,27 @@ var levels = [
       new Crate(new import_vector2.default(3, 3), null)
     ]
   )),
+  new Level("two_directions", "stairs", 5, 2, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                ..........###
+                .....######.#
+                .....#......#
+                ######......#
+                #...........#
+                #############
+            `),
+      new Targets([
+        new import_vector2.default(11, 1),
+        new import_vector2.default(2, 4)
+      ]),
+      new Spawner(new import_vector2.default(7, 3), import_vector2.default.up, null),
+      new Crate(new import_vector2.default(11, 2), null),
+      new Crate(new import_vector2.default(3, 4), null)
+    ]
+  )),
   new Level("push_wall_mid", "eight", 17, 9, new GameState(
     -1,
     0,
@@ -11576,27 +11597,6 @@ var levels = [
       new Crate(new import_vector2.default(1, 3), null),
       new Crate(new import_vector2.default(4, 3), null),
       new Crate(new import_vector2.default(5, 4), null)
-    ]
-  )),
-  new Level("two_directions", "stairs", 5, 2, new GameState(
-    -1,
-    0,
-    [
-      Walls.fromString(`
-                ..........###
-                .....######.#
-                .....#......#
-                ######......#
-                #...........#
-                #############
-            `),
-      new Targets([
-        new import_vector2.default(11, 1),
-        new import_vector2.default(2, 4)
-      ]),
-      new Spawner(new import_vector2.default(7, 3), import_vector2.default.up, null),
-      new Crate(new import_vector2.default(11, 2), null),
-      new Crate(new import_vector2.default(3, 4), null)
     ]
   )),
   new Level("bistable", "claw", 8, 3, new GameState(
@@ -11705,6 +11705,35 @@ var levels = [
       new Crate(new import_vector2.default(6, 2), null)
     ]
   )),
+  new Level("double_move_spawner", "factory", 13, 4, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                ..###########..
+                ###.#.#.#.#.#..
+                #...........##.
+                #............#.
+                #............#.
+                #............##
+                #.............#
+                ###############
+            `),
+      new Targets([
+        new import_vector2.default(2, 3),
+        new import_vector2.default(4, 3),
+        new import_vector2.default(6, 3),
+        new import_vector2.default(8, 3),
+        new import_vector2.default(10, 3)
+      ]),
+      new Spawner(new import_vector2.default(2, 6), import_vector2.default.up, null),
+      new Crate(new import_vector2.default(2, 2), null),
+      new Crate(new import_vector2.default(4, 2), null),
+      new Crate(new import_vector2.default(6, 2), null),
+      new Crate(new import_vector2.default(8, 2), null),
+      new Crate(new import_vector2.default(10, 2), null)
+    ]
+  )),
   new Level("loop_init", "pipe", 11, 8, new GameState(
     -1,
     0,
@@ -11756,33 +11785,28 @@ var levels = [
       new Crate(new import_vector2.default(8, 4), null)
     ]
   )),
-  new Level("double_move_spawner", "factory", 13, 4, new GameState(
+  new Level("mini_avoid_avoiding", "worm", 7, 3, new GameState(
     -1,
     0,
     [
       Walls.fromString(`
-                ..###########..
-                ###.#.#.#.#.#..
-                #...........##.
-                #............#.
-                #............#.
-                #............##
-                #.............#
-                ###############
+                .....#########..
+                .....#.......#..
+                .....#.#########
+                .....#.........#
+                ########...#####
+                #.........##....
+                ###########.....
             `),
       new Targets([
-        new import_vector2.default(2, 3),
-        new import_vector2.default(4, 3),
-        new import_vector2.default(6, 3),
-        new import_vector2.default(8, 3),
-        new import_vector2.default(10, 3)
+        new import_vector2.default(11, 1),
+        new import_vector2.default(13, 3),
+        new import_vector2.default(2, 5)
       ]),
-      new Spawner(new import_vector2.default(2, 6), import_vector2.default.up, null),
-      new Crate(new import_vector2.default(2, 2), null),
-      new Crate(new import_vector2.default(4, 2), null),
-      new Crate(new import_vector2.default(6, 2), null),
-      new Crate(new import_vector2.default(8, 2), null),
-      new Crate(new import_vector2.default(10, 2), null)
+      new Spawner(new import_vector2.default(10, 4), import_vector2.default.left, null),
+      new Crate(new import_vector2.default(8, 1), null),
+      new Crate(new import_vector2.default(10, 3), null),
+      new Crate(new import_vector2.default(6, 5), null)
     ]
   )),
   new Level("tree", "trident", 14, 4, new GameState(
@@ -11806,30 +11830,6 @@ var levels = [
       new Spawner(new import_vector2.default(1, 3), import_vector2.default.right, null),
       new Crate(new import_vector2.default(6, 1), null),
       new Crate(new import_vector2.default(6, 3), null),
-      new Crate(new import_vector2.default(6, 5), null)
-    ]
-  )),
-  new Level("mini_avoid_avoiding", "worm", 7, 3, new GameState(
-    -1,
-    0,
-    [
-      Walls.fromString(`
-                .....#########..
-                .....#.......#..
-                .....#.#########
-                .....#.........#
-                ########...#####
-                #.........##....
-                ###########.....
-            `),
-      new Targets([
-        new import_vector2.default(11, 1),
-        new import_vector2.default(13, 3),
-        new import_vector2.default(2, 5)
-      ]),
-      new Spawner(new import_vector2.default(10, 4), import_vector2.default.left, null),
-      new Crate(new import_vector2.default(8, 1), null),
-      new Crate(new import_vector2.default(10, 3), null),
       new Crate(new import_vector2.default(6, 5), null)
     ]
   ))
@@ -12433,6 +12433,10 @@ function update() {
           ["ex", "aleft", "dright", "sdown", "space", "wup"].forEach((x) => {
             _cooling_time_left[x] += 0.25;
           });
+          setTimeout(() => {
+            waiting_for_final_input = false;
+            console.log("no longer waiting for final input");
+          }, 400);
         }
       }
       if (time_offset === 0)
