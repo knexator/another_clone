@@ -163,6 +163,7 @@ const COLOR_TAPE_DELAY = Color.fromHex("#f5ca7f");
 const COLOR_HIGH = Color.fromHex("#99F3ED");
 const COLOR_LOW = Color.fromHex("#6AC2BC");
 const COLOR_SYMBOL = Color.fromHex("#B84B4B");
+const COLOR_BRIGHT = new Color(1.3, 1.3, 1.3, 1);
 
 const tape_high = new Sprite(Shaku.gfx.whiteTexture);
 tape_high.origin = new Vector2(0, -8 / (SYMBOL_SIZE * 1.5));
@@ -668,12 +669,11 @@ class Player extends Pushable {
         public previous: Player | null,
     ) { super(pos, previous); };
 
-    private static _brightColor = new Color(1.3, 1.3, 1.3, 1);
     draw(turn_time: number): void {
         this.sprite = this.age < robot_tape.length ? player_sprite : player_gray_sprite;
 
         this.sprite.rotation = this.dir.getRadians() + Math.PI / 2;
-        this.sprite.color = (this.index === 0) ? Player._brightColor : Shaku.utils.Color.white;
+        this.sprite.color = (this.index === 0) ? COLOR_BRIGHT : Shaku.utils.Color.white;
 
         if (turn_time !== 1 && this.previous) {
             // turn_time = clamp(remap(turn_time, .2, 1, 0, 1), 0, 1);
@@ -988,7 +988,7 @@ let levels = [
             new Crate(new Vector2(4, 5), null),
         ],
     )),*/ // unintended solution: same as trident, on the lower divider
-    new Level("bistable_push", "prongs", 6, 2, new GameState(
+    /*new Level("bistable_push", "prongs", 6, 2, new GameState(
         -1, 0,
         [
             Walls.fromString(`
@@ -1006,6 +1006,29 @@ let levels = [
             new Spawner(new Vector2(1, 2), Vector2.right, null),
             new Crate(new Vector2(5, 1), null),
             new Crate(new Vector2(6, 3), null),
+        ],
+    )),*/
+    new Level("bistable_self_loop_push", "train", 6, 3, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                .###.......
+                ##.#.......
+                #..#######.
+                #........##
+                #.........#
+                ###########
+            `),
+            new Targets([
+                new Vector2(1, 2),
+                new Vector2(7, 3),
+                new Vector2(8, 4),
+            ]),
+
+            new Spawner(new Vector2(2, 1), Vector2.down, null),
+            new Crate(new Vector2(1, 3), null),
+            new Crate(new Vector2(4, 3), null),
+            new Crate(new Vector2(5, 4), null),
         ],
     )),
     new Level("two_directions", "stairs", 5, 2, new GameState(
@@ -1086,6 +1109,26 @@ let levels = [
             new Crate(new Vector2(11, 2), null),
         ],
     )),
+    new Level("basic_push_diverge", "duck", 10, 3, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                .####.
+                .#..#.
+                .#..##
+                .#...#
+                ##.###
+                #..#..
+                ####..
+            `),
+            new Targets([
+                new Vector2(2, 2),
+            ]),
+
+            new Spawner(new Vector2(1, 5), Vector2.right, null),
+            new Crate(new Vector2(3, 2), null),
+        ],
+    )),
     /*new Level("compose", "nose", 20, 11, new GameState(
         -1, 0,
         [
@@ -1124,6 +1167,57 @@ let levels = [
             new Crate(new Vector2(7, 2), null),
         ],
     )),*/
+    new Level("push_wait", "forklift", 6, 3, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ########..
+                #......#..
+                #......##.
+                #.......#.
+                #.......##
+                #........#
+                ##########
+            `),
+            new Targets([
+                new Vector2(1, 1),
+                new Vector2(2, 1),
+                new Vector2(3, 1),
+                new Vector2(4, 1),
+                new Vector2(5, 1),
+                new Vector2(6, 1),
+            ]),
+
+            new Spawner(new Vector2(2, 5), Vector2.up, null),
+            new Crate(new Vector2(1, 2), null),
+            new Crate(new Vector2(2, 2), null),
+            new Crate(new Vector2(3, 2), null),
+            new Crate(new Vector2(4, 2), null),
+            new Crate(new Vector2(5, 2), null),
+            new Crate(new Vector2(6, 2), null),
+        ],
+    )),
+    new Level("loop_init", "pipe", 11, 8, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ######......
+                #....#......
+                #....#######
+                ##.........#
+                .#..########
+                .####.......
+            `),
+            new Targets([
+                new Vector2(3, 2),
+                new Vector2(9, 3),
+            ]),
+
+            new Spawner(new Vector2(2, 4), Vector2.right, null),
+            new Crate(new Vector2(2, 2), null),
+            new Crate(new Vector2(5, 3), null),
+        ],
+    )),
     new Level("u_chain", "eyes", 16, 2, new GameState(
         -1, 0,
         [
@@ -1173,26 +1267,6 @@ let levels = [
             new Crate(new Vector2(4, 2), null),
         ],
     )),*/
-    new Level("basic_push_diverge", "duck", 10, 3, new GameState(
-        -1, 0,
-        [
-            Walls.fromString(`
-                .####.
-                .#..#.
-                .#..##
-                .#...#
-                ##.###
-                #..#..
-                ####..
-            `),
-            new Targets([
-                new Vector2(2, 2),
-            ]),
-
-            new Spawner(new Vector2(1, 5), Vector2.right, null),
-            new Crate(new Vector2(3, 2), null),
-        ],
-    )),
     /*new Level("left_right_both_up", "factory", 12, 4, new GameState(
         -1, 0,
         [
@@ -1232,14 +1306,13 @@ let levels = [
             new Crate(new Vector2(10, 4), null),
         ],
     )),*/ // very broken
-    new Level("double_move_spawner", "factory", 14, 4, new GameState(
+    new Level("double_move_spawner", "factory", 13, 4, new GameState(
         -1, 0,
         [
             Walls.fromString(`
                 ..###########..
                 ###.#.#.#.#.#..
                 #...........##.
-                #............#.
                 #............#.
                 #............#.
                 #............##
@@ -1254,7 +1327,7 @@ let levels = [
                 new Vector2(10, 3),
             ]),
 
-            new Spawner(new Vector2(2, 7), Vector2.up, null),
+            new Spawner(new Vector2(2, 6), Vector2.up, null),
 
             new Crate(new Vector2(2, 2), null),
             new Crate(new Vector2(4, 2), null),
@@ -1287,6 +1360,56 @@ let levels = [
             new Crate(new Vector2(6, 5), null),
         ],
     )),
+    new Level("mini_avoid_avoiding", "worm", 7, 3, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                .....#########..
+                .....#.......#..
+                .....#.#########
+                .....#.........#
+                ########...#####
+                #.........##....
+                ###########.....
+            `),
+            new Targets([
+                new Vector2(11, 1),
+                new Vector2(13, 3),
+                new Vector2(2, 5),
+            ]),
+
+            new Spawner(new Vector2(10, 4), Vector2.left, null),
+            new Crate(new Vector2(8, 1), null),
+            new Crate(new Vector2(10, 3), null),
+            new Crate(new Vector2(6, 5), null),
+        ],
+    )),
+    /*new Level("avoid_avoiding", "cannon", 17, 8, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ...###.........
+                ..##.#########.
+                ..#..........##
+                .##...........#
+                ##...........##
+                #.....########.
+                #.....#........
+                #...#.#........
+                #######........
+            `),
+            new Targets([
+                new Vector2(11, 2),
+                new Vector2(12, 3),
+                new Vector2(11, 4),
+            ]),
+
+            new Spawner(new Vector2(4, 1), Vector2.down, null),
+            new Crate(new Vector2(7, 2), null),
+            new Crate(new Vector2(8, 3), null),
+            new Crate(new Vector2(7, 4), null),
+        ],
+    )),*/
 ]
 
 enum STATE {
@@ -1699,20 +1822,28 @@ function update() {
                 } else {
                     if (CONFIG.time === "MANUAL") {
                         let time_left = .1;
-                        row_1_background.color = COLOR_SYMBOL;
-                        row_2_background.color = COLOR_SYMBOL;
+                        let first = cur_level.dev_name === "first";
+                        if (first) {
+                            space_sprite.color = COLOR_BRIGHT;
+                        } else {
+                            row_1_background.color = COLOR_SYMBOL;
+                            row_2_background.color = COLOR_SYMBOL;
+                        }
                         doEveryFrameUntilTrue(() => {
-                            Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_1 * SYMBOL_SIZE, -450));
-                            Shaku.gfx.drawSprite(row_1_background);
-                            if (row_2 > 0) {
-                                Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_2 * SYMBOL_SIZE, -525));
-                                Shaku.gfx.drawSprite(row_2_background);
+                            if (!first) {
+                                Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_1 * SYMBOL_SIZE, -450));
+                                Shaku.gfx.drawSprite(row_1_background);
+                                if (row_2 > 0) {
+                                    Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_2 * SYMBOL_SIZE, -525));
+                                    Shaku.gfx.drawSprite(row_2_background);
+                                }
+                                Shaku.gfx.resetCamera();
                             }
-                            Shaku.gfx.resetCamera();
                             time_left -= Shaku.gameTime.delta;
                             if (time_left < 0) {
                                 row_1_background.color = COLOR_TAPE;
                                 row_2_background.color = COLOR_TAPE;
+                                space_sprite.color = Color.white;
                                 return true;
                             }
                             return false;

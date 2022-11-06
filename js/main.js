@@ -10926,6 +10926,7 @@ var COLOR_TAPE_DELAY = import_color.default.fromHex("#f5ca7f");
 var COLOR_HIGH = import_color.default.fromHex("#99F3ED");
 var COLOR_LOW = import_color.default.fromHex("#6AC2BC");
 var COLOR_SYMBOL = import_color.default.fromHex("#B84B4B");
+var COLOR_BRIGHT = new import_color.default(1.3, 1.3, 1.3, 1);
 var tape_high = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
 tape_high.origin = new import_vector2.default(0, -8 / (SYMBOL_SIZE * 1.5));
 tape_high.size.set(SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16);
@@ -11346,7 +11347,7 @@ var Crate = class extends Pushable {
     return new Crate(this.pos.clone(), this);
   }
 };
-var _Player = class extends Pushable {
+var Player = class extends Pushable {
   constructor(pos, dir, index, age = 0, previous) {
     super(pos, previous);
     this.pos = pos;
@@ -11359,7 +11360,7 @@ var _Player = class extends Pushable {
   draw(turn_time) {
     this.sprite = this.age < robot_tape.length ? player_sprite : player_gray_sprite;
     this.sprite.rotation = this.dir.getRadians() + Math.PI / 2;
-    this.sprite.color = this.index === 0 ? _Player._brightColor : import_shaku.default.utils.Color.white;
+    this.sprite.color = this.index === 0 ? COLOR_BRIGHT : import_shaku.default.utils.Color.white;
     if (turn_time !== 1 && this.previous) {
       this.sprite.position.copy(import_vector2.default.lerp(this.previous.pos, this.pos, turn_time).add(1, 1).mul(TILE_SIZE));
       if (this.previous.age !== this.age && this.age > 0 && this.age - 1 < robot_tape.length && robot_tape[this.age - 1] !== TAPE_SYMBOL.NONE && this.previous.pos.equals(this.pos)) {
@@ -11371,11 +11372,9 @@ var _Player = class extends Pushable {
     import_shaku.default.gfx.drawSprite(this.sprite);
   }
   clone() {
-    return new _Player(this.pos.clone(), this.dir.clone(), this.index, this.age, this);
+    return new Player(this.pos.clone(), this.dir.clone(), this.index, this.age, this);
   }
 };
-var Player = _Player;
-__publicField(Player, "_brightColor", new import_color.default(1.3, 1.3, 1.3, 1));
 var levels = [
   new Level("first", "sofa", 17, 4, new GameState(
     -1,
@@ -11556,24 +11555,27 @@ var levels = [
       new Crate(new import_vector2.default(4, 2), null)
     ]
   )),
-  new Level("bistable_push", "prongs", 6, 2, new GameState(
+  new Level("bistable_self_loop_push", "train", 6, 3, new GameState(
     -1,
     0,
     [
       Walls.fromString(`
-                ..#########.
-                ###.......#.
-                #...########
-                ###........#
-                ..##########
+                .###.......
+                ##.#.......
+                #..#######.
+                #........##
+                #.........#
+                ###########
             `),
       new Targets([
-        new import_vector2.default(8, 1),
-        new import_vector2.default(9, 3)
+        new import_vector2.default(1, 2),
+        new import_vector2.default(7, 3),
+        new import_vector2.default(8, 4)
       ]),
-      new Spawner(new import_vector2.default(1, 2), import_vector2.default.right, null),
-      new Crate(new import_vector2.default(5, 1), null),
-      new Crate(new import_vector2.default(6, 3), null)
+      new Spawner(new import_vector2.default(2, 1), import_vector2.default.down, null),
+      new Crate(new import_vector2.default(1, 3), null),
+      new Crate(new import_vector2.default(4, 3), null),
+      new Crate(new import_vector2.default(5, 4), null)
     ]
   )),
   new Level("two_directions", "stairs", 5, 2, new GameState(
@@ -11653,6 +11655,77 @@ var levels = [
       new Crate(new import_vector2.default(11, 2), null)
     ]
   )),
+  new Level("basic_push_diverge", "duck", 10, 3, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                .####.
+                .#..#.
+                .#..##
+                .#...#
+                ##.###
+                #..#..
+                ####..
+            `),
+      new Targets([
+        new import_vector2.default(2, 2)
+      ]),
+      new Spawner(new import_vector2.default(1, 5), import_vector2.default.right, null),
+      new Crate(new import_vector2.default(3, 2), null)
+    ]
+  )),
+  new Level("push_wait", "forklift", 6, 3, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                ########..
+                #......#..
+                #......##.
+                #.......#.
+                #.......##
+                #........#
+                ##########
+            `),
+      new Targets([
+        new import_vector2.default(1, 1),
+        new import_vector2.default(2, 1),
+        new import_vector2.default(3, 1),
+        new import_vector2.default(4, 1),
+        new import_vector2.default(5, 1),
+        new import_vector2.default(6, 1)
+      ]),
+      new Spawner(new import_vector2.default(2, 5), import_vector2.default.up, null),
+      new Crate(new import_vector2.default(1, 2), null),
+      new Crate(new import_vector2.default(2, 2), null),
+      new Crate(new import_vector2.default(3, 2), null),
+      new Crate(new import_vector2.default(4, 2), null),
+      new Crate(new import_vector2.default(5, 2), null),
+      new Crate(new import_vector2.default(6, 2), null)
+    ]
+  )),
+  new Level("loop_init", "pipe", 11, 8, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                ######......
+                #....#......
+                #....#######
+                ##.........#
+                .#..########
+                .####.......
+            `),
+      new Targets([
+        new import_vector2.default(3, 2),
+        new import_vector2.default(9, 3)
+      ]),
+      new Spawner(new import_vector2.default(2, 4), import_vector2.default.right, null),
+      new Crate(new import_vector2.default(2, 2), null),
+      new Crate(new import_vector2.default(5, 3), null)
+    ]
+  )),
   new Level("u_chain", "eyes", 16, 2, new GameState(
     -1,
     0,
@@ -11683,27 +11756,7 @@ var levels = [
       new Crate(new import_vector2.default(8, 4), null)
     ]
   )),
-  new Level("basic_push_diverge", "duck", 10, 3, new GameState(
-    -1,
-    0,
-    [
-      Walls.fromString(`
-                .####.
-                .#..#.
-                .#..##
-                .#...#
-                ##.###
-                #..#..
-                ####..
-            `),
-      new Targets([
-        new import_vector2.default(2, 2)
-      ]),
-      new Spawner(new import_vector2.default(1, 5), import_vector2.default.right, null),
-      new Crate(new import_vector2.default(3, 2), null)
-    ]
-  )),
-  new Level("double_move_spawner", "factory", 14, 4, new GameState(
+  new Level("double_move_spawner", "factory", 13, 4, new GameState(
     -1,
     0,
     [
@@ -11711,7 +11764,6 @@ var levels = [
                 ..###########..
                 ###.#.#.#.#.#..
                 #...........##.
-                #............#.
                 #............#.
                 #............#.
                 #............##
@@ -11725,7 +11777,7 @@ var levels = [
         new import_vector2.default(8, 3),
         new import_vector2.default(10, 3)
       ]),
-      new Spawner(new import_vector2.default(2, 7), import_vector2.default.up, null),
+      new Spawner(new import_vector2.default(2, 6), import_vector2.default.up, null),
       new Crate(new import_vector2.default(2, 2), null),
       new Crate(new import_vector2.default(4, 2), null),
       new Crate(new import_vector2.default(6, 2), null),
@@ -11754,6 +11806,30 @@ var levels = [
       new Spawner(new import_vector2.default(1, 3), import_vector2.default.right, null),
       new Crate(new import_vector2.default(6, 1), null),
       new Crate(new import_vector2.default(6, 3), null),
+      new Crate(new import_vector2.default(6, 5), null)
+    ]
+  )),
+  new Level("mini_avoid_avoiding", "worm", 7, 3, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                .....#########..
+                .....#.......#..
+                .....#.#########
+                .....#.........#
+                ########...#####
+                #.........##....
+                ###########.....
+            `),
+      new Targets([
+        new import_vector2.default(11, 1),
+        new import_vector2.default(13, 3),
+        new import_vector2.default(2, 5)
+      ]),
+      new Spawner(new import_vector2.default(10, 4), import_vector2.default.left, null),
+      new Crate(new import_vector2.default(8, 1), null),
+      new Crate(new import_vector2.default(10, 3), null),
       new Crate(new import_vector2.default(6, 5), null)
     ]
   ))
@@ -12075,20 +12151,28 @@ function update() {
         } else {
           if (CONFIG.time === "MANUAL") {
             let time_left = 0.1;
-            row_1_background.color = COLOR_SYMBOL;
-            row_2_background.color = COLOR_SYMBOL;
+            let first = cur_level.dev_name === "first";
+            if (first) {
+              space_sprite.color = COLOR_BRIGHT;
+            } else {
+              row_1_background.color = COLOR_SYMBOL;
+              row_2_background.color = COLOR_SYMBOL;
+            }
             doEveryFrameUntilTrue(() => {
-              import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_1 * SYMBOL_SIZE, -450));
-              import_shaku.default.gfx.drawSprite(row_1_background);
-              if (row_2 > 0) {
-                import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_2 * SYMBOL_SIZE, -525));
-                import_shaku.default.gfx.drawSprite(row_2_background);
+              if (!first) {
+                import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_1 * SYMBOL_SIZE, -450));
+                import_shaku.default.gfx.drawSprite(row_1_background);
+                if (row_2 > 0) {
+                  import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_2 * SYMBOL_SIZE, -525));
+                  import_shaku.default.gfx.drawSprite(row_2_background);
+                }
+                import_shaku.default.gfx.resetCamera();
               }
-              import_shaku.default.gfx.resetCamera();
               time_left -= import_shaku.default.gameTime.delta;
               if (time_left < 0) {
                 row_1_background.color = COLOR_TAPE;
                 row_2_background.color = COLOR_TAPE;
+                space_sprite.color = import_color.default.white;
                 return true;
               }
               return false;
