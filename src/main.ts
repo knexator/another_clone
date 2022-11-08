@@ -171,6 +171,17 @@ tape_border.origin.set(0, 0);
 const tape_border_right = new Sprite(tape_borders_texture, new Rectangle(SYMBOL_SIZE * 1.5, 0, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
 tape_border_right.origin.set(0, 0);
 
+let stepSoundSrc = await Shaku.assets.loadSound('sounds/step.wav');
+let pushSoundSrc = await Shaku.assets.loadSound('sounds/push.wav');
+let wallSoundSrc = await Shaku.assets.loadSound('sounds/wall.wav');
+let onTargetSoundSrc = await Shaku.assets.loadSound('sounds/onTarget.wav');
+let offTargetSoundSrc = await Shaku.assets.loadSound('sounds/offTarget.wav');
+let stepSound = await Shaku.sfx.createSound(stepSoundSrc);
+let pushSound = await Shaku.sfx.createSound(pushSoundSrc);
+let wallSound = await Shaku.sfx.createSound(wallSoundSrc);
+let onTargetSound = await Shaku.sfx.createSound(onTargetSoundSrc);
+let offTargetSound = await Shaku.sfx.createSound(offTargetSoundSrc);
+
 const COLOR_TAPE = Color.fromHex("#E5B35B");
 const COLOR_TAPE_DELAY = Color.fromHex("#f5ca7f");
 const COLOR_HIGH = Color.fromHex("#99F3ED");
@@ -220,6 +231,54 @@ class GameState {
     draw(turn_time: number) {
         this.things.forEach(x => x.draw(turn_time));
         this.spawner.draw(turn_time); // hacky
+    }
+
+    playSounds(turn_duration: number) {
+        // let any_player_moved = this.players.some(p => p.pos)
+        // this.things.forEach(x => x.playSound(turn_time));
+        if (this.minor_turn <= 0) return;
+        let turn_active_player = this.players[this.minor_turn - 1];
+        if (!turn_active_player || !turn_active_player.previous) return;
+        if (turn_active_player.previous.pos.equals(turn_active_player.pos)) {
+            if (turn_active_player.wall_crashed()) {
+                // wall bump
+                // wallSound.play();
+                Shaku.sfx.play(wallSoundSrc, Math.pow(.6, turn_active_player.index), 1.0, true);
+                console.log("wall sound")
+            } else {
+                // waited
+            }
+        } else {
+            // step
+            // stepSound.play();            
+            Shaku.sfx.play(stepSoundSrc, 1.5 * Math.pow(.6, turn_active_player.index), 1.0, true);
+            console.log("step sound")
+        }
+        let any_pushed = this.things.some(x => {
+            if (!(x instanceof Pushable)) return false;
+            if (x === turn_active_player) return false;
+            if (!x.previous) return false;
+            return !x.previous.pos.equals(x.pos);
+        })
+        if (any_pushed) {
+            Shaku.sfx.play(pushSoundSrc, 1.5 * Math.pow(.6, turn_active_player.index), 1.0, true);
+        }
+        let target = this.target;
+        let crates = this.crates;
+        let any_crate_on = this.crates.some(c => {
+            return c.previous && !c.previous.pos.equals(c.pos) && this.target.posAt(c.pos);
+        })
+        let any_crate_off = this.crates.some(c => {
+            return c.previous && !c.previous.pos.equals(c.pos) && this.target.posAt(c.previous.pos);
+        })
+        if (any_crate_on) {
+            // todo: use sound instances
+            Shaku.sfx.play(onTargetSoundSrc, 1.0, 1.0, true);
+        }
+        if (any_crate_off) {
+            // todo: use sound instances
+            Shaku.sfx.play(offTargetSoundSrc, 1.0, 1.0, true);
+        }
     }
 
     public get wall(): Walls {
@@ -490,7 +549,6 @@ class Targets extends GameObject {
     }
 }
 
-
 class Button extends GameObject {
     constructor(
         public pos: Vector2,
@@ -691,7 +749,7 @@ class Player extends Pushable {
         if (turn_time !== 1 && this.previous) {
             // turn_time = clamp(remap(turn_time, .2, 1, 0, 1), 0, 1);
             this.sprite.position.copy(Vector2.lerp(this.previous.pos, this.pos, turn_time).add(1, 1).mul(TILE_SIZE));
-            if (this.previous.age !== this.age && this.age > 0 && this.age - 1 < robot_tape.length && robot_tape[this.age - 1] !== TAPE_SYMBOL.NONE && this.previous.pos.equals(this.pos)) {
+            if (this.wall_crashed()) {
                 // player bumping into a wall
                 this.sprite.position.copy(this.pos.add(this.dir.mul((turn_time - turn_time * turn_time))).add(1, 1).mul(TILE_SIZE));
             }
@@ -699,6 +757,10 @@ class Player extends Pushable {
             this.sprite.position.copy(this.pos.add(1, 1).mul(TILE_SIZE));
         }
         Shaku.gfx!.drawSprite(this.sprite);
+    }
+
+    wall_crashed(): boolean {
+        return (this.previous !== null) && this.previous.age !== this.age && this.age > 0 && this.age - 1 < robot_tape.length && robot_tape[this.age - 1] !== TAPE_SYMBOL.NONE && this.previous.pos.equals(this.pos);
     }
 
     clone(): GameObject {
@@ -2098,6 +2160,7 @@ function update() {
     }
 
     if (state === STATE.GAME && !in_end_screen) {
+        // MAIN TURN LOGIC
         let delta_time_left = Shaku.gameTime.delta;
 
         while (delta_time_left > 0) {
@@ -2145,6 +2208,9 @@ function update() {
                 let dir = Math.sign(selected_turn - all_states[cur_turn].major_turn - .5); // -.5 is for minor_turn !== 0
                 cur_turn += dir;
                 time_offset -= dir * .99;
+                if (dir > 0) {
+                    all_states[cur_turn].playSounds(1.0);
+                }
 
                 if (!EDITOR && !exiting_level && all_states[cur_turn].won && !waiting_for_final_input) {
                     storage.setItem(cur_level.dev_name, "y");

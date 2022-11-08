@@ -11067,6 +11067,16 @@ var tape_border = new import_sprite.default(tape_borders_texture, new import_rec
 tape_border.origin.set(0, 0);
 var tape_border_right = new import_sprite.default(tape_borders_texture, new import_rectangle.default(SYMBOL_SIZE * 1.5, 0, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
 tape_border_right.origin.set(0, 0);
+var stepSoundSrc = await import_shaku.default.assets.loadSound("sounds/step.wav");
+var pushSoundSrc = await import_shaku.default.assets.loadSound("sounds/push.wav");
+var wallSoundSrc = await import_shaku.default.assets.loadSound("sounds/wall.wav");
+var onTargetSoundSrc = await import_shaku.default.assets.loadSound("sounds/onTarget.wav");
+var offTargetSoundSrc = await import_shaku.default.assets.loadSound("sounds/offTarget.wav");
+var stepSound = await import_shaku.default.sfx.createSound(stepSoundSrc);
+var pushSound = await import_shaku.default.sfx.createSound(pushSoundSrc);
+var wallSound = await import_shaku.default.sfx.createSound(wallSoundSrc);
+var onTargetSound = await import_shaku.default.sfx.createSound(onTargetSoundSrc);
+var offTargetSound = await import_shaku.default.sfx.createSound(offTargetSoundSrc);
 var COLOR_TAPE = import_color.default.fromHex("#E5B35B");
 var COLOR_TAPE_DELAY = import_color.default.fromHex("#f5ca7f");
 var COLOR_HIGH = import_color.default.fromHex("#99F3ED");
@@ -11108,6 +11118,49 @@ var GameState = class {
   draw(turn_time) {
     this.things.forEach((x) => x.draw(turn_time));
     this.spawner.draw(turn_time);
+  }
+  playSounds(turn_duration) {
+    if (this.minor_turn <= 0)
+      return;
+    let turn_active_player = this.players[this.minor_turn - 1];
+    if (!turn_active_player || !turn_active_player.previous)
+      return;
+    if (turn_active_player.previous.pos.equals(turn_active_player.pos)) {
+      if (turn_active_player.wall_crashed()) {
+        import_shaku.default.sfx.play(wallSoundSrc, Math.pow(0.6, turn_active_player.index), 1, true);
+        console.log("wall sound");
+      } else {
+      }
+    } else {
+      import_shaku.default.sfx.play(stepSoundSrc, 1.5 * Math.pow(0.6, turn_active_player.index), 1, true);
+      console.log("step sound");
+    }
+    let any_pushed = this.things.some((x) => {
+      if (!(x instanceof Pushable))
+        return false;
+      if (x === turn_active_player)
+        return false;
+      if (!x.previous)
+        return false;
+      return !x.previous.pos.equals(x.pos);
+    });
+    if (any_pushed) {
+      import_shaku.default.sfx.play(pushSoundSrc, 1.5 * Math.pow(0.6, turn_active_player.index), 1, true);
+    }
+    let target = this.target;
+    let crates = this.crates;
+    let any_crate_on = this.crates.some((c) => {
+      return c.previous && !c.previous.pos.equals(c.pos) && this.target.posAt(c.pos);
+    });
+    let any_crate_off = this.crates.some((c) => {
+      return c.previous && !c.previous.pos.equals(c.pos) && this.target.posAt(c.previous.pos);
+    });
+    if (any_crate_on) {
+      import_shaku.default.sfx.play(onTargetSoundSrc, 1, 1, true);
+    }
+    if (any_crate_off) {
+      import_shaku.default.sfx.play(offTargetSoundSrc, 1, 1, true);
+    }
   }
   get wall() {
     let res = this.things.filter((x) => x instanceof Walls);
@@ -11509,13 +11562,16 @@ var Player = class extends Pushable {
     this.sprite.color = this.index === 0 ? COLOR_BRIGHT : import_shaku.default.utils.Color.white;
     if (turn_time !== 1 && this.previous) {
       this.sprite.position.copy(import_vector2.default.lerp(this.previous.pos, this.pos, turn_time).add(1, 1).mul(TILE_SIZE));
-      if (this.previous.age !== this.age && this.age > 0 && this.age - 1 < robot_tape.length && robot_tape[this.age - 1] !== TAPE_SYMBOL.NONE && this.previous.pos.equals(this.pos)) {
+      if (this.wall_crashed()) {
         this.sprite.position.copy(this.pos.add(this.dir.mul(turn_time - turn_time * turn_time)).add(1, 1).mul(TILE_SIZE));
       }
     } else {
       this.sprite.position.copy(this.pos.add(1, 1).mul(TILE_SIZE));
     }
     import_shaku.default.gfx.drawSprite(this.sprite);
+  }
+  wall_crashed() {
+    return this.previous !== null && this.previous.age !== this.age && this.age > 0 && this.age - 1 < robot_tape.length && robot_tape[this.age - 1] !== TAPE_SYMBOL.NONE && this.previous.pos.equals(this.pos);
   }
   clone() {
     return new Player(this.pos.clone(), this.dir.clone(), this.index, this.age, this);
@@ -12556,6 +12612,9 @@ function update() {
         let dir = Math.sign(selected_turn - all_states[cur_turn].major_turn - 0.5);
         cur_turn += dir;
         time_offset -= dir * 0.99;
+        if (dir > 0) {
+          all_states[cur_turn].playSounds(1);
+        }
         if (!EDITOR && !exiting_level && all_states[cur_turn].won && !waiting_for_final_input) {
           storage.setItem(cur_level.dev_name, "y");
           time_offset = 0;
