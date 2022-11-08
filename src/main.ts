@@ -18,6 +18,7 @@ import memoize from "lodash.memoize";
 import * as dat from 'dat.gui';
 import MsdfFontTextureAsset from "shaku/lib/assets/msdf_font_texture_asset";
 import GameTime from "shaku/lib/utils/game_time";
+import Animator from "shaku/lib/utils/animator";
 import { BarEffect } from "./bar_effect";
 
 // all queued turns wont take any longer than turn_duration / power_thing
@@ -52,6 +53,8 @@ Shaku.gfx!.centerCanvas();
 
 // let game_size = new Vector2(800, 400);
 let game_size = new Vector2(800, 430);
+
+let muted = false;
 
 const logo_texture = await Shaku.assets.loadTexture("imgs/logo.png", { generateMipMaps: true });
 const logo_sprite = new Sprite(logo_texture);
@@ -106,6 +109,14 @@ const space_texture = await Shaku.assets.loadTexture("imgs/spacebar.png", { gene
 const space_sprite = new Sprite(space_texture);
 const undo_texture = await Shaku.assets.loadTexture("imgs/undo_redo.png", { generateMipMaps: true });
 const undo_sprite = new Sprite(undo_texture, new Rectangle(0, 0, 200, 50));
+const mute_texture = await Shaku.assets.loadTexture("imgs/mute.png", { generateMipMaps: true });
+const mute_sprite = new Sprite(mute_texture, new Rectangle(0, 50, 100, 50));
+mute_sprite.position.set(725, 550);
+
+const reset_texture = await Shaku.assets.loadTexture("imgs/reset.png", { generateMipMaps: true });
+const reset_sprite = new Sprite(reset_texture);
+reset_sprite.position.set(600, 550);
+
 
 const player_texture = await Shaku.assets.loadTexture("imgs/player.png", { generateMipMaps: true });
 // player_texture.filter = TextureFilterModes.LinearMipmapLinear;
@@ -234,6 +245,7 @@ class GameState {
     }
 
     playSounds(turn_duration: number) {
+        if (muted) return;
         // let any_player_moved = this.players.some(p => p.pos)
         // this.things.forEach(x => x.playSound(turn_time));
         if (this.minor_turn <= 0) return;
@@ -261,7 +273,7 @@ class GameState {
             return !x.previous.pos.equals(x.pos);
         })
         if (any_pushed) {
-            Shaku.sfx.play(pushSoundSrc, 1.5 * Math.pow(.6, turn_active_player.index), 1.0, true);
+            Shaku.sfx.play(pushSoundSrc, .6 * Math.pow(.6, turn_active_player.index), 1.0, true);
         }
         let target = this.target;
         let crates = this.crates;
@@ -273,11 +285,11 @@ class GameState {
         })
         if (any_crate_on) {
             // todo: use sound instances
-            Shaku.sfx.play(onTargetSoundSrc, 1.0, 1.0, true);
+            Shaku.sfx.play(onTargetSoundSrc, .7, 1.0, true);
         }
         if (any_crate_off) {
             // todo: use sound instances
-            Shaku.sfx.play(offTargetSoundSrc, 1.0, 1.0, true);
+            Shaku.sfx.play(offTargetSoundSrc, .65, 1.0, true);
         }
     }
 
@@ -1816,6 +1828,14 @@ function update() {
     Shaku.startFrame();
     Shaku.gfx!.clear(Shaku.utils.Color.darkslategray);
 
+    if (Shaku.input.pressed("m")) {
+        muted = !muted;
+        mute_sprite.sourceRect.y = muted ? 0 : 50;
+        mute_sprite.size.mulSelf(1.25);
+        mute_sprite.rotation = (Math.random() - .5) * .2;
+        new Animator(mute_sprite).to({ "size.x": 100, "size.y": 50, "rotation": 0 }).duration(.1).play();
+    }
+
     Shaku.gfx.useEffect(background_effect);
     // @ts-ignore
     background_effect.uniforms["u_time"](Shaku.gameTime.elapsed);
@@ -1939,10 +1959,10 @@ function update() {
                         }
                         doEveryFrameUntilTrue(() => {
                             if (!first) {
-                                Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_1 * SYMBOL_SIZE, -450));
+                                Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_1 * SYMBOL_SIZE, -445));
                                 Shaku.gfx.drawSprite(row_1_background);
                                 if (row_2 > 0) {
-                                    Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_2 * SYMBOL_SIZE, -525));
+                                    Shaku.gfx.setCameraOrthographic(new Vector2(-400 + .5 * row_2 * SYMBOL_SIZE, -445 - 75));
                                     Shaku.gfx.drawSprite(row_2_background);
                                 }
                                 Shaku.gfx.resetCamera();
@@ -2300,11 +2320,13 @@ function update() {
         undo_sprite.sourceRect.y = (Shaku.gameTime.elapsed % 2) < 1 ? 0 : 50;
         dirs_sprite.position.set(400, 525);
         space_sprite.position.set(150, 550);
-        undo_sprite.position.set(650, 550);
+        undo_sprite.position.set(150, 485);
 
         Shaku.gfx.drawSprite(dirs_sprite);
         Shaku.gfx.drawSprite(space_sprite);
         Shaku.gfx.drawSprite(undo_sprite);
+        Shaku.gfx.drawSprite(mute_sprite);
+        Shaku.gfx.drawSprite(reset_sprite);
     }
 
     if (state === STATE.INTRO) {

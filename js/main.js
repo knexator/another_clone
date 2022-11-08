@@ -2094,7 +2094,7 @@ var require_animator = __commonJS({
   "../Shaku/lib/utils/animator.js"(exports, module) {
     "use strict";
     var _autoAnimators = [];
-    var Animator = class {
+    var Animator2 = class {
       constructor(target) {
         this._target = target;
         this._fromValues = {};
@@ -2272,7 +2272,7 @@ var require_animator = __commonJS({
     function lerp2(start, end, amt) {
       return (1 - amt) * start + amt * end;
     }
-    module.exports = Animator;
+    module.exports = Animator2;
   }
 });
 
@@ -10835,6 +10835,7 @@ var GUI$1 = GUI;
 
 // src/main.ts
 var import_game_time = __toESM(require_game_time());
+var import_animator = __toESM(require_animator());
 
 // src/bar_effect.ts
 var import_effect2 = __toESM(require_effect());
@@ -10992,6 +10993,7 @@ document.body.appendChild(import_shaku.default.gfx.canvas);
 import_shaku.default.gfx.setResolution(800, 600, true);
 import_shaku.default.gfx.centerCanvas();
 var game_size = new import_vector2.default(800, 430);
+var muted = false;
 var logo_texture = await import_shaku.default.assets.loadTexture("imgs/logo.png", { generateMipMaps: true });
 var logo_sprite = new import_sprite.default(logo_texture);
 logo_sprite.origin.set(0, 0);
@@ -11031,6 +11033,12 @@ var space_texture = await import_shaku.default.assets.loadTexture("imgs/spacebar
 var space_sprite = new import_sprite.default(space_texture);
 var undo_texture = await import_shaku.default.assets.loadTexture("imgs/undo_redo.png", { generateMipMaps: true });
 var undo_sprite = new import_sprite.default(undo_texture, new import_rectangle.default(0, 0, 200, 50));
+var mute_texture = await import_shaku.default.assets.loadTexture("imgs/mute.png", { generateMipMaps: true });
+var mute_sprite = new import_sprite.default(mute_texture, new import_rectangle.default(0, 50, 100, 50));
+mute_sprite.position.set(725, 550);
+var reset_texture = await import_shaku.default.assets.loadTexture("imgs/reset.png", { generateMipMaps: true });
+var reset_sprite = new import_sprite.default(reset_texture);
+reset_sprite.position.set(600, 550);
 var player_texture = await import_shaku.default.assets.loadTexture("imgs/player.png", { generateMipMaps: true });
 var player_sprite = new import_sprite.default(player_texture);
 player_sprite.size.set(TILE_SIZE, TILE_SIZE);
@@ -11120,6 +11128,8 @@ var GameState = class {
     this.spawner.draw(turn_time);
   }
   playSounds(turn_duration) {
+    if (muted)
+      return;
     if (this.minor_turn <= 0)
       return;
     let turn_active_player = this.players[this.minor_turn - 1];
@@ -11145,7 +11155,7 @@ var GameState = class {
       return !x.previous.pos.equals(x.pos);
     });
     if (any_pushed) {
-      import_shaku.default.sfx.play(pushSoundSrc, 1.5 * Math.pow(0.6, turn_active_player.index), 1, true);
+      import_shaku.default.sfx.play(pushSoundSrc, 0.6 * Math.pow(0.6, turn_active_player.index), 1, true);
     }
     let target = this.target;
     let crates = this.crates;
@@ -11156,10 +11166,10 @@ var GameState = class {
       return c.previous && !c.previous.pos.equals(c.pos) && this.target.posAt(c.previous.pos);
     });
     if (any_crate_on) {
-      import_shaku.default.sfx.play(onTargetSoundSrc, 1, 1, true);
+      import_shaku.default.sfx.play(onTargetSoundSrc, 0.7, 1, true);
     }
     if (any_crate_off) {
-      import_shaku.default.sfx.play(offTargetSoundSrc, 1, 1, true);
+      import_shaku.default.sfx.play(offTargetSoundSrc, 0.65, 1, true);
     }
   }
   get wall() {
@@ -12263,6 +12273,13 @@ var editor_button_looking_for_target = -1;
 function update() {
   import_shaku.default.startFrame();
   import_shaku.default.gfx.clear(import_shaku.default.utils.Color.darkslategray);
+  if (import_shaku.default.input.pressed("m")) {
+    muted = !muted;
+    mute_sprite.sourceRect.y = muted ? 0 : 50;
+    mute_sprite.size.mulSelf(1.25);
+    mute_sprite.rotation = (Math.random() - 0.5) * 0.2;
+    new import_animator.default(mute_sprite).to({ "size.x": 100, "size.y": 50, "rotation": 0 }).duration(0.1).play();
+  }
   import_shaku.default.gfx.useEffect(background_effect);
   background_effect.uniforms["u_time"](import_shaku.default.gameTime.elapsed);
   background_effect.uniforms["u_alpha"](1);
@@ -12363,10 +12380,10 @@ function update() {
             }
             doEveryFrameUntilTrue(() => {
               if (!first) {
-                import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_1 * SYMBOL_SIZE, -450));
+                import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_1 * SYMBOL_SIZE, -445));
                 import_shaku.default.gfx.drawSprite(row_1_background);
                 if (row_2 > 0) {
-                  import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_2 * SYMBOL_SIZE, -525));
+                  import_shaku.default.gfx.setCameraOrthographic(new import_vector2.default(-400 + 0.5 * row_2 * SYMBOL_SIZE, -445 - 75));
                   import_shaku.default.gfx.drawSprite(row_2_background);
                 }
                 import_shaku.default.gfx.resetCamera();
@@ -12687,10 +12704,12 @@ function update() {
     undo_sprite.sourceRect.y = import_shaku.default.gameTime.elapsed % 2 < 1 ? 0 : 50;
     dirs_sprite.position.set(400, 525);
     space_sprite.position.set(150, 550);
-    undo_sprite.position.set(650, 550);
+    undo_sprite.position.set(150, 485);
     import_shaku.default.gfx.drawSprite(dirs_sprite);
     import_shaku.default.gfx.drawSprite(space_sprite);
     import_shaku.default.gfx.drawSprite(undo_sprite);
+    import_shaku.default.gfx.drawSprite(mute_sprite);
+    import_shaku.default.gfx.drawSprite(reset_sprite);
   }
   if (state === 0 /* INTRO */) {
     if (intro_exit_time > 0) {
