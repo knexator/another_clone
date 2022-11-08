@@ -40,6 +40,7 @@ let gui = new dat.GUI({});
 gui.remember(CONFIG);
 gui.add(CONFIG, "time", ["MANUAL", "SEMI", "AUTO"]);
 gui.add(CONFIG, "instant_reset");
+gui.hide();
 
 Shaku!.input!.setTargetElement(() => Shaku.gfx!.canvas);
 await Shaku.init();
@@ -1320,19 +1321,20 @@ let levels = [
             Walls.fromString(`
                 ######......
                 #....#......
+                #....#......
                 #....#######
                 ##.........#
                 .#..########
                 .####.......
             `),
             new Targets([
-                new Vector2(3, 2),
-                new Vector2(9, 3),
+                new Vector2(3, 3),
+                new Vector2(9, 4),
             ]),
 
-            new Spawner(new Vector2(2, 4), Vector2.right, null),
-            new Crate(new Vector2(2, 2), null),
-            new Crate(new Vector2(5, 3), null),
+            new Spawner(new Vector2(2, 5), Vector2.right, null),
+            new Crate(new Vector2(2, 3), null),
+            new Crate(new Vector2(5, 4), null),
         ],
     )),
     new Level("u_chain", "eyes", 16, 2, new GameState(

@@ -10987,6 +10987,7 @@ var gui = new GUI$1({});
 gui.remember(CONFIG);
 gui.add(CONFIG, "time", ["MANUAL", "SEMI", "AUTO"]);
 gui.add(CONFIG, "instant_reset");
+gui.hide();
 import_shaku.default.input.setTargetElement(() => import_shaku.default.gfx.canvas);
 await import_shaku.default.init();
 document.body.appendChild(import_shaku.default.gfx.canvas);
@@ -11933,18 +11934,19 @@ var levels = [
       Walls.fromString(`
                 ######......
                 #....#......
+                #....#......
                 #....#######
                 ##.........#
                 .#..########
                 .####.......
             `),
       new Targets([
-        new import_vector2.default(3, 2),
-        new import_vector2.default(9, 3)
+        new import_vector2.default(3, 3),
+        new import_vector2.default(9, 4)
       ]),
-      new Spawner(new import_vector2.default(2, 4), import_vector2.default.right, null),
-      new Crate(new import_vector2.default(2, 2), null),
-      new Crate(new import_vector2.default(5, 3), null)
+      new Spawner(new import_vector2.default(2, 5), import_vector2.default.right, null),
+      new Crate(new import_vector2.default(2, 3), null),
+      new Crate(new import_vector2.default(5, 4), null)
     ]
   )),
   new Level("u_chain", "eyes", 16, 2, new GameState(
