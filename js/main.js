@@ -5012,14 +5012,14 @@ var require_sprite_batch = __commonJS({
             positions[pi2 + 10] = bottomRight2.position.y;
             positions[pi2 + 11] = bottomRight2.position.z || 0;
             let uvi2 = this._currBatchCount * 4 * 2;
-            uvs[uvi2 + 0] = topLeft2.uv.x;
-            uvs[uvi2 + 1] = topLeft2.uv.y;
-            uvs[uvi2 + 2] = bottomRight2.uv.x;
-            uvs[uvi2 + 3] = topLeft2.uv.y;
-            uvs[uvi2 + 4] = topLeft2.uv.x;
-            uvs[uvi2 + 5] = bottomRight2.uv.y;
-            uvs[uvi2 + 6] = bottomRight2.uv.x;
-            uvs[uvi2 + 7] = bottomRight2.uv.y;
+            uvs[uvi2 + 0] = topLeft2.textureCoord.x;
+            uvs[uvi2 + 1] = topLeft2.textureCoord.y;
+            uvs[uvi2 + 2] = bottomRight2.textureCoord.x;
+            uvs[uvi2 + 3] = topLeft2.textureCoord.y;
+            uvs[uvi2 + 4] = topLeft2.textureCoord.x;
+            uvs[uvi2 + 5] = bottomRight2.textureCoord.y;
+            uvs[uvi2 + 6] = bottomRight2.textureCoord.x;
+            uvs[uvi2 + 7] = bottomRight2.textureCoord.y;
             this._currBatchCount++;
             continue;
           }
@@ -5123,10 +5123,10 @@ var require_sprite_batch = __commonJS({
           }
           if (sprite.static) {
             sprite._cachedVertices = [
-              { position: topLeft, uv: uvTl || { x: 0, y: 0 } },
+              { position: topLeft, textureCoord: uvTl || { x: 0, y: 0 } },
               { position: topRight },
               { position: bottomLeft },
-              { position: bottomRight, uv: uvBr || { x: 1, y: 1 } }
+              { position: bottomRight, textureCoord: uvBr || { x: 1, y: 1 } }
             ];
           }
           this._currBatchCount++;
@@ -11934,19 +11934,19 @@ var levels = [
       Walls.fromString(`
                 ######......
                 #....#......
-                #....#......
                 #....#######
                 ##.........#
                 .#..########
-                .####.......
+                .#.##.......
+                .###........
             `),
       new Targets([
-        new import_vector2.default(3, 3),
-        new import_vector2.default(9, 4)
+        new import_vector2.default(3, 2),
+        new import_vector2.default(9, 3)
       ]),
-      new Spawner(new import_vector2.default(2, 5), import_vector2.default.right, null),
-      new Crate(new import_vector2.default(2, 3), null),
-      new Crate(new import_vector2.default(5, 4), null)
+      new Spawner(new import_vector2.default(2, 4), import_vector2.default.right, null),
+      new Crate(new import_vector2.default(2, 2), null),
+      new Crate(new import_vector2.default(5, 3), null)
     ]
   )),
   new Level("u_chain", "eyes", 16, 2, new GameState(
