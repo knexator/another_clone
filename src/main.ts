@@ -997,6 +997,7 @@ let levels = [
         [
             Walls.fromString(`
                 ..........###
+                ..........#.#
                 .....######.#
                 .....#......#
                 ######......#
@@ -1004,13 +1005,13 @@ let levels = [
                 #############
             `),
             new Targets([
-                new Vector2(11, 1),
-                new Vector2(2, 4),
+                new Vector2(11, 2),
+                new Vector2(2, 5),
             ]),
 
-            new Spawner(new Vector2(7, 3), Vector2.up, null),
-            new Crate(new Vector2(11, 2), null),
-            new Crate(new Vector2(3, 4), null),
+            new Spawner(new Vector2(7, 4), Vector2.up, null),
+            new Crate(new Vector2(11, 3), null),
+            new Crate(new Vector2(3, 5), null),
         ],
     )),
     /*new Level("push_wall_direct", "u-shape", 7, 5, new GameState(

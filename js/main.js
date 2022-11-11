@@ -11734,6 +11734,7 @@ var levels = [
     [
       Walls.fromString(`
                 ..........###
+                ..........#.#
                 .....######.#
                 .....#......#
                 ######......#
@@ -11741,12 +11742,12 @@ var levels = [
                 #############
             `),
       new Targets([
-        new import_vector2.default(11, 1),
-        new import_vector2.default(2, 4)
+        new import_vector2.default(11, 2),
+        new import_vector2.default(2, 5)
       ]),
-      new Spawner(new import_vector2.default(7, 3), import_vector2.default.up, null),
-      new Crate(new import_vector2.default(11, 2), null),
-      new Crate(new import_vector2.default(3, 4), null)
+      new Spawner(new import_vector2.default(7, 4), import_vector2.default.up, null),
+      new Crate(new import_vector2.default(11, 3), null),
+      new Crate(new import_vector2.default(3, 5), null)
     ]
   )),
   new Level("push_wall_mid", "eight", 17, 9, new GameState(
