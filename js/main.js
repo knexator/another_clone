@@ -12393,6 +12393,8 @@ function update() {
       if (CONFIG.instant_reset) {
         cur_turn = 0;
         time_offset = -0.99;
+        robot_tape = robot_tape.fill(4 /* NONE */);
+        all_states = gameLogic(initial_state, robot_tape);
       }
     }
     if (time_offset === 0 && CONFIG.time === "AUTO" && all_states[cur_turn].major_turn >= robot_tape.length && all_states[cur_turn].minor_turn == 0 && all_states[cur_turn].someChanges && !all_states[cur_turn].won) {

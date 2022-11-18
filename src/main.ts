@@ -2028,6 +2028,8 @@ function update() {
             if (CONFIG.instant_reset) {
                 cur_turn = 0;
                 time_offset = -.99;
+                robot_tape = robot_tape.fill(TAPE_SYMBOL.NONE);
+                all_states = gameLogic(initial_state, robot_tape);
             }
         }
 
