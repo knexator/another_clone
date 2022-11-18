@@ -11059,6 +11059,7 @@ var two_state_wall_texture = await import_shaku.default.assets.loadTexture("imgs
 var spawner_texture = await import_shaku.default.assets.loadTexture("imgs/spawner.png", { generateMipMaps: true });
 var spawner_sprite = new import_sprite.default(spawner_texture);
 spawner_sprite.size.set(TILE_SIZE, TILE_SIZE);
+var particle_crate_texture = await import_shaku.default.assets.loadTexture("imgs/particle_crate.png", { generateMipMaps: true });
 var geo_texture = await import_shaku.default.assets.loadTexture("imgs/geo.png", { generateMipMaps: true });
 var geo_sprite = new import_sprite.default(geo_texture, new import_rectangle.default(0, 0, TILE_SIZE, TILE_SIZE));
 var floors_texture = await import_shaku.default.assets.loadTexture("imgs/floors.png", { generateMipMaps: true });
@@ -11100,6 +11101,31 @@ var tape_low = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
 tape_low.origin = new import_vector2.default(0, -8 / (SYMBOL_SIZE * 1.5));
 tape_low.size.set(SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16);
 tape_low.color = COLOR_LOW;
+var ParticleCrate = class {
+  constructor(pos, time) {
+    this.pos = pos;
+    this.time = time;
+    this.sprite = new import_sprite.default(particle_crate_texture, new import_rectangle.default(0, 0, TILE_SIZE * 2, TILE_SIZE * 2));
+    this.sprite.position.copy(this.pos.add(1, 1).mul(TILE_SIZE));
+  }
+  sprite;
+  draw() {
+    let t = (import_shaku.default.gameTime.elapsed - this.time) / 0.15 - 0.05;
+    if (t <= 0)
+      return;
+    if (t >= 1) {
+      particles = particles.filter((x) => x !== this);
+      return;
+    }
+    t = Math.floor(t * 9);
+    console.log(t);
+    this.sprite.setSourceFromSpritesheet(
+      new import_vector2.default(t % 3, Math.floor(t / 3)),
+      new import_vector2.default(3, 3)
+    );
+    import_shaku.default.gfx.drawSprite(this.sprite);
+  }
+};
 var Level = class {
   constructor(dev_name, public_name, n_moves, n_delay, initial_state2) {
     this.dev_name = dev_name;
@@ -11139,12 +11165,10 @@ var GameState = class {
     if (turn_active_player.previous.pos.equals(turn_active_player.pos)) {
       if (turn_active_player.wall_crashed()) {
         import_shaku.default.sfx.play(wallSoundSrc, Math.pow(0.6, turn_active_player.index), 1, true);
-        console.log("wall sound");
       } else {
       }
     } else {
       import_shaku.default.sfx.play(stepSoundSrc, 1.5 * Math.pow(0.6, turn_active_player.index), 1, true);
-      console.log("step sound");
     }
     let any_pushed = this.things.some((x) => {
       if (!(x instanceof Pushable))
@@ -11160,14 +11184,17 @@ var GameState = class {
     }
     let target = this.target;
     let crates = this.crates;
-    let any_crate_on = this.crates.some((c) => {
+    let crates_on = this.crates.filter((c) => {
       return c.previous && !c.previous.pos.equals(c.pos) && this.target.posAt(c.pos);
     });
     let any_crate_off = this.crates.some((c) => {
       return c.previous && !c.previous.pos.equals(c.pos) && this.target.posAt(c.previous.pos);
     });
-    if (any_crate_on) {
+    if (crates_on.length > 0) {
       import_shaku.default.sfx.play(onTargetSoundSrc, 0.7, 1, true);
+      crates_on.forEach((c) => {
+        particles.push(new ParticleCrate(c.pos, import_shaku.default.gameTime.elapsed));
+      });
     }
     if (any_crate_off) {
       import_shaku.default.sfx.play(offTargetSoundSrc, 0.65, 1, true);
@@ -11983,12 +12010,12 @@ var levels = [
                 .##........#
                 .#.........#
                 ##.........#
-                #.........##
+                #..........#
                 #..........#
                 ############
             `),
       new Targets([
-        new import_vector2.default(10, 4),
+        new import_vector2.default(10, 3),
         new import_vector2.default(4, 1),
         new import_vector2.default(5, 1),
         new import_vector2.default(6, 1),
@@ -12078,6 +12105,7 @@ var time_offset = 0;
 var ending_boost = 0;
 var initial_state;
 var all_states;
+var particles = [];
 var level_offset = import_vector2.default.zero;
 var row_1 = 0;
 var row_2 = 0;
@@ -12111,6 +12139,7 @@ function load_level(level) {
     _cooling_time_left[key] = Infinity;
   }
   in_end_screen = false;
+  particles = [];
 }
 function openCurInEditor() {
   let old_wall = initial_state.wall;
@@ -12446,6 +12475,7 @@ function update() {
   } else {
     all_states[cur_turn].draw(1);
   }
+  particles.forEach((p) => p.draw());
   if (state === 1 /* GAME */ && EDITOR && !in_end_screen) {
     let mouse_tile = import_shaku.default.input.mousePosition.add(level_offset).div(TILE_SIZE).round().sub(1, 1);
     import_shaku.default.gfx.outlineRect(

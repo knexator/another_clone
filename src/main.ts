@@ -81,6 +81,7 @@ MID_LINE_SPRITE.size.set(800, 8);
 MID_LINE_SPRITE.position.set(0, game_size.y);
 MID_LINE_SPRITE.color = Color.fromHex("#12679B");
 
+// Loading screen
 Shaku.startFrame();
 Shaku.gfx!.clear(Shaku.utils.Color.darkslategray);
 Shaku.gfx.drawSprite(logo_sprite);
@@ -153,6 +154,8 @@ const spawner_texture = await Shaku.assets.loadTexture("imgs/spawner.png", { gen
 const spawner_sprite = new Sprite(spawner_texture);
 spawner_sprite.size.set(TILE_SIZE, TILE_SIZE);
 
+const particle_crate_texture = await Shaku.assets.loadTexture("imgs/particle_crate.png", { generateMipMaps: true });
+// spawner_texture.filter = TextureFilterModes.LinearMipmapLinear;
 
 
 const geo_texture = await Shaku.assets.loadTexture("imgs/geo.png", { generateMipMaps: true });
@@ -211,6 +214,33 @@ tape_low.origin = new Vector2(0, -8 / (SYMBOL_SIZE * 1.5));
 tape_low.size.set(SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16);
 tape_low.color = COLOR_LOW;
 
+class ParticleCrate {
+    public sprite: Sprite;
+    constructor(
+        public pos: Vector2,
+        public time: number,
+    ) {
+        this.sprite = new Sprite(particle_crate_texture, new Rectangle(0, 0, TILE_SIZE * 2, TILE_SIZE * 2));
+        this.sprite.position.copy(this.pos.add(1, 1).mul(TILE_SIZE));
+    }
+
+    draw() {
+        let t = (Shaku.gameTime.elapsed - this.time) / .15 - .05;
+        if (t <= 0) return;
+        if (t >= 1) {
+            particles = particles.filter(x => x !== this);
+            return;
+        }
+        t = Math.floor(t * 9);
+        console.log(t);
+        this.sprite.setSourceFromSpritesheet(
+            new Vector2(t % 3, Math.floor(t / 3)),
+            new Vector2(3, 3),
+        )
+        Shaku.gfx.drawSprite(this.sprite);
+    }
+}
+
 class Level {
     constructor(
         public dev_name: string,
@@ -258,7 +288,7 @@ class GameState {
                 // wall bump
                 // wallSound.play();
                 Shaku.sfx.play(wallSoundSrc, Math.pow(.6, turn_active_player.index), 1.0, true);
-                console.log("wall sound")
+                // console.log("wall sound")
             } else {
                 // waited
             }
@@ -266,7 +296,7 @@ class GameState {
             // step
             // stepSound.play();            
             Shaku.sfx.play(stepSoundSrc, 1.5 * Math.pow(.6, turn_active_player.index), 1.0, true);
-            console.log("step sound")
+            // console.log("step sound")
         }
         let any_pushed = this.things.some(x => {
             if (!(x instanceof Pushable)) return false;
@@ -279,15 +309,19 @@ class GameState {
         }
         let target = this.target;
         let crates = this.crates;
-        let any_crate_on = this.crates.some(c => {
+        let crates_on = this.crates.filter(c => {
             return c.previous && !c.previous.pos.equals(c.pos) && this.target.posAt(c.pos);
         })
         let any_crate_off = this.crates.some(c => {
             return c.previous && !c.previous.pos.equals(c.pos) && this.target.posAt(c.previous.pos);
         })
-        if (any_crate_on) {
+        if (crates_on.length > 0) {
             // todo: use sound instances
             Shaku.sfx.play(onTargetSoundSrc, .7, 1.0, true);
+
+            crates_on.forEach(c => {
+                particles.push(new ParticleCrate(c.pos, Shaku.gameTime.elapsed))
+            })
         }
         if (any_crate_off) {
             // todo: use sound instances
@@ -1482,12 +1516,12 @@ let levels = [
                 .##........#
                 .#.........#
                 ##.........#
-                #.........##
+                #..........#
                 #..........#
                 ############
             `),
             new Targets([
-                new Vector2(10, 4),
+                new Vector2(10, 3),
                 new Vector2(4, 1),
                 new Vector2(5, 1),
                 new Vector2(6, 1),
@@ -1622,6 +1656,8 @@ let initial_state: GameState;
 
 let all_states: GameState[]; // = gameLogic(initial_state, robot_tape);
 
+let particles: ParticleCrate[] = [];
+
 let level_offset = Vector2.zero;
 
 let row_1 = 0;
@@ -1660,6 +1696,7 @@ function load_level(level: Level) {
         _cooling_time_left[key] = Infinity;
     }
     in_end_screen = false;
+    particles = [];
 }
 
 function openCurInEditor() {
@@ -2081,6 +2118,7 @@ function update() {
     } else {
         all_states[cur_turn].draw(1);
     }
+    particles.forEach(p => p.draw());
 
     // editor
     if (state === STATE.GAME && EDITOR && !in_end_screen) {
