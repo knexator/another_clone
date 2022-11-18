@@ -11572,9 +11572,13 @@ var Player = class extends Pushable {
     this.sprite.rotation = this.dir.getRadians() + Math.PI / 2;
     this.sprite.color = this.index === 0 ? COLOR_BRIGHT : import_shaku.default.utils.Color.white;
     if (turn_time !== 1 && this.previous) {
-      this.sprite.position.copy(import_vector2.default.lerp(this.previous.pos, this.pos, turn_time).add(1, 1).mul(TILE_SIZE));
-      if (this.wall_crashed()) {
-        this.sprite.position.copy(this.pos.add(this.dir.mul(turn_time - turn_time * turn_time)).add(1, 1).mul(TILE_SIZE));
+      if (cur_turn === 0) {
+        this.sprite.position.copy(import_vector2.default.lerp(this.pos.sub(this.dir), this.pos, turn_time).add(1, 1).mul(TILE_SIZE));
+      } else {
+        this.sprite.position.copy(import_vector2.default.lerp(this.previous.pos, this.pos, turn_time).add(1, 1).mul(TILE_SIZE));
+        if (this.wall_crashed()) {
+          this.sprite.position.copy(this.pos.add(this.dir.mul(turn_time - turn_time * turn_time)).add(1, 1).mul(TILE_SIZE));
+        }
       }
     } else {
       this.sprite.position.copy(this.pos.add(1, 1).mul(TILE_SIZE));
@@ -12090,7 +12094,7 @@ function load_level(level) {
   cur_level = level;
   selected_turn = 0;
   cur_turn = 0;
-  time_offset = 0;
+  time_offset = -0.99;
   ending_boost = 2;
   robot_delay = level.n_delay;
   updateTapeLength(level.n_moves);
@@ -12359,7 +12363,7 @@ function update() {
       selected_turn = 0;
       if (CONFIG.instant_reset) {
         cur_turn = 0;
-        time_offset = 0;
+        time_offset = -0.99;
       }
     }
     if (time_offset === 0 && CONFIG.time === "AUTO" && all_states[cur_turn].major_turn >= robot_tape.length && all_states[cur_turn].minor_turn == 0 && all_states[cur_turn].someChanges && !all_states[cur_turn].won) {
@@ -12622,6 +12626,10 @@ function update() {
   if (state === 1 /* GAME */ && !in_end_screen) {
     let delta_time_left = import_shaku.default.gameTime.delta;
     while (delta_time_left > 0) {
+      if (cur_turn === 0 && time_offset < 0) {
+        time_offset = moveTowards(time_offset, 0, delta_time_left * 6.666666666666667);
+        break;
+      }
       if (time_offset < 0) {
         if (all_states[cur_turn].empty) {
           time_offset = 0;
@@ -12741,6 +12749,9 @@ function update() {
   if (state === 0 /* INTRO */) {
     if (intro_exit_time > 0) {
       intro_exit_time += import_shaku.default.gameTime.delta * 1.5;
+      if (intro_exit_time > 0.5) {
+        time_offset = moveTowards(time_offset, 0, import_shaku.default.gameTime.delta * 4);
+      }
       if (intro_exit_time >= 1) {
         state = 1 /* GAME */;
       }

@@ -241,6 +241,7 @@ class GameState {
     }
 
     draw(turn_time: number) {
+        // console.log(time_offset);
         this.things.forEach(x => x.draw(turn_time));
         this.spawner.draw(turn_time); // hacky
     }
@@ -761,10 +762,15 @@ class Player extends Pushable {
 
         if (turn_time !== 1 && this.previous) {
             // turn_time = clamp(remap(turn_time, .2, 1, 0, 1), 0, 1);
-            this.sprite.position.copy(Vector2.lerp(this.previous.pos, this.pos, turn_time).add(1, 1).mul(TILE_SIZE));
-            if (this.wall_crashed()) {
-                // player bumping into a wall
-                this.sprite.position.copy(this.pos.add(this.dir.mul((turn_time - turn_time * turn_time))).add(1, 1).mul(TILE_SIZE));
+            if (cur_turn === 0) {
+                // special first turn
+                this.sprite.position.copy(Vector2.lerp(this.pos.sub(this.dir), this.pos, turn_time).add(1, 1).mul(TILE_SIZE));
+            } else {
+                this.sprite.position.copy(Vector2.lerp(this.previous.pos, this.pos, turn_time).add(1, 1).mul(TILE_SIZE));
+                if (this.wall_crashed()) {
+                    // player bumping into a wall
+                    this.sprite.position.copy(this.pos.add(this.dir.mul((turn_time - turn_time * turn_time))).add(1, 1).mul(TILE_SIZE));
+                }
             }
         } else {
             this.sprite.position.copy(this.pos.add(1, 1).mul(TILE_SIZE));
@@ -1637,7 +1643,7 @@ function load_level(level: Level) {
     cur_level = level;
     selected_turn = 0;
     cur_turn = 0;
-    time_offset = 0;
+    time_offset = -.99;
     ending_boost = 2;
     robot_delay = level.n_delay;
     updateTapeLength(level.n_moves)
@@ -1984,7 +1990,7 @@ function update() {
             selected_turn = 0;
             if (CONFIG.instant_reset) {
                 cur_turn = 0;
-                time_offset = 0;
+                time_offset = -.99;
             }
         }
 
@@ -2263,6 +2269,11 @@ function update() {
         let delta_time_left = Shaku.gameTime.delta;
 
         while (delta_time_left > 0) {
+            // first turn is a bit special
+            if (cur_turn === 0 && time_offset < 0) {
+                time_offset = moveTowards(time_offset, 0, delta_time_left * 6.666666666666667);
+                break;
+            }
             // Skip empty turns
             if (time_offset < 0) { // forwards                
                 if (all_states[cur_turn].empty) {
@@ -2415,6 +2426,9 @@ function update() {
 
         if (intro_exit_time > 0) {
             intro_exit_time += Shaku.gameTime.delta * 1.5;
+            if (intro_exit_time > .5) {
+                time_offset = moveTowards(time_offset, 0, Shaku.gameTime.delta * 4);
+            }
             if (intro_exit_time >= 1) {
                 state = STATE.GAME;
             }
