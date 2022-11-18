@@ -897,56 +897,6 @@ let levels = [
             new Crate(new Vector2(8, 2), null),
         ],
     )),*/
-    new Level("filler", "whale", 11, 2, new GameState(
-        -1, 0,
-        [
-            Walls.fromString(`
-                ###########
-                #.#.......#
-                #.#.......#
-                #.#.......#
-                #.#.......#
-                #........##
-                ##########.
-            `),
-            new Targets([
-                new Vector2(3, 1),
-                new Vector2(4, 1),
-                new Vector2(5, 1),
-                new Vector2(6, 1),
-                new Vector2(7, 1),
-                new Vector2(8, 1),
-            ]),
-
-            new Spawner(new Vector2(1, 1), Vector2.down, null),
-            new Crate(new Vector2(3, 4), null),
-            new Crate(new Vector2(4, 4), null),
-            new Crate(new Vector2(5, 4), null),
-            new Crate(new Vector2(6, 4), null),
-            new Crate(new Vector2(7, 4), null),
-            new Crate(new Vector2(8, 4), null),
-        ],
-    )),
-    new Level("microban", "sokoban", 8, 5, new GameState(
-        -1, 0,
-        [
-            Walls.fromString(`
-                ####..
-                #..#..
-                #..###
-                #....#
-                #....#
-                #..###
-                ####..
-            `),
-            new Targets([
-                new Vector2(2, 1),
-            ]),
-
-            new Spawner(new Vector2(1, 3), Vector2.right, null),
-            new Crate(new Vector2(3, 4), null),
-        ],
-    )),
     new Level("move_spawner", "hat", 6, 4, new GameState(
         -1, 0,
         [
@@ -977,6 +927,56 @@ let levels = [
             new Crate(new Vector2(6, 2), null),
             new Crate(new Vector2(7, 2), null),
             new Crate(new Vector2(8, 2), null),
+        ],
+    )),
+    new Level("microban", "sokoban", 8, 5, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ####..
+                #..#..
+                #..###
+                #....#
+                #....#
+                #..###
+                ####..
+            `),
+            new Targets([
+                new Vector2(2, 1),
+            ]),
+
+            new Spawner(new Vector2(1, 3), Vector2.right, null),
+            new Crate(new Vector2(3, 4), null),
+        ],
+    )),
+    new Level("filler", "whale", 11, 2, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ###########
+                #.#.......#
+                #.#.......#
+                #.#.......#
+                #.#.......#
+                #........##
+                ##########.
+            `),
+            new Targets([
+                new Vector2(3, 1),
+                new Vector2(4, 1),
+                new Vector2(5, 1),
+                new Vector2(6, 1),
+                new Vector2(7, 1),
+                new Vector2(8, 1),
+            ]),
+
+            new Spawner(new Vector2(1, 1), Vector2.down, null),
+            new Crate(new Vector2(3, 4), null),
+            new Crate(new Vector2(4, 4), null),
+            new Crate(new Vector2(5, 4), null),
+            new Crate(new Vector2(6, 4), null),
+            new Crate(new Vector2(7, 4), null),
+            new Crate(new Vector2(8, 4), null),
         ],
     )),
     new Level("basic_reversed", "house", 15, 10, new GameState(
