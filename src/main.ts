@@ -216,6 +216,8 @@ tape_low.origin = new Vector2(0, -8 / (SYMBOL_SIZE * 1.5));
 tape_low.size.set(SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16);
 tape_low.color = COLOR_LOW;
 
+type Particle = ParticleCrate | ParticleBump;
+
 class ParticleCrate {
     public sprite: Sprite;
     constructor(
@@ -238,6 +240,33 @@ class ParticleCrate {
             new Vector2(t % 3, Math.floor(t / 3)),
             new Vector2(3, 3),
         )
+        Shaku.gfx.drawSprite(this.sprite);
+    }
+}
+
+class ParticleBump {
+    public sprite: Sprite;
+    constructor(
+        public pos: Vector2,
+        public time: number,
+    ) {
+        this.sprite = new Sprite(particle_crate_texture, new Rectangle(0, 0, TILE_SIZE * 2, TILE_SIZE * 2));
+        this.sprite.position.copy(this.pos.add(1, 1).mul(TILE_SIZE));
+    }
+
+    draw() {
+        let t = (Shaku.gameTime.elapsed - this.time) / .10 - .02;
+        if (t <= 0) return;
+        if (t >= 1) {
+            particles = particles.filter(x => x !== this);
+            return;
+        }
+        t = Math.floor(t * 9);
+        this.sprite.setSourceFromSpritesheet(
+            new Vector2(t % 3, Math.floor(t / 3)),
+            new Vector2(3, 3),
+        )
+        this.sprite.size.mulSelf(.5);
         Shaku.gfx.drawSprite(this.sprite);
     }
 }
@@ -289,7 +318,7 @@ class GameState {
                 // wall bump
                 // wallSound.play();
                 Shaku.sfx.play(wallSoundSrc, Math.pow(.6, turn_active_player.index), 1.0, true);
-                // console.log("wall sound")
+                particles.push(new ParticleBump(turn_active_player.pos.add(turn_active_player.dir.mul(.5)), Shaku.gameTime.elapsed));
             } else {
                 // waited
             }
@@ -1657,7 +1686,7 @@ let initial_state: GameState;
 
 let all_states: GameState[]; // = gameLogic(initial_state, robot_tape);
 
-let particles: ParticleCrate[] = [];
+let particles: Particle[] = [];
 
 let level_offset = Vector2.zero;
 

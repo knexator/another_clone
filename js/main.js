@@ -11258,6 +11258,31 @@ var ParticleCrate = class {
     import_shaku.default.gfx.drawSprite(this.sprite);
   }
 };
+var ParticleBump = class {
+  constructor(pos, time) {
+    this.pos = pos;
+    this.time = time;
+    this.sprite = new import_sprite.default(particle_crate_texture, new import_rectangle.default(0, 0, TILE_SIZE * 2, TILE_SIZE * 2));
+    this.sprite.position.copy(this.pos.add(1, 1).mul(TILE_SIZE));
+  }
+  sprite;
+  draw() {
+    let t = (import_shaku.default.gameTime.elapsed - this.time) / 0.1 - 0.02;
+    if (t <= 0)
+      return;
+    if (t >= 1) {
+      particles = particles.filter((x) => x !== this);
+      return;
+    }
+    t = Math.floor(t * 9);
+    this.sprite.setSourceFromSpritesheet(
+      new import_vector2.default(t % 3, Math.floor(t / 3)),
+      new import_vector2.default(3, 3)
+    );
+    this.sprite.size.mulSelf(0.5);
+    import_shaku.default.gfx.drawSprite(this.sprite);
+  }
+};
 var Level = class {
   constructor(dev_name, public_name, n_moves, n_delay, initial_state2) {
     this.dev_name = dev_name;
@@ -11297,6 +11322,7 @@ var GameState = class {
     if (turn_active_player.previous.pos.equals(turn_active_player.pos)) {
       if (turn_active_player.wall_crashed()) {
         import_shaku.default.sfx.play(wallSoundSrc, Math.pow(0.6, turn_active_player.index), 1, true);
+        particles.push(new ParticleBump(turn_active_player.pos.add(turn_active_player.dir.mul(0.5)), import_shaku.default.gameTime.elapsed));
       } else {
       }
     } else {
