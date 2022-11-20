@@ -188,6 +188,19 @@ tape_border.origin.set(0, 0);
 const tape_border_right = new Sprite(tape_borders_texture, new Rectangle(SYMBOL_SIZE * 1.5, 0, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
 tape_border_right.origin.set(0, 0);
 
+let level_icon_textures = new Map<string, TextureAsset>();
+for (let level_name of ["sofa", "cap", "hat", "whale", "house", "snake", "stairs"]) {
+    // @ts-ignore
+    let icon_texture = Shaku.assets.loadTexture(`icons/${level_name}.png`).asset;
+    level_icon_textures.set(level_name, icon_texture);
+}
+
+let icon_back_texture = await Shaku.assets.loadTexture("icons/icon_back.png");
+let icon_border_texture = await Shaku.assets.loadTexture("icons/icon_border.png");
+const icon_back = new Sprite(icon_back_texture);
+const icon_border = new Sprite(icon_border_texture);
+icon_border.color = Color.fromHex("#6D6D6D");
+
 let stepSoundSrc = await Shaku.assets.loadSound('sounds/step.wav');
 let pushSoundSrc = await Shaku.assets.loadSound('sounds/push.wav');
 let wallSoundSrc = await Shaku.assets.loadSound('sounds/wall.wav');
@@ -216,6 +229,7 @@ tape_low.origin = new Vector2(0, -8 / (SYMBOL_SIZE * 1.5));
 tape_low.size.set(SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16);
 tape_low.color = COLOR_LOW;
 
+await Shaku.assets.waitForAll();
 type Particle = ParticleCrate | ParticleBump;
 
 class ParticleCrate {
@@ -1104,7 +1118,7 @@ let levels = [
             new Crate(new Vector2(7, 3), null),
         ],
     )),*/
-    new Level("push_wall_mid", "eight", 17, 9, new GameState(
+    new Level("push_wall_mid", "snake", 17, 9, new GameState(
         -1, 0,
         [
             Walls.fromString(`
@@ -1647,6 +1661,19 @@ let levels = [
     )),
 ]
 
+let level_icon_sprites = new Map<string, Sprite>();
+for (let k = 0; k < levels.length; k++) {
+    let cur_texture = level_icon_textures.get(levels[k].public_name);
+    if (cur_texture !== undefined) {
+        let cur_spr = new Sprite(cur_texture);
+        cur_spr.position.set(
+            (k % menu_row_size) * menu_button_spacing + menu_off_x + menu_button_size / 2,
+            Math.floor(k / menu_row_size) * menu_button_spacing + menu_off_y + menu_button_size / 2,
+        )
+        level_icon_sprites.set(levels[k].public_name, cur_spr);
+    }
+}
+
 enum STATE {
     INTRO,
     GAME,
@@ -2045,12 +2072,12 @@ function update() {
 
     if (state === STATE.GAME && !in_end_screen) {
         if (pressed_throttled(["q", "z"], Shaku.gameTime.delta) && selected_turn > 0) {
-            if (waiting_for_final_input) {
+            if (waiting_for_final_input || exiting_level) {
                 cancelExitTransition();
             }
             selected_turn -= 1;
         } else if (pressed_throttled(["e", "x"], Shaku.gameTime.delta)) {
-            if (waiting_for_final_input) {
+            if (waiting_for_final_input || exiting_level) {
                 waiting_for_final_input = false;
             } else {
                 selected_turn += 1;
@@ -2095,7 +2122,7 @@ function update() {
         ], Shaku.gameTime.delta)
         // if (input_symbol !== null && time_offset === 0) {
         if (input_symbol !== null) {
-            if (waiting_for_final_input) {
+            if (waiting_for_final_input || exiting_level) {
                 waiting_for_final_input = false;
             } else if (selected_turn < robot_tape.length) {
                 robot_tape[selected_turn] = input_symbol;
@@ -2404,9 +2431,9 @@ function update() {
                     time_offset = 0;
                     selected_turn = all_states[cur_turn].major_turn;
                     waiting_for_final_input = true;
-                    ["ex", "aleft", "dright", "sdown", "space", "wup"].forEach(x => {
+                    /*["ex", "aleft", "dright", "sdown", "space", "wup"].forEach(x => {
                         _cooling_time_left[x] += .25;
-                    })
+                    })*/
                 }
             }
 
@@ -2445,15 +2472,29 @@ function update() {
 
         for (let k = 0; k < levels.length; k++) {
             let solved = storage.getItem(levels[k].dev_name) === "y";
-            Shaku.gfx.fillRect(
-                new Rectangle(
-                    (k % menu_row_size) * menu_button_spacing + menu_off_x,
-                    Math.floor(k / menu_row_size) * menu_button_spacing + menu_off_y,
-                    menu_button_size, menu_button_size
-                ), solved
-                ? (k === menu_selected_level ? Color.chartreuse : Color.darkgreen)
-                : (k === menu_selected_level ? Color.cyan : Color.darkcyan)
-            )
+            let icon_spr = level_icon_sprites.get(levels[k].public_name);
+            if (icon_spr) {
+                icon_back.position.copy(icon_spr.position);
+                icon_border.position.copy(icon_spr.position);
+
+                icon_border.color = solved
+                    ? (k === menu_selected_level ? Color.chartreuse : Color.darkgreen)
+                    : (k === menu_selected_level ? Color.cyan : Color.darkcyan);
+
+                Shaku.gfx.drawSprite(icon_back);
+                Shaku.gfx.drawSprite(icon_spr);
+                Shaku.gfx.drawSprite(icon_border);
+            } else {
+                Shaku.gfx.fillRect(
+                    new Rectangle(
+                        (k % menu_row_size) * menu_button_spacing + menu_off_x,
+                        Math.floor(k / menu_row_size) * menu_button_spacing + menu_off_y,
+                        menu_button_size, menu_button_size
+                    ), solved
+                    ? (k === menu_selected_level ? Color.chartreuse : Color.darkgreen)
+                    : (k === menu_selected_level ? Color.cyan : Color.darkcyan)
+                )
+            }
         }
         Shaku.gfx.useEffect(Shaku.gfx.builtinEffects.MsdfFont);
         for (let k = 0; k < levels.length; k++) {
@@ -2463,6 +2504,7 @@ function update() {
                 42
             );
             Shaku.gfx.drawGroup(text_spr, false);*/
+            if (level_icon_sprites.has(levels[k].public_name)) continue;
             let name_spr = generateText(levels[k].public_name,
                 (k % menu_row_size) * menu_button_spacing + menu_off_x + menu_button_size / 2,
                 Math.floor(k / menu_row_size) * menu_button_spacing + menu_off_y + menu_button_size / 5,

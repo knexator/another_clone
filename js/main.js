@@ -8008,7 +8008,7 @@ var require_lodash = __commonJS({
       "^" + funcToString.call(hasOwnProperty).replace(reRegExpChar, "\\$&").replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, "$1.*?") + "$"
     );
     var splice = arrayProto.splice;
-    var Map = getNative(root, "Map");
+    var Map2 = getNative(root, "Map");
     var nativeCreate = getNative(Object, "create");
     function Hash(entries) {
       var index = -1, length = entries ? entries.length : 0;
@@ -8102,7 +8102,7 @@ var require_lodash = __commonJS({
     function mapCacheClear() {
       this.__data__ = {
         "hash": new Hash(),
-        "map": new (Map || ListCache)(),
+        "map": new (Map2 || ListCache)(),
         "string": new Hash()
       };
     }
@@ -11210,6 +11210,16 @@ var tape_border = new import_sprite.default(tape_borders_texture, new import_rec
 tape_border.origin.set(0, 0);
 var tape_border_right = new import_sprite.default(tape_borders_texture, new import_rectangle.default(SYMBOL_SIZE * 1.5, 0, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
 tape_border_right.origin.set(0, 0);
+var level_icon_textures = /* @__PURE__ */ new Map();
+for (let level_name of ["sofa", "cap", "hat", "whale", "house", "snake", "stairs"]) {
+  let icon_texture = import_shaku.default.assets.loadTexture(`icons/${level_name}.png`).asset;
+  level_icon_textures.set(level_name, icon_texture);
+}
+var icon_back_texture = await import_shaku.default.assets.loadTexture("icons/icon_back.png");
+var icon_border_texture = await import_shaku.default.assets.loadTexture("icons/icon_border.png");
+var icon_back = new import_sprite.default(icon_back_texture);
+var icon_border = new import_sprite.default(icon_border_texture);
+icon_border.color = import_color.default.fromHex("#6D6D6D");
 var stepSoundSrc = await import_shaku.default.assets.loadSound("sounds/step.wav");
 var pushSoundSrc = await import_shaku.default.assets.loadSound("sounds/push.wav");
 var wallSoundSrc = await import_shaku.default.assets.loadSound("sounds/wall.wav");
@@ -11234,6 +11244,7 @@ var tape_low = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
 tape_low.origin = new import_vector2.default(0, -8 / (SYMBOL_SIZE * 1.5));
 tape_low.size.set(SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16);
 tape_low.color = COLOR_LOW;
+await import_shaku.default.assets.waitForAll();
 var ParticleCrate = class {
   constructor(pos, time) {
     this.pos = pos;
@@ -11938,7 +11949,7 @@ var levels = [
       new Crate(new import_vector2.default(3, 5), null)
     ]
   )),
-  new Level("push_wall_mid", "eight", 17, 9, new GameState(
+  new Level("push_wall_mid", "snake", 17, 9, new GameState(
     -1,
     0,
     [
@@ -12241,6 +12252,18 @@ var levels = [
     ]
   ))
 ];
+var level_icon_sprites = /* @__PURE__ */ new Map();
+for (let k = 0; k < levels.length; k++) {
+  let cur_texture = level_icon_textures.get(levels[k].public_name);
+  if (cur_texture !== void 0) {
+    let cur_spr = new import_sprite.default(cur_texture);
+    cur_spr.position.set(
+      k % menu_row_size * menu_button_spacing + menu_off_x + menu_button_size / 2,
+      Math.floor(k / menu_row_size) * menu_button_spacing + menu_off_y + menu_button_size / 2
+    );
+    level_icon_sprites.set(levels[k].public_name, cur_spr);
+  }
+}
 var in_end_screen = false;
 var state = 0 /* INTRO */;
 var TAPE_SYMBOL = /* @__PURE__ */ ((TAPE_SYMBOL2) => {
@@ -12537,12 +12560,12 @@ function update() {
   }
   if (state === 1 /* GAME */ && !in_end_screen) {
     if (pressed_throttled(["q", "z"], import_shaku.default.gameTime.delta) && selected_turn > 0) {
-      if (waiting_for_final_input) {
+      if (waiting_for_final_input || exiting_level) {
         cancelExitTransition();
       }
       selected_turn -= 1;
     } else if (pressed_throttled(["e", "x"], import_shaku.default.gameTime.delta)) {
-      if (waiting_for_final_input) {
+      if (waiting_for_final_input || exiting_level) {
         waiting_for_final_input = false;
       } else {
         selected_turn += 1;
@@ -12580,7 +12603,7 @@ function update() {
       ["space", 4 /* NONE */]
     ], import_shaku.default.gameTime.delta);
     if (input_symbol !== null) {
-      if (waiting_for_final_input) {
+      if (waiting_for_final_input || exiting_level) {
         waiting_for_final_input = false;
       } else if (selected_turn < robot_tape.length) {
         robot_tape[selected_turn] = input_symbol;
@@ -12867,9 +12890,6 @@ function update() {
           time_offset = 0;
           selected_turn = all_states[cur_turn].major_turn;
           waiting_for_final_input = true;
-          ["ex", "aleft", "dright", "sdown", "space", "wup"].forEach((x) => {
-            _cooling_time_left[x] += 0.25;
-          });
         }
       }
       if (time_offset === 0)
@@ -12902,18 +12922,30 @@ function update() {
     }
     for (let k = 0; k < levels.length; k++) {
       let solved = storage.getItem(levels[k].dev_name) === "y";
-      import_shaku.default.gfx.fillRect(
-        new import_rectangle.default(
-          k % menu_row_size * menu_button_spacing + menu_off_x,
-          Math.floor(k / menu_row_size) * menu_button_spacing + menu_off_y,
-          menu_button_size,
-          menu_button_size
-        ),
-        solved ? k === menu_selected_level ? import_color.default.chartreuse : import_color.default.darkgreen : k === menu_selected_level ? import_color.default.cyan : import_color.default.darkcyan
-      );
+      let icon_spr = level_icon_sprites.get(levels[k].public_name);
+      if (icon_spr) {
+        icon_back.position.copy(icon_spr.position);
+        icon_border.position.copy(icon_spr.position);
+        icon_border.color = solved ? k === menu_selected_level ? import_color.default.chartreuse : import_color.default.darkgreen : k === menu_selected_level ? import_color.default.cyan : import_color.default.darkcyan;
+        import_shaku.default.gfx.drawSprite(icon_back);
+        import_shaku.default.gfx.drawSprite(icon_spr);
+        import_shaku.default.gfx.drawSprite(icon_border);
+      } else {
+        import_shaku.default.gfx.fillRect(
+          new import_rectangle.default(
+            k % menu_row_size * menu_button_spacing + menu_off_x,
+            Math.floor(k / menu_row_size) * menu_button_spacing + menu_off_y,
+            menu_button_size,
+            menu_button_size
+          ),
+          solved ? k === menu_selected_level ? import_color.default.chartreuse : import_color.default.darkgreen : k === menu_selected_level ? import_color.default.cyan : import_color.default.darkcyan
+        );
+      }
     }
     import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
     for (let k = 0; k < levels.length; k++) {
+      if (level_icon_sprites.has(levels[k].public_name))
+        continue;
       let name_spr = generateText(
         levels[k].public_name,
         k % menu_row_size * menu_button_spacing + menu_off_x + menu_button_size / 2,
