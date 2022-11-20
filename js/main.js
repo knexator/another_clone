@@ -13005,7 +13005,7 @@ function initTransitionToExitLevel(next_thing) {
         return !c.pos.equals(p);
       });
     });
-    if (winning_pos.length !== 1) {
+    if (winning_pos.length === 0) {
       throw new Error("idk targets thing");
     }
     let screen_pos = winning_pos[0].add(1, 1).mul(TILE_SIZE).sub(level_offset);
