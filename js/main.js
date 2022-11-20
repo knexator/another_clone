@@ -11797,23 +11797,22 @@ var levels = [
       new Crate(new import_vector2.default(2, 3), null)
     ]
   )),
-  new Level("basic", "smol", 10, 5, new GameState(
+  new Level("basic", "cap", 10, 5, new GameState(
     -1,
     0,
     [
       Walls.fromString(`
-                ..###..
-                ###.###
-                #.....#
-                #.#...#
-                #.#..##
-                ######.
+                #####.
+                #...#.
+                #...##
+                #....#
+                ######
             `),
       new Targets([
-        new import_vector2.default(3, 4)
+        new import_vector2.default(1, 3)
       ]),
-      new Spawner(new import_vector2.default(1, 4), import_vector2.default.up, null),
-      new Crate(new import_vector2.default(4, 2), null)
+      new Spawner(new import_vector2.default(1, 1), import_vector2.default.down, null),
+      new Crate(new import_vector2.default(3, 2), null)
     ]
   )),
   new Level("move_spawner", "hat", 6, 4, new GameState(

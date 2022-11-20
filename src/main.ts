@@ -922,23 +922,22 @@ let levels = [
             new Crate(new Vector2(8, 3), null),
         ],
     )),*/
-    new Level("basic", "smol", 10, 5, new GameState(
+    new Level("basic", "cap", 10, 5, new GameState(
         -1, 0,
         [
             Walls.fromString(`
-                ..###..
-                ###.###
-                #.....#
-                #.#...#
-                #.#..##
-                ######.
+                #####.
+                #...#.
+                #...##
+                #....#
+                ######
             `),
             new Targets([
-                new Vector2(3, 4),
+                new Vector2(1, 3),
             ]),
 
-            new Spawner(new Vector2(1, 4), Vector2.up, null),
-            new Crate(new Vector2(4, 2), null),
+            new Spawner(new Vector2(1, 1), Vector2.down, null),
+            new Crate(new Vector2(3, 2), null),
         ],
     )),
     /*new Level("auto", "sausage", 2, 1, new GameState(
