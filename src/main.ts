@@ -20,6 +20,7 @@ import MsdfFontTextureAsset from "shaku/lib/assets/msdf_font_texture_asset";
 import GameTime from "shaku/lib/utils/game_time";
 import Animator from "shaku/lib/utils/animator";
 import { BarEffect } from "./bar_effect";
+import { TransitionEffect } from "./transition_effect";
 
 // all queued turns wont take any longer than turn_duration / power_thing
 let power_thing = 1 / 4.0;
@@ -28,6 +29,7 @@ let miniturn_duration = 0.15;
 let margin_fraction = 0.40;
 const TILE_SIZE = 50;
 const SYMBOL_SIZE = 50;
+const EXIT_TIME = .3;
 
 const CONFIG: {
     time: "MANUAL" | "SEMI" | "AUTO",
@@ -232,7 +234,6 @@ class ParticleCrate {
             return;
         }
         t = Math.floor(t * 9);
-        console.log(t);
         this.sprite.setSourceFromSpritesheet(
             new Vector2(t % 3, Math.floor(t / 3)),
             new Vector2(3, 3),
@@ -1671,6 +1672,8 @@ let row_2_background = new Sprite(Shaku.gfx.whiteTexture);
 row_2_background.origin = Vector2.zero;
 row_2_background.color = COLOR_TAPE;
 
+let exit_transition_cancelled = false;
+
 let cur_level_n = 0;
 let cur_level: Level;
 load_level(levels[cur_level_n]);
@@ -1815,19 +1818,22 @@ const background_effect = Shaku.gfx.createEffect(BackgroundEffect);
 Shaku.gfx.useEffect(background_effect);
 // @ts-ignore
 background_effect.uniforms["u_aspect_ratio"](MAIN_SCREEN_SPRITE.size.x / MAIN_SCREEN_SPRITE.size.y);
-// @ts-ignore
-Shaku.gfx.useEffect(null);
 
 const bar_effect = Shaku.gfx.createEffect(BarEffect);
 Shaku.gfx.useEffect(bar_effect);
 // @ts-ignore
 bar_effect.uniforms["u_aspect_ratio"](LOWER_SCREEN_SPRITE.size.x / LOWER_SCREEN_SPRITE.size.y);
-// @ts-ignore
-Shaku.gfx.useEffect(null);
 
 const FULL_SCREEN_SPRITE = new Sprite(Shaku.gfx.whiteTexture);
 FULL_SCREEN_SPRITE.origin = Vector2.zero;
 FULL_SCREEN_SPRITE.size = Shaku.gfx.getCanvasSize();
+const transition_effect = Shaku.gfx.createEffect(TransitionEffect);
+Shaku.gfx.useEffect(transition_effect);
+// @ts-ignore
+transition_effect.uniforms["u_screen_size"](FULL_SCREEN_SPRITE.size.x, FULL_SCREEN_SPRITE.size.y);
+
+// @ts-ignore
+Shaku.gfx.useEffect(null);
 
 let changing_rects: [Sprite, number, boolean][] = [];
 function setSymbolChanging(n: number) {
@@ -2011,6 +2017,9 @@ function update() {
 
     if (state === STATE.GAME && !in_end_screen) {
         if (pressed_throttled(["q", "z"], Shaku.gameTime.delta) && selected_turn > 0) {
+            if (waiting_for_final_input) {
+                cancelExitTransition();
+            }
             selected_turn -= 1;
         } else if (pressed_throttled(["e", "x"], Shaku.gameTime.delta)) {
             if (waiting_for_final_input) {
@@ -2370,10 +2379,6 @@ function update() {
                     ["ex", "aleft", "dright", "sdown", "space", "wup"].forEach(x => {
                         _cooling_time_left[x] += .25;
                     })
-                    setTimeout(() => {
-                        waiting_for_final_input = false;
-                        console.log("no longer waiting for final input")
-                    }, 400);
                 }
             }
 
@@ -2385,7 +2390,7 @@ function update() {
             openCurInEditor();
         }
 
-        if (!EDITOR && !exiting_level && time_offset === 0 && all_states[cur_turn].won && !waiting_for_final_input) {
+        if (!EDITOR && !exiting_level && time_offset === 0 && all_states[cur_turn].won) {
             if (cur_level_n < levels.length - 1) {
                 initTransitionToLevel(cur_level_n + 1);
             } else {
@@ -2530,20 +2535,74 @@ function update() {
     Shaku.requestAnimationFrame(update);
 }
 
+function cancelExitTransition() {
+    console.log("cancelling!");
+    exit_transition_cancelled = true;
+    waiting_for_final_input = false;
+    exiting_level = false;
+}
+
 function initTransitionToExitLevel(next_thing: Function) {
     let exit_level_time = 0;
     exiting_level = true;
+    Shaku.gfx.useEffect(transition_effect);
+    if (state === STATE.GAME) {
+        // Find the target that had no crate right before winning
+        let k = 1;
+        let almost_last_turn = all_states[cur_turn - k];
+        while (almost_last_turn.minor_turn !== 0) {
+            k++;
+            almost_last_turn = all_states[cur_turn - k];
+        }
+        let crates = almost_last_turn.crates;
+        let target = almost_last_turn.target;
+        let winning_pos = target.positions.filter(p => {
+            // return true only if there was no crate here
+            return crates.every(c => {
+                return !c.pos.equals(p);
+            });
+        })
+        if (winning_pos.length !== 1) {
+            throw new Error("idk targets thing");
+        }
+        let screen_pos = winning_pos[0].add(1, 1).mul(TILE_SIZE).sub(level_offset);
+        // @ts-ignore
+        transition_effect.uniforms["u_pos"](screen_pos.x, screen_pos.y);
+    } else if (state === STATE.MENU) {
+        // @ts-ignore
+        transition_effect.uniforms["u_pos"](
+            (menu_selected_level % menu_row_size) * menu_button_spacing + menu_off_x + menu_button_size / 2,
+            Math.floor(menu_selected_level / menu_row_size) * menu_button_spacing + menu_off_y + menu_button_size / 2
+        );
+    }
+    // @ts-ignore
+    Shaku.gfx.useEffect(null);
+
     doEveryFrameUntilTrue(() => {
-        // todo: cooler transition
-        FULL_SCREEN_SPRITE.color = new Color(0, 0, 0, exit_level_time);
+        // // todo: cooler transition
+        // FULL_SCREEN_SPRITE.color = new Color(0, 0, 0, exit_level_time);
+        // Shaku.gfx.drawSprite(FULL_SCREEN_SPRITE);
+
+        Shaku.gfx.useEffect(transition_effect);
+        // @ts-ignore
+        transition_effect.uniforms["u_progress"](exit_level_time);
         Shaku.gfx.drawSprite(FULL_SCREEN_SPRITE);
+        // @ts-ignore
+        Shaku.gfx.useEffect(null);
 
-        exit_level_time = moveTowards(exit_level_time, 1, Shaku.gameTime.delta * 3);
-
-        if (exit_level_time >= 1) {
-            exiting_level = false;
-            next_thing();
-            return true;
+        if (exit_transition_cancelled) {
+            exit_level_time = moveTowards(exit_level_time, 0, Shaku.gameTime.delta * 3 / EXIT_TIME);
+            if (exit_level_time <= 0) {
+                exit_transition_cancelled = false;
+                return true;
+            }
+        } else {
+            exit_level_time = moveTowards(exit_level_time, 1, Shaku.gameTime.delta / EXIT_TIME);
+            if (exit_level_time >= 1) {
+                exiting_level = false;
+                next_thing();
+                return true;
+            }
         }
         return false;
     });
@@ -2556,12 +2615,24 @@ function initTransitionToEnterLevel(n: number) {
     cur_level_n = n;
     load_level(levels[n]);
 
-    doEveryFrameUntilTrue(() => {
-        // todo: cooler transition
-        FULL_SCREEN_SPRITE.color = new Color(0, 0, 0, 1 - enter_level_time);
-        Shaku.gfx.drawSprite(FULL_SCREEN_SPRITE);
+    Shaku.gfx.useEffect(transition_effect);
+    let spawner = initial_state.spawner;
+    let screen_pos = spawner.pos.add(spawner.dir.mul(.5)).add(1, 1).mul(TILE_SIZE).sub(level_offset);
+    // @ts-ignore
+    transition_effect.uniforms["u_pos"](screen_pos.x, screen_pos.y);
+    // @ts-ignore
+    Shaku.gfx.useEffect(null);
 
-        enter_level_time = moveTowards(enter_level_time, 1, Shaku.gameTime.delta * 3);
+    doEveryFrameUntilTrue(() => {
+        Shaku.gfx.useEffect(transition_effect);
+        // @ts-ignore
+        transition_effect.uniforms["u_progress"](1 - enter_level_time);
+        Shaku.gfx.drawSprite(FULL_SCREEN_SPRITE);
+        // @ts-ignore
+        Shaku.gfx.useEffect(null);
+
+
+        enter_level_time = moveTowards(enter_level_time, 1, Shaku.gameTime.delta / EXIT_TIME);
 
         return enter_level_time >= 1;
     });
@@ -2588,7 +2659,7 @@ function initTransitionToLevel(n: number) {
 let _cooling_time_left: Record<string, number> = {};
 let _press_count: Record<string, number> = {};
 function pressed_throttled(code: string | string[], dt: number): boolean {
-    if (exiting_level) return false;
+    if (exiting_level && state === STATE.MENU) return false;
     let key = Array.isArray(code) ? code.join('') : code;
     if (!(key in _cooling_time_left)) {
         _cooling_time_left[key] = 0;
