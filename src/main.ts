@@ -29,7 +29,7 @@ let miniturn_duration = 0.15;
 let margin_fraction = 0.40;
 const TILE_SIZE = 50;
 const SYMBOL_SIZE = 50;
-const EXIT_TIME = .3;
+const EXIT_TIME = .6;
 
 const CONFIG: {
     time: "MANUAL" | "SEMI" | "AUTO",
@@ -2320,7 +2320,7 @@ function update() {
         while (delta_time_left > 0) {
             // first turn is a bit special
             if (cur_turn === 0 && time_offset < 0) {
-                time_offset = moveTowards(time_offset, 0, delta_time_left * 6.666666666666667);
+                time_offset = moveTowards(time_offset, 0, delta_time_left * 4);
                 break;
             }
             // Skip empty turns
