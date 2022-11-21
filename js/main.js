@@ -11210,11 +11210,7 @@ var tape_border = new import_sprite.default(tape_borders_texture, new import_rec
 tape_border.origin.set(0, 0);
 var tape_border_right = new import_sprite.default(tape_borders_texture, new import_rectangle.default(SYMBOL_SIZE * 1.5, 0, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
 tape_border_right.origin.set(0, 0);
-var level_icon_textures = /* @__PURE__ */ new Map();
-for (let level_name of ["sofa", "cap", "hat", "whale", "house", "snake", "stairs"]) {
-  let icon_texture = import_shaku.default.assets.loadTexture(`icons/${level_name}.png`).asset;
-  level_icon_textures.set(level_name, icon_texture);
-}
+var icons_texture = await import_shaku.default.assets.loadTexture("icons/all.png");
 var icon_back_texture = await import_shaku.default.assets.loadTexture("icons/icon_back.png");
 var icon_border_texture = await import_shaku.default.assets.loadTexture("icons/icon_border.png");
 var icon_back = new import_sprite.default(icon_back_texture);
@@ -11858,7 +11854,7 @@ var levels = [
       new Crate(new import_vector2.default(8, 2), null)
     ]
   )),
-  new Level("microban", "sokoban", 8, 5, new GameState(
+  new Level("microban", "soko", 8, 5, new GameState(
     -1,
     0,
     [
@@ -12253,15 +12249,18 @@ var levels = [
   ))
 ];
 var level_icon_sprites = /* @__PURE__ */ new Map();
-for (let k = 0; k < levels.length; k++) {
-  let cur_texture = level_icon_textures.get(levels[k].public_name);
-  if (cur_texture !== void 0) {
-    let cur_spr = new import_sprite.default(cur_texture);
+{
+  let atlas_size = new import_vector2.default(6, 2);
+  let k = 0;
+  for (let level_name of ["sofa", "cap", "hat", "soko", "whale", "house", "stairs", "snake", "train", "pipe", "claw", "toad"]) {
+    let cur_spr = new import_sprite.default(icons_texture);
+    cur_spr.setSourceFromSpritesheet(new import_vector2.default(k % atlas_size.x, Math.floor(k / atlas_size.x)), atlas_size);
     cur_spr.position.set(
       k % menu_row_size * menu_button_spacing + menu_off_x + menu_button_size / 2,
       Math.floor(k / menu_row_size) * menu_button_spacing + menu_off_y + menu_button_size / 2
     );
-    level_icon_sprites.set(levels[k].public_name, cur_spr);
+    level_icon_sprites.set(level_name, cur_spr);
+    k++;
   }
 }
 var in_end_screen = false;

@@ -188,12 +188,7 @@ tape_border.origin.set(0, 0);
 const tape_border_right = new Sprite(tape_borders_texture, new Rectangle(SYMBOL_SIZE * 1.5, 0, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
 tape_border_right.origin.set(0, 0);
 
-let level_icon_textures = new Map<string, TextureAsset>();
-for (let level_name of ["sofa", "cap", "hat", "whale", "house", "snake", "stairs"]) {
-    // @ts-ignore
-    let icon_texture = Shaku.assets.loadTexture(`icons/${level_name}.png`).asset;
-    level_icon_textures.set(level_name, icon_texture);
-}
+let icons_texture = await Shaku.assets.loadTexture("icons/all.png");
 
 let icon_back_texture = await Shaku.assets.loadTexture("icons/icon_back.png");
 let icon_border_texture = await Shaku.assets.loadTexture("icons/icon_border.png");
@@ -1006,7 +1001,7 @@ let levels = [
             new Crate(new Vector2(8, 2), null),
         ],
     )),
-    new Level("microban", "sokoban", 8, 5, new GameState(
+    new Level("microban", "soko", 8, 5, new GameState(
         -1, 0,
         [
             Walls.fromString(`
@@ -1662,15 +1657,18 @@ let levels = [
 ]
 
 let level_icon_sprites = new Map<string, Sprite>();
-for (let k = 0; k < levels.length; k++) {
-    let cur_texture = level_icon_textures.get(levels[k].public_name);
-    if (cur_texture !== undefined) {
-        let cur_spr = new Sprite(cur_texture);
+{
+    let atlas_size = new Vector2(6, 2);
+    let k = 0;
+    for (let level_name of ["sofa", "cap", "hat", "soko", "whale", "house", "stairs", "snake", "train", "pipe", "claw", "toad"]) {
+        let cur_spr = new Sprite(icons_texture);
+        cur_spr.setSourceFromSpritesheet(new Vector2(k % atlas_size.x, Math.floor(k / atlas_size.x)), atlas_size)
         cur_spr.position.set(
             (k % menu_row_size) * menu_button_spacing + menu_off_x + menu_button_size / 2,
             Math.floor(k / menu_row_size) * menu_button_spacing + menu_off_y + menu_button_size / 2,
         )
-        level_icon_sprites.set(levels[k].public_name, cur_spr);
+        level_icon_sprites.set(level_name, cur_spr);
+        k++;
     }
 }
 
