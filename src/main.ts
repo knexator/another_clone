@@ -2614,6 +2614,7 @@ function cancelExitTransition() {
 
 function initTransitionToExitLevel(next_thing: Function) {
     let exit_level_time = 0;
+    let boost = 1;
     exiting_level = true;
     Shaku.gfx.useEffect(transition_effect);
     if (state === STATE.GAME) {
@@ -2644,6 +2645,8 @@ function initTransitionToExitLevel(next_thing: Function) {
             (menu_selected_level % menu_row_size) * menu_button_spacing + menu_off_x + menu_button_size / 2,
             Math.floor(menu_selected_level / menu_row_size) * menu_button_spacing + menu_off_y + menu_button_size / 2
         );
+        exit_level_time = .25;
+        boost = 1.5;
     }
     // @ts-ignore
     Shaku.gfx.useEffect(null);
@@ -2667,7 +2670,7 @@ function initTransitionToExitLevel(next_thing: Function) {
                 return true;
             }
         } else {
-            exit_level_time = moveTowards(exit_level_time, 1, Shaku.gameTime.delta / EXIT_TIME);
+            exit_level_time = moveTowards(exit_level_time, 1, Shaku.gameTime.delta * boost / EXIT_TIME);
             if (exit_level_time >= 1) {
                 exiting_level = false;
                 next_thing();

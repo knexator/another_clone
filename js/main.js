@@ -13020,6 +13020,7 @@ function cancelExitTransition() {
 }
 function initTransitionToExitLevel(next_thing) {
   let exit_level_time = 0;
+  let boost = 1;
   exiting_level = true;
   import_shaku.default.gfx.useEffect(transition_effect);
   if (state === 1 /* GAME */) {
@@ -13046,6 +13047,8 @@ function initTransitionToExitLevel(next_thing) {
       menu_selected_level % menu_row_size * menu_button_spacing + menu_off_x + menu_button_size / 2,
       Math.floor(menu_selected_level / menu_row_size) * menu_button_spacing + menu_off_y + menu_button_size / 2
     );
+    exit_level_time = 0.25;
+    boost = 1.5;
   }
   import_shaku.default.gfx.useEffect(null);
   doEveryFrameUntilTrue(() => {
@@ -13060,7 +13063,7 @@ function initTransitionToExitLevel(next_thing) {
         return true;
       }
     } else {
-      exit_level_time = moveTowards(exit_level_time, 1, import_shaku.default.gameTime.delta / EXIT_TIME);
+      exit_level_time = moveTowards(exit_level_time, 1, import_shaku.default.gameTime.delta * boost / EXIT_TIME);
       if (exit_level_time >= 1) {
         exiting_level = false;
         next_thing();
