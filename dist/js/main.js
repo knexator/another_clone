@@ -12117,36 +12117,6 @@ var levels = [
       new Crate(new import_vector2.default(10, 2), null)
     ]
   )),
-  new Level("u_chain", "eyes", 16, 2, new GameState(
-    -1,
-    0,
-    [
-      Walls.fromString(`
-                ###########
-                #.........#
-                #.........#
-                #.........#
-                #.........#
-                #.......###
-                #########..
-            `),
-      new Targets([
-        new import_vector2.default(3, 2),
-        new import_vector2.default(4, 2),
-        new import_vector2.default(5, 2),
-        new import_vector2.default(6, 2),
-        new import_vector2.default(7, 2),
-        new import_vector2.default(8, 2)
-      ]),
-      new Spawner(new import_vector2.default(1, 1), import_vector2.default.down, null),
-      new Crate(new import_vector2.default(3, 4), null),
-      new Crate(new import_vector2.default(4, 4), null),
-      new Crate(new import_vector2.default(5, 4), null),
-      new Crate(new import_vector2.default(6, 4), null),
-      new Crate(new import_vector2.default(7, 4), null),
-      new Crate(new import_vector2.default(8, 4), null)
-    ]
-  )),
   new Level("companion_cube", "fish", 14, 12, new GameState(
     -1,
     0,
@@ -12182,6 +12152,36 @@ var levels = [
       new Crate(new import_vector2.default(10, 2), null)
     ]
   )),
+  new Level("u_chain", "eyes", 16, 2, new GameState(
+    -1,
+    0,
+    [
+      Walls.fromString(`
+                ###########
+                #.........#
+                #.........#
+                #.........#
+                #.........#
+                #.......###
+                #########..
+            `),
+      new Targets([
+        new import_vector2.default(3, 2),
+        new import_vector2.default(4, 2),
+        new import_vector2.default(5, 2),
+        new import_vector2.default(6, 2),
+        new import_vector2.default(7, 2),
+        new import_vector2.default(8, 2)
+      ]),
+      new Spawner(new import_vector2.default(1, 1), import_vector2.default.down, null),
+      new Crate(new import_vector2.default(3, 4), null),
+      new Crate(new import_vector2.default(4, 4), null),
+      new Crate(new import_vector2.default(5, 4), null),
+      new Crate(new import_vector2.default(6, 4), null),
+      new Crate(new import_vector2.default(7, 4), null),
+      new Crate(new import_vector2.default(8, 4), null)
+    ]
+  )),
   new Level("mini_avoid_avoiding", "worm", 7, 3, new GameState(
     -1,
     0,
@@ -12205,37 +12205,13 @@ var levels = [
       new Crate(new import_vector2.default(10, 3), null),
       new Crate(new import_vector2.default(6, 5), null)
     ]
-  )),
-  new Level("tree", "trident", 14, 4, new GameState(
-    -1,
-    0,
-    [
-      Walls.fromString(`
-                ..##########...
-                .##........#...
-                ##..########...
-                #..........#...
-                ###..##########
-                ..##..........#
-                ...############
-            `),
-      new Targets([
-        new import_vector2.default(9, 1),
-        new import_vector2.default(9, 3),
-        new import_vector2.default(12, 5)
-      ]),
-      new Spawner(new import_vector2.default(1, 3), import_vector2.default.right, null),
-      new Crate(new import_vector2.default(6, 1), null),
-      new Crate(new import_vector2.default(6, 3), null),
-      new Crate(new import_vector2.default(6, 5), null)
-    ]
   ))
 ];
 var level_icon_sprites = /* @__PURE__ */ new Map();
 {
-  let atlas_size = new import_vector2.default(6, 2);
+  let atlas_size = new import_vector2.default(6, 3);
   let k = 0;
-  for (let level_name of ["sofa", "cap", "hat", "soko", "whale", "house", "stairs", "snake", "train", "pipe", "claw", "toad"]) {
+  for (let level_name of ["sofa", "cap", "hat", "soko", "whale", "house", "stairs", "snake", "train", "pipe", "claw", "toad", "duck", "car", "factory"]) {
     let cur_spr = new import_sprite.default(icons_texture);
     cur_spr.setSourceFromSpritesheet(new import_vector2.default(k % atlas_size.x, Math.floor(k / atlas_size.x)), atlas_size);
     cur_spr.position.set(
@@ -12882,7 +12858,7 @@ function update() {
       openCurInEditor();
     }
     if (!EDITOR && !exiting_level && time_offset === 0 && all_states[cur_turn].won) {
-      if (cur_level_n < levels.length - 1) {
+      if (cur_level_n < levels.length - 2) {
         initTransitionToLevel(cur_level_n + 1);
       } else {
         initTransitionToExitLevel(() => initTransitionToEnterEnd());

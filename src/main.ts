@@ -1478,6 +1478,41 @@ let levels = [
             new Crate(new Vector2(5, 3), null),
         ],
     )),*/
+    new Level("companion_cube", "fish", 14, 12, new GameState(
+        -1, 0,
+        [
+            Walls.fromString(`
+                ...#########.
+                ..##.......#.
+                .##........#.
+                .#.........#.
+                ##.........##
+                #...........#
+                #...........#
+                #############
+            `),
+            new Targets([
+                new Vector2(10, 3),
+                new Vector2(4, 1),
+                new Vector2(5, 1),
+                new Vector2(6, 1),
+                new Vector2(7, 1),
+                new Vector2(8, 1),
+                new Vector2(9, 1),
+                new Vector2(10, 1),
+            ]),
+
+            new Spawner(new Vector2(2, 6), Vector2.up, null),
+            new Crate(new Vector2(3, 3), null),
+            new Crate(new Vector2(4, 2), null),
+            new Crate(new Vector2(5, 2), null),
+            new Crate(new Vector2(6, 2), null),
+            new Crate(new Vector2(7, 2), null),
+            new Crate(new Vector2(8, 2), null),
+            new Crate(new Vector2(9, 2), null),
+            new Crate(new Vector2(10, 2), null),
+        ],
+    )),
     new Level("u_chain", "eyes", 16, 2, new GameState(
         -1, 0,
         [
@@ -1566,41 +1601,6 @@ let levels = [
             new Crate(new Vector2(10, 4), null),
         ],
     )),*/ // very broken    
-    new Level("companion_cube", "fish", 14, 12, new GameState(
-        -1, 0,
-        [
-            Walls.fromString(`
-                ...#########.
-                ..##.......#.
-                .##........#.
-                .#.........#.
-                ##.........##
-                #...........#
-                #...........#
-                #############
-            `),
-            new Targets([
-                new Vector2(10, 3),
-                new Vector2(4, 1),
-                new Vector2(5, 1),
-                new Vector2(6, 1),
-                new Vector2(7, 1),
-                new Vector2(8, 1),
-                new Vector2(9, 1),
-                new Vector2(10, 1),
-            ]),
-
-            new Spawner(new Vector2(2, 6), Vector2.up, null),
-            new Crate(new Vector2(3, 3), null),
-            new Crate(new Vector2(4, 2), null),
-            new Crate(new Vector2(5, 2), null),
-            new Crate(new Vector2(6, 2), null),
-            new Crate(new Vector2(7, 2), null),
-            new Crate(new Vector2(8, 2), null),
-            new Crate(new Vector2(9, 2), null),
-            new Crate(new Vector2(10, 2), null),
-        ],
-    )),
     new Level("mini_avoid_avoiding", "worm", 7, 3, new GameState(
         -1, 0,
         [
@@ -1651,7 +1651,7 @@ let levels = [
             new Crate(new Vector2(7, 4), null),
         ],
     )),*/
-    new Level("tree", "trident", 14, 4, new GameState(
+    /*new Level("tree", "trident", 14, 4, new GameState(
         -1, 0,
         [
             Walls.fromString(`
@@ -1674,14 +1674,14 @@ let levels = [
             new Crate(new Vector2(6, 3), null),
             new Crate(new Vector2(6, 5), null),
         ],
-    )),
+    )),*/
 ]
 
 let level_icon_sprites = new Map<string, Sprite>();
 {
-    let atlas_size = new Vector2(6, 2);
+    let atlas_size = new Vector2(6, 3);
     let k = 0;
-    for (let level_name of ["sofa", "cap", "hat", "soko", "whale", "house", "stairs", "snake", "train", "pipe", "claw", "toad"]) {
+    for (let level_name of ["sofa", "cap", "hat", "soko", "whale", "house", "stairs", "snake", "train", "pipe", "claw", "toad", "duck", "car", "factory"]) {
         let cur_spr = new Sprite(icons_texture);
         cur_spr.setSourceFromSpritesheet(new Vector2(k % atlas_size.x, Math.floor(k / atlas_size.x)), atlas_size)
         cur_spr.position.set(
@@ -2465,7 +2465,7 @@ function update() {
         }
 
         if (!EDITOR && !exiting_level && time_offset === 0 && all_states[cur_turn].won) {
-            if (cur_level_n < levels.length - 1) {
+            if (cur_level_n < levels.length - 2) {
                 initTransitionToLevel(cur_level_n + 1);
             } else {
                 initTransitionToExitLevel(() => initTransitionToEnterEnd());
