@@ -54,6 +54,11 @@ Shaku.gfx!.setResolution(800, 600, true);
 Shaku.gfx!.centerCanvas();
 // Shaku.gfx!.maximizeCanvasSize(false, false);
 
+// Pre loading
+Shaku.startFrame();
+Shaku.gfx!.clear(Shaku.utils.Color.darkslategray);
+Shaku.endFrame();
+
 // let game_size = new Vector2(800, 400);
 let game_size = new Vector2(800, 430);
 
