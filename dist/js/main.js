@@ -936,7 +936,7 @@ var require_color = __commonJS({
 var require_blend_modes = __commonJS({
   "../Shaku/lib/gfx/blend_modes.js"(exports, module) {
     "use strict";
-    var BlendModes2 = {
+    var BlendModes = {
       AlphaBlend: "alpha",
       Opaque: "opaque",
       Additive: "additive",
@@ -949,12 +949,12 @@ var require_blend_modes = __commonJS({
       DestIn: "dest-in",
       DestOut: "dest-out"
     };
-    Object.defineProperty(BlendModes2, "_values", {
-      value: new Set(Object.values(BlendModes2)),
+    Object.defineProperty(BlendModes, "_values", {
+      value: new Set(Object.values(BlendModes)),
       writable: false
     });
-    Object.freeze(BlendModes2);
-    module.exports = { BlendModes: BlendModes2 };
+    Object.freeze(BlendModes);
+    module.exports = { BlendModes };
   }
 });
 
@@ -4412,7 +4412,7 @@ var require_sprite = __commonJS({
     var Rectangle2 = require_rectangle();
     var Vector22 = require_vector2();
     var Vector32 = require_vector3();
-    var { BlendMode, BlendModes: BlendModes2 } = require_blend_modes();
+    var { BlendMode, BlendModes } = require_blend_modes();
     var Sprite2 = class {
       constructor(texture, sourceRect) {
         this.texture = texture;
@@ -4425,7 +4425,7 @@ var require_sprite = __commonJS({
           this.size = new Vector22(100, 100);
         }
         this.sourceRect = sourceRect || null;
-        this.blendMode = BlendModes2.AlphaBlend;
+        this.blendMode = BlendModes.AlphaBlend;
         this.rotation = 0;
         this.origin = new Vector22(0.5, 0.5);
         this.skew = new Vector22(0, 0);
@@ -4903,7 +4903,7 @@ var require_sprite_batch = __commonJS({
     var { Rectangle: Rectangle2, Color: Color3 } = require_utils();
     var Vector22 = require_vector2();
     var Vertex = require_vertex();
-    var { BlendModes: BlendModes2 } = require_blend_modes();
+    var { BlendModes } = require_blend_modes();
     var Matrix = require_matrix();
     var Mesh = require_mesh();
     var _logger = require_logger().getLogger("gfx");
@@ -4935,7 +4935,7 @@ var require_sprite_batch = __commonJS({
           this._gfx.useEffect(effect);
         }
         this._effect = this._gfx._activeEffect;
-        this._currBlend = BlendModes2.AlphaBlend;
+        this._currBlend = BlendModes.AlphaBlend;
         this._currTexture = null;
         this._currBatchCount = 0;
         this._transform = transform;
@@ -5232,7 +5232,7 @@ var require_gfx = __commonJS({
     "use strict";
     var IManager = require_manager();
     var Color3 = require_color();
-    var { BlendMode, BlendModes: BlendModes2 } = require_blend_modes();
+    var { BlendMode, BlendModes } = require_blend_modes();
     var Rectangle2 = require_rectangle();
     var { Effect: Effect4, BasicEffect, MsdfFontEffect } = require_effects();
     var TextureAsset = require_texture_asset();
@@ -5648,7 +5648,7 @@ var require_gfx = __commonJS({
           return;
         }
         this.__startDrawingSprites(this._activeEffect, null);
-        this._setBlendMode(blendMode || BlendModes2.AlphaBlend);
+        this._setBlendMode(blendMode || BlendModes.AlphaBlend);
         this.spritesBatch.setTexture(texture);
         this.spritesBatch.pushVertices(vertices);
       }
@@ -5659,7 +5659,7 @@ var require_gfx = __commonJS({
           new Vector22(destRect.width, destRect.height),
           null,
           color,
-          blend || BlendModes2.Opaque,
+          blend || BlendModes.Opaque,
           rotation,
           null,
           null
@@ -5674,7 +5674,7 @@ var require_gfx = __commonJS({
           let sprite = new Sprite2(this.whiteTexture);
           sprite.color = colors[i] || colors;
           sprite.rotation = rotation.length ? rotation[i] : rotation;
-          sprite.blendMode = blend || BlendModes2.Opaque;
+          sprite.blendMode = blend || BlendModes.Opaque;
           let destRect = destRects[i];
           sprite.size.set(destRect.width, destRect.height);
           sprite.position.set(destRect.x + destRect.width / 2, destRect.y + destRect.width / 2);
@@ -5847,7 +5847,7 @@ var require_gfx = __commonJS({
       _fillShapesBuffer(points, colors, blendMode, onReady, isStrip, groupsSize) {
         this.presentBufferedData();
         colors = colors || _whiteColor;
-        blendMode = blendMode || BlendModes2.Opaque;
+        blendMode = blendMode || BlendModes.Opaque;
         if (colors.length !== void 0 && colors.length !== points.length) {
           _logger.error("When drawing shapes with colors array, the colors array and points array must have the same length!");
           return;
@@ -5927,7 +5927,7 @@ var require_gfx = __commonJS({
         }
       }
       get BlendModes() {
-        return BlendModes2;
+        return BlendModes;
       }
       get TextureWrapModes() {
         return TextureWrapModes;
@@ -5972,42 +5972,42 @@ var require_gfx = __commonJS({
         if (this._lastBlendMode !== blendMode) {
           var gl = this._gl;
           switch (blendMode) {
-            case BlendModes2.AlphaBlend:
+            case BlendModes.AlphaBlend:
               gl.enable(gl.BLEND);
               gl.blendEquation(gl.FUNC_ADD);
               gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
               break;
-            case BlendModes2.Opaque:
+            case BlendModes.Opaque:
               gl.disable(gl.BLEND);
               break;
-            case BlendModes2.Additive:
+            case BlendModes.Additive:
               gl.enable(gl.BLEND);
               gl.blendEquation(gl.FUNC_ADD);
               gl.blendFunc(gl.ONE, gl.ONE);
               break;
-            case BlendModes2.Multiply:
+            case BlendModes.Multiply:
               gl.enable(gl.BLEND);
               gl.blendEquation(gl.FUNC_ADD);
               gl.blendFuncSeparate(gl.DST_COLOR, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
               break;
-            case BlendModes2.Screen:
+            case BlendModes.Screen:
               gl.enable(gl.BLEND);
               gl.blendEquation(gl.FUNC_ADD);
               gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_COLOR, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
               break;
-            case BlendModes2.Subtract:
+            case BlendModes.Subtract:
               gl.enable(gl.BLEND);
               gl.blendEquation(gl.FUNC_ADD);
               gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ONE, gl.ONE);
               gl.blendEquationSeparate(gl.FUNC_REVERSE_SUBTRACT, gl.FUNC_ADD);
               break;
-            case BlendModes2.Invert:
+            case BlendModes.Invert:
               gl.enable(gl.BLEND);
               gl.blendEquation(gl.FUNC_ADD);
               gl.blendFunc(gl.ONE_MINUS_DST_COLOR, gl.ZERO);
               gl.blendFuncSeparate(gl.ONE_MINUS_DST_COLOR, gl.ZERO, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
               break;
-            case BlendModes2.Overlay:
+            case BlendModes.Overlay:
               gl.enable(gl.BLEND);
               if (gl.MAX) {
                 gl.blendEquation(gl.MAX);
@@ -6017,17 +6017,17 @@ var require_gfx = __commonJS({
                 gl.blendFunc(gl.ONE, gl.ONE);
               }
               break;
-            case BlendModes2.Darken:
+            case BlendModes.Darken:
               gl.enable(gl.BLEND);
               gl.blendEquation(gl.MIN);
               gl.blendFuncSeparate(gl.DST_COLOR, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
               break;
-            case BlendModes2.DestIn:
+            case BlendModes.DestIn:
               gl.enable(gl.BLEND);
               gl.blendEquation(gl.FUNC_ADD);
               gl.blendFunc(gl.ZERO, gl.SRC_ALPHA);
               break;
-            case BlendModes2.DestOut:
+            case BlendModes.DestOut:
               gl.enable(gl.BLEND);
               gl.blendEquation(gl.FUNC_ADD);
               gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_ALPHA);
@@ -8207,7 +8207,6 @@ var import_vector2 = __toESM(require_vector2());
 var import_color = __toESM(require_color());
 var import_rectangle = __toESM(require_rectangle());
 var import_key_codes = __toESM(require_key_codes());
-var import_blend_modes = __toESM(require_blend_modes());
 var import_text_alignments = __toESM(require_text_alignments());
 
 // src/background_effect.ts
@@ -11128,13 +11127,14 @@ import_shaku.default.gfx.setResolution(800, 600, true);
 import_shaku.default.gfx.centerCanvas();
 var game_size = new import_vector2.default(800, 430);
 var muted = false;
-var logo_texture = await import_shaku.default.assets.loadTexture("imgs/logo.png", { generateMipMaps: true });
+var logo_texture = import_shaku.default.assets.loadTexture("imgs/logo.png").asset;
+var logo_start_texture = import_shaku.default.assets.loadTexture("imgs/start.png").asset;
+var logo_loading_texture = import_shaku.default.assets.loadTexture("imgs/loading.png").asset;
+await import_shaku.default.assets.waitForAll();
 var logo_sprite = new import_sprite.default(logo_texture);
 logo_sprite.origin.set(0, 0);
-var logo_start_texture = await import_shaku.default.assets.loadTexture("imgs/start.png", { generateMipMaps: true });
 var logo_start_sprite = new import_sprite.default(logo_start_texture);
 logo_start_sprite.origin.set(0, 0);
-var logo_loading_texture = await import_shaku.default.assets.loadTexture("imgs/loading.png", { generateMipMaps: true });
 var logo_loading_sprite = new import_sprite.default(logo_loading_texture);
 logo_loading_sprite.origin.set(0, 0);
 var LOWER_SCREEN_SPRITE = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
@@ -11160,49 +11160,57 @@ var menu_button_spacing = 125;
 var menu_button_size = 100;
 var menu_off_x = (game_size.x - menu_button_spacing * (menu_row_size - 1) - menu_button_size) * 0.5;
 var menu_off_y = (game_size.y - menu_button_spacing * 2 - menu_button_size) * 0.5;
-var instructions_font = await import_shaku.default.assets.loadMsdfFontTexture("fonts/Arial.ttf", { jsonUrl: "fonts/Arial.json", textureUrl: "fonts/Arial.png" });
-var dirs_texture = await import_shaku.default.assets.loadTexture("imgs/directions.png", { generateMipMaps: true });
+var instructions_font = import_shaku.default.assets.loadMsdfFontTexture("fonts/Arial.ttf", { jsonUrl: "fonts/Arial.json", textureUrl: "fonts/Arial.png" }).asset;
+var dirs_texture = import_shaku.default.assets.loadTexture("imgs/directions.png", { generateMipMaps: true }).asset;
+var space_texture = import_shaku.default.assets.loadTexture("imgs/spacebar.png", { generateMipMaps: true }).asset;
+var undo_texture = import_shaku.default.assets.loadTexture("imgs/undo_redo.png", { generateMipMaps: true }).asset;
+var mute_texture = import_shaku.default.assets.loadTexture("imgs/mute.png", { generateMipMaps: true }).asset;
+var reset_texture = import_shaku.default.assets.loadTexture("imgs/reset.png", { generateMipMaps: true }).asset;
+var player_texture = import_shaku.default.assets.loadTexture("imgs/player.png", { generateMipMaps: true }).asset;
+var player_gray_texture = import_shaku.default.assets.loadTexture("imgs/player_gray.png", { generateMipMaps: true }).asset;
+var crate_texture = import_shaku.default.assets.loadTexture("imgs/crate.png", { generateMipMaps: true }).asset;
+var target_texture = import_shaku.default.assets.loadTexture("imgs/target.png", { generateMipMaps: true }).asset;
+var button_texture = import_shaku.default.assets.loadTexture("imgs/button.png", { generateMipMaps: true }).asset;
+var particle_crate_texture = import_shaku.default.assets.loadTexture("imgs/particle_crate.png", { generateMipMaps: true }).asset;
+var geo_texture = import_shaku.default.assets.loadTexture("imgs/geo.png", { generateMipMaps: true }).asset;
+var spawner_texture = import_shaku.default.assets.loadTexture("imgs/spawner.png", { generateMipMaps: true }).asset;
+var floors_texture = import_shaku.default.assets.loadTexture("imgs/floors.png", { generateMipMaps: true }).asset;
+var left_arrow_texture = import_shaku.default.assets.loadTexture("imgs/left_arrow.png", { generateMipMaps: true }).asset;
+var none_texture = import_shaku.default.assets.loadTexture("imgs/wait.png", { generateMipMaps: true }).asset;
+var tape_borders_texture = import_shaku.default.assets.loadTexture("imgs/tape_borders.png", { generateMipMaps: true }).asset;
+var icons_texture = import_shaku.default.assets.loadTexture("icons/all.png").asset;
+var icon_back_texture = import_shaku.default.assets.loadTexture("icons/icon_back.png").asset;
+var icon_border_texture = import_shaku.default.assets.loadTexture("icons/icon_border.png").asset;
+var stepSoundSrc = import_shaku.default.assets.loadSound("sounds/step.wav").asset;
+var pushSoundSrc = import_shaku.default.assets.loadSound("sounds/push.wav").asset;
+var wallSoundSrc = import_shaku.default.assets.loadSound("sounds/wall.wav").asset;
+var onTargetSoundSrc = import_shaku.default.assets.loadSound("sounds/onTarget.wav").asset;
+var offTargetSoundSrc = import_shaku.default.assets.loadSound("sounds/offTarget.wav").asset;
+await import_shaku.default.assets.waitForAll();
 var dirs_sprite = new import_sprite.default(dirs_texture, new import_rectangle.default(0, 0, 150, 100));
-var space_texture = await import_shaku.default.assets.loadTexture("imgs/spacebar.png", { generateMipMaps: true });
 var space_sprite = new import_sprite.default(space_texture);
-var undo_texture = await import_shaku.default.assets.loadTexture("imgs/undo_redo.png", { generateMipMaps: true });
 var undo_sprite = new import_sprite.default(undo_texture, new import_rectangle.default(0, 0, 200, 50));
-var mute_texture = await import_shaku.default.assets.loadTexture("imgs/mute.png", { generateMipMaps: true });
 var mute_sprite = new import_sprite.default(mute_texture, new import_rectangle.default(0, 50, 100, 50));
 mute_sprite.position.set(725, 550);
-var reset_texture = await import_shaku.default.assets.loadTexture("imgs/reset.png", { generateMipMaps: true });
 var reset_sprite = new import_sprite.default(reset_texture);
 reset_sprite.position.set(600, 550);
-var player_texture = await import_shaku.default.assets.loadTexture("imgs/player.png", { generateMipMaps: true });
 var player_sprite = new import_sprite.default(player_texture);
 player_sprite.size.set(TILE_SIZE, TILE_SIZE);
-var player_gray_texture = await import_shaku.default.assets.loadTexture("imgs/player_gray.png", { generateMipMaps: true });
 var player_gray_sprite = new import_sprite.default(player_gray_texture);
 player_gray_sprite.size.set(TILE_SIZE, TILE_SIZE);
-var crate_texture = await import_shaku.default.assets.loadTexture("imgs/crate.png", { generateMipMaps: true });
 var crate_sprite = new import_sprite.default(crate_texture);
 crate_sprite.size.set(TILE_SIZE, TILE_SIZE);
-var target_texture = await import_shaku.default.assets.loadTexture("imgs/target.png", { generateMipMaps: true });
 var target_sprite = new import_sprite.default(target_texture);
 target_sprite.size.set(TILE_SIZE, TILE_SIZE);
-var button_texture = await import_shaku.default.assets.loadTexture("imgs/button.png", { generateMipMaps: true });
 var button_sprite = new import_sprite.default(button_texture);
 button_sprite.size.set(TILE_SIZE, TILE_SIZE);
-var two_state_wall_texture = await import_shaku.default.assets.loadTexture("imgs/two_state_wall.png", { generateMipMaps: true });
-var spawner_texture = await import_shaku.default.assets.loadTexture("imgs/spawner.png", { generateMipMaps: true });
 var spawner_sprite = new import_sprite.default(spawner_texture);
 spawner_sprite.size.set(TILE_SIZE, TILE_SIZE);
-var particle_crate_texture = await import_shaku.default.assets.loadTexture("imgs/particle_crate.png", { generateMipMaps: true });
-var geo_texture = await import_shaku.default.assets.loadTexture("imgs/geo.png", { generateMipMaps: true });
 var geo_sprite = new import_sprite.default(geo_texture, new import_rectangle.default(0, 0, TILE_SIZE, TILE_SIZE));
-var floors_texture = await import_shaku.default.assets.loadTexture("imgs/floors.png", { generateMipMaps: true });
-var left_arrow_texture = await import_shaku.default.assets.loadTexture("imgs/left_arrow.png", { generateMipMaps: true });
 var left_arrow = new import_sprite.default(left_arrow_texture);
 left_arrow.size.set(SYMBOL_SIZE, SYMBOL_SIZE);
-var none_texture = await import_shaku.default.assets.loadTexture("imgs/wait.png", { generateMipMaps: true });
 var none_sprite = new import_sprite.default(none_texture);
 none_sprite.size.set(SYMBOL_SIZE, SYMBOL_SIZE);
-var tape_borders_texture = await import_shaku.default.assets.loadTexture("imgs/tape_borders.png", { generateMipMaps: true });
 var tape_border_left = new import_sprite.default(tape_borders_texture, new import_rectangle.default(0, 0, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
 tape_border_left.origin.set(0, 0);
 tape_border_left.position.set(-SYMBOL_SIZE / 2, 0);
@@ -11210,22 +11218,9 @@ var tape_border = new import_sprite.default(tape_borders_texture, new import_rec
 tape_border.origin.set(0, 0);
 var tape_border_right = new import_sprite.default(tape_borders_texture, new import_rectangle.default(SYMBOL_SIZE * 1.5, 0, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
 tape_border_right.origin.set(0, 0);
-var icons_texture = await import_shaku.default.assets.loadTexture("icons/all.png");
-var icon_back_texture = await import_shaku.default.assets.loadTexture("icons/icon_back.png");
-var icon_border_texture = await import_shaku.default.assets.loadTexture("icons/icon_border.png");
 var icon_back = new import_sprite.default(icon_back_texture);
 var icon_border = new import_sprite.default(icon_border_texture);
 icon_border.color = import_color.default.fromHex("#6D6D6D");
-var stepSoundSrc = await import_shaku.default.assets.loadSound("sounds/step.wav");
-var pushSoundSrc = await import_shaku.default.assets.loadSound("sounds/push.wav");
-var wallSoundSrc = await import_shaku.default.assets.loadSound("sounds/wall.wav");
-var onTargetSoundSrc = await import_shaku.default.assets.loadSound("sounds/onTarget.wav");
-var offTargetSoundSrc = await import_shaku.default.assets.loadSound("sounds/offTarget.wav");
-var stepSound = await import_shaku.default.sfx.createSound(stepSoundSrc);
-var pushSound = await import_shaku.default.sfx.createSound(pushSoundSrc);
-var wallSound = await import_shaku.default.sfx.createSound(wallSoundSrc);
-var onTargetSound = await import_shaku.default.sfx.createSound(onTargetSoundSrc);
-var offTargetSound = await import_shaku.default.sfx.createSound(offTargetSoundSrc);
 var COLOR_TAPE = import_color.default.fromHex("#E5B35B");
 var COLOR_TAPE_DELAY = import_color.default.fromHex("#f5ca7f");
 var COLOR_HIGH = import_color.default.fromHex("#99F3ED");
@@ -11240,7 +11235,6 @@ var tape_low = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
 tape_low.origin = new import_vector2.default(0, -8 / (SYMBOL_SIZE * 1.5));
 tape_low.size.set(SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16);
 tape_low.color = COLOR_LOW;
-await import_shaku.default.assets.waitForAll();
 var ParticleCrate = class {
   constructor(pos, time) {
     this.pos = pos;
@@ -11660,14 +11654,7 @@ var TwoStateWall = class extends ButtonTarget {
     this.dir = dir;
     this.extended = extended;
     this.previous = previous;
-    this.rail_sprite = new import_sprite.default(two_state_wall_texture, new import_rectangle.default(0, 0, TILE_SIZE * 2, TILE_SIZE));
-    this.rail_sprite.position = pos.add(dir.mul(0.5)).add(1, 1).mul(TILE_SIZE);
-    this.rail_sprite.rotation = this.dir.getRadians();
-    this.wall_sprite = new import_sprite.default(two_state_wall_texture, new import_rectangle.default(TILE_SIZE * 2, 0, TILE_SIZE, TILE_SIZE));
-    this.wall_sprite.rotation = this.dir.getRadians();
   }
-  rail_sprite;
-  wall_sprite;
   mainUpdate(state2, button_active, button_prev_active) {
     let new_state = new GameState(state2.major_turn, state2.minor_turn + 1, state2.things.map((x) => x.clone()));
     if (button_active) {
@@ -11686,13 +11673,6 @@ var TwoStateWall = class extends ButtonTarget {
     return [];
   }
   draw(turn_time) {
-    import_shaku.default.gfx.drawSprite(this.rail_sprite);
-    let pos = this.extended ? this.pos.add(this.dir) : this.pos;
-    if (this.previous && this.previous.extended != this.extended) {
-      pos = import_vector2.default.lerp(this.previous.extended ? this.pos.add(this.dir) : this.pos, pos, turn_time);
-    }
-    this.wall_sprite.position.copy(pos.add(1, 1).mul(TILE_SIZE));
-    import_shaku.default.gfx.drawSprite(this.wall_sprite);
   }
   move(state2, pos, direction) {
     if (this.extended) {

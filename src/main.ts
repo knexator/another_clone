@@ -59,15 +59,19 @@ let game_size = new Vector2(800, 430);
 
 let muted = false;
 
-const logo_texture = await Shaku.assets.loadTexture("imgs/logo.png", { generateMipMaps: true });
+// @ts-ignore
+const logo_texture = Shaku.assets.loadTexture("imgs/logo.png").asset;
+// @ts-ignore
+const logo_start_texture = Shaku.assets.loadTexture("imgs/start.png").asset;
+// @ts-ignore
+const logo_loading_texture = Shaku.assets.loadTexture("imgs/loading.png").asset;
+
+await Shaku.assets.waitForAll();
+
 const logo_sprite = new Sprite(logo_texture);
 logo_sprite.origin.set(0, 0);
-
-const logo_start_texture = await Shaku.assets.loadTexture("imgs/start.png", { generateMipMaps: true });
 const logo_start_sprite = new Sprite(logo_start_texture);
 logo_start_sprite.origin.set(0, 0);
-
-const logo_loading_texture = await Shaku.assets.loadTexture("imgs/loading.png", { generateMipMaps: true });
 const logo_loading_sprite = new Sprite(logo_loading_texture);
 logo_loading_sprite.origin.set(0, 0);
 
@@ -105,80 +109,106 @@ const menu_off_y = (game_size.y - menu_button_spacing * 2 - menu_button_size) * 
 
 // await new Promise(r => setTimeout(r, 2000)); // to test loading screen
 
-let instructions_font = await Shaku.assets.loadMsdfFontTexture('fonts/Arial.ttf', { jsonUrl: 'fonts/Arial.json', textureUrl: 'fonts/Arial.png' });
+// @ts-ignore
+let instructions_font = Shaku.assets.loadMsdfFontTexture('fonts/Arial.ttf', { jsonUrl: 'fonts/Arial.json', textureUrl: 'fonts/Arial.png' }).asset;
+// @ts-ignore
+const dirs_texture = Shaku.assets.loadTexture("imgs/directions.png", { generateMipMaps: true }).asset;
+// @ts-ignore
+const space_texture = Shaku.assets.loadTexture("imgs/spacebar.png", { generateMipMaps: true }).asset;
+// @ts-ignore
+const undo_texture = Shaku.assets.loadTexture("imgs/undo_redo.png", { generateMipMaps: true }).asset;
+// @ts-ignore
+const mute_texture = Shaku.assets.loadTexture("imgs/mute.png", { generateMipMaps: true }).asset;
+// @ts-ignore
+const reset_texture = Shaku.assets.loadTexture("imgs/reset.png", { generateMipMaps: true }).asset;
 
-const dirs_texture = await Shaku.assets.loadTexture("imgs/directions.png", { generateMipMaps: true });
+// @ts-ignore
+const player_texture = Shaku.assets.loadTexture("imgs/player.png", { generateMipMaps: true }).asset;
+// @ts-ignore
+const player_gray_texture = Shaku.assets.loadTexture("imgs/player_gray.png", { generateMipMaps: true }).asset;
+// @ts-ignore
+const crate_texture = Shaku.assets.loadTexture("imgs/crate.png", { generateMipMaps: true }).asset;
+// @ts-ignore
+const target_texture = Shaku.assets.loadTexture("imgs/target.png", { generateMipMaps: true }).asset;
+// @ts-ignore
+const button_texture = Shaku.assets.loadTexture("imgs/button.png", { generateMipMaps: true }).asset;
+// const two_state_wall_texture =  Shaku.assets.loadTexture("imgs/two_state_wall.png", { generateMipMaps: true }).asset;
+// @ts-ignore
+const particle_crate_texture = Shaku.assets.loadTexture("imgs/particle_crate.png", { generateMipMaps: true }).asset;
+// @ts-ignore
+const geo_texture = Shaku.assets.loadTexture("imgs/geo.png", { generateMipMaps: true }).asset;
+// @ts-ignore
+const spawner_texture = Shaku.assets.loadTexture("imgs/spawner.png", { generateMipMaps: true }).asset;
+// @ts-ignore
+const floors_texture = Shaku.assets.loadTexture("imgs/floors.png", { generateMipMaps: true }).asset;
+// @ts-ignore
+const left_arrow_texture = Shaku.assets.loadTexture("imgs/left_arrow.png", { generateMipMaps: true }).asset;
+// @ts-ignore
+const none_texture = Shaku.assets.loadTexture("imgs/wait.png", { generateMipMaps: true }).asset;
+// @ts-ignore
+const tape_borders_texture = Shaku.assets.loadTexture("imgs/tape_borders.png", { generateMipMaps: true }).asset;
+// @ts-ignore
+let icons_texture = Shaku.assets.loadTexture("icons/all.png").asset;
+// @ts-ignore
+let icon_back_texture = Shaku.assets.loadTexture("icons/icon_back.png").asset;
+// @ts-ignore
+let icon_border_texture = Shaku.assets.loadTexture("icons/icon_border.png").asset;
+// @ts-ignore
+let stepSoundSrc = Shaku.assets.loadSound('sounds/step.wav').asset;
+// @ts-ignore
+let pushSoundSrc = Shaku.assets.loadSound('sounds/push.wav').asset;
+// @ts-ignore
+let wallSoundSrc = Shaku.assets.loadSound('sounds/wall.wav').asset;
+// @ts-ignore
+let onTargetSoundSrc = Shaku.assets.loadSound('sounds/onTarget.wav').asset;
+// @ts-ignore
+let offTargetSoundSrc = Shaku.assets.loadSound('sounds/offTarget.wav').asset;
+
+await Shaku.assets.waitForAll();
+
 const dirs_sprite = new Sprite(dirs_texture, new Rectangle(0, 0, 150, 100));
-const space_texture = await Shaku.assets.loadTexture("imgs/spacebar.png", { generateMipMaps: true });
 const space_sprite = new Sprite(space_texture);
-const undo_texture = await Shaku.assets.loadTexture("imgs/undo_redo.png", { generateMipMaps: true });
 const undo_sprite = new Sprite(undo_texture, new Rectangle(0, 0, 200, 50));
-const mute_texture = await Shaku.assets.loadTexture("imgs/mute.png", { generateMipMaps: true });
 const mute_sprite = new Sprite(mute_texture, new Rectangle(0, 50, 100, 50));
 mute_sprite.position.set(725, 550);
-
-const reset_texture = await Shaku.assets.loadTexture("imgs/reset.png", { generateMipMaps: true });
 const reset_sprite = new Sprite(reset_texture);
 reset_sprite.position.set(600, 550);
 
-
-const player_texture = await Shaku.assets.loadTexture("imgs/player.png", { generateMipMaps: true });
 // player_texture.filter = TextureFilterModes.LinearMipmapLinear;
 const player_sprite = new Sprite(player_texture);
 player_sprite.size.set(TILE_SIZE, TILE_SIZE);
-
-const player_gray_texture = await Shaku.assets.loadTexture("imgs/player_gray.png", { generateMipMaps: true });
 // player_gray_texture.filter = TextureFilterModes.LinearMipmapLinear;
 const player_gray_sprite = new Sprite(player_gray_texture);
 player_gray_sprite.size.set(TILE_SIZE, TILE_SIZE);
-
-
-const crate_texture = await Shaku.assets.loadTexture("imgs/crate.png", { generateMipMaps: true });
 // crate_texture.filter = TextureFilterModes.LinearMipmapLinear;
 const crate_sprite = new Sprite(crate_texture);
 crate_sprite.size.set(TILE_SIZE, TILE_SIZE);
-
-const target_texture = await Shaku.assets.loadTexture("imgs/target.png", { generateMipMaps: true });
 // target_texture.filter = TextureFilterModes.LinearMipmapLinear;
 const target_sprite = new Sprite(target_texture);
 target_sprite.size.set(TILE_SIZE, TILE_SIZE);
-
-const button_texture = await Shaku.assets.loadTexture("imgs/button.png", { generateMipMaps: true });
 // button_texture.filter = TextureFilterModes.LinearMipmapLinear;
 const button_sprite = new Sprite(button_texture);
 button_sprite.size.set(TILE_SIZE, TILE_SIZE);
-
-const two_state_wall_texture = await Shaku.assets.loadTexture("imgs/two_state_wall.png", { generateMipMaps: true });
 // two_state_wall_texture.filter = TextureFilterModes.LinearMipmapLinear;
-
-const spawner_texture = await Shaku.assets.loadTexture("imgs/spawner.png", { generateMipMaps: true });
 // spawner_texture.filter = TextureFilterModes.LinearMipmapLinear;
 const spawner_sprite = new Sprite(spawner_texture);
 spawner_sprite.size.set(TILE_SIZE, TILE_SIZE);
 
-const particle_crate_texture = await Shaku.assets.loadTexture("imgs/particle_crate.png", { generateMipMaps: true });
 // spawner_texture.filter = TextureFilterModes.LinearMipmapLinear;
 
-
-const geo_texture = await Shaku.assets.loadTexture("imgs/geo.png", { generateMipMaps: true });
 // geo_texture.filter = TextureFilterModes.LinearMipmapLinear;
 const geo_sprite = new Sprite(geo_texture, new Rectangle(0, 0, TILE_SIZE, TILE_SIZE));
 
-const floors_texture = await Shaku.assets.loadTexture("imgs/floors.png", { generateMipMaps: true });
 // floors_texture.filter = TextureFilterModes.LinearMipmapLinear;
 
 
-const left_arrow_texture = await Shaku.assets.loadTexture("imgs/left_arrow.png", { generateMipMaps: true });
 // left_arrow_texture.filter = TextureFilterModes.LinearMipmapLinear;
 const left_arrow = new Sprite(left_arrow_texture);
 left_arrow.size.set(SYMBOL_SIZE, SYMBOL_SIZE);
 
-const none_texture = await Shaku.assets.loadTexture("imgs/wait.png", { generateMipMaps: true });
 // none_texture.filter = TextureFilterModes.LinearMipmapLinear;
 const none_sprite = new Sprite(none_texture);
 none_sprite.size.set(SYMBOL_SIZE, SYMBOL_SIZE);
-
-const tape_borders_texture = await Shaku.assets.loadTexture("imgs/tape_borders.png", { generateMipMaps: true });
 
 const tape_border_left = new Sprite(tape_borders_texture, new Rectangle(0, 0, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
 tape_border_left.origin.set(0, 0);
@@ -188,24 +218,9 @@ tape_border.origin.set(0, 0);
 const tape_border_right = new Sprite(tape_borders_texture, new Rectangle(SYMBOL_SIZE * 1.5, 0, SYMBOL_SIZE / 2, SYMBOL_SIZE * 1.5));
 tape_border_right.origin.set(0, 0);
 
-let icons_texture = await Shaku.assets.loadTexture("icons/all.png");
-
-let icon_back_texture = await Shaku.assets.loadTexture("icons/icon_back.png");
-let icon_border_texture = await Shaku.assets.loadTexture("icons/icon_border.png");
 const icon_back = new Sprite(icon_back_texture);
 const icon_border = new Sprite(icon_border_texture);
 icon_border.color = Color.fromHex("#6D6D6D");
-
-let stepSoundSrc = await Shaku.assets.loadSound('sounds/step.wav');
-let pushSoundSrc = await Shaku.assets.loadSound('sounds/push.wav');
-let wallSoundSrc = await Shaku.assets.loadSound('sounds/wall.wav');
-let onTargetSoundSrc = await Shaku.assets.loadSound('sounds/onTarget.wav');
-let offTargetSoundSrc = await Shaku.assets.loadSound('sounds/offTarget.wav');
-let stepSound = await Shaku.sfx.createSound(stepSoundSrc);
-let pushSound = await Shaku.sfx.createSound(pushSoundSrc);
-let wallSound = await Shaku.sfx.createSound(wallSoundSrc);
-let onTargetSound = await Shaku.sfx.createSound(onTargetSoundSrc);
-let offTargetSound = await Shaku.sfx.createSound(offTargetSoundSrc);
 
 const COLOR_TAPE = Color.fromHex("#E5B35B");
 const COLOR_TAPE_DELAY = Color.fromHex("#f5ca7f");
@@ -224,7 +239,12 @@ tape_low.origin = new Vector2(0, -8 / (SYMBOL_SIZE * 1.5));
 tape_low.size.set(SYMBOL_SIZE, SYMBOL_SIZE * 1.5 - 16);
 tape_low.color = COLOR_LOW;
 
-await Shaku.assets.waitForAll();
+// let stepSound = await Shaku.sfx.createSound(stepSoundSrc);
+// let pushSound = await Shaku.sfx.createSound(pushSoundSrc);
+// let wallSound = await Shaku.sfx.createSound(wallSoundSrc);
+// let onTargetSound = await Shaku.sfx.createSound(onTargetSoundSrc);
+// let offTargetSound = await Shaku.sfx.createSound(offTargetSoundSrc);
+
 type Particle = ParticleCrate | ParticleBump;
 
 class ParticleCrate {
@@ -693,9 +713,10 @@ abstract class ButtonTarget extends GameObject {
     }
 }
 
+
 class TwoStateWall extends ButtonTarget {
-    private rail_sprite: Sprite;
-    private wall_sprite: Sprite;
+    // private rail_sprite: Sprite;
+    // private wall_sprite: Sprite;
     constructor(
         public pos: Vector2,
         public dir: Vector2,
@@ -703,12 +724,12 @@ class TwoStateWall extends ButtonTarget {
         public previous: TwoStateWall | null,
     ) {
         super();
-        this.rail_sprite = new Sprite(two_state_wall_texture, new Rectangle(0, 0, TILE_SIZE * 2, TILE_SIZE));
-        this.rail_sprite.position = pos.add(dir.mul(.5)).add(1, 1).mul(TILE_SIZE);
-        this.rail_sprite.rotation = this.dir.getRadians();
+        // this.rail_sprite = new Sprite(two_state_wall_texture, new Rectangle(0, 0, TILE_SIZE * 2, TILE_SIZE));
+        // this.rail_sprite.position = pos.add(dir.mul(.5)).add(1, 1).mul(TILE_SIZE);
+        // this.rail_sprite.rotation = this.dir.getRadians();
 
-        this.wall_sprite = new Sprite(two_state_wall_texture, new Rectangle(TILE_SIZE * 2, 0, TILE_SIZE, TILE_SIZE));
-        this.wall_sprite.rotation = this.dir.getRadians();
+        // this.wall_sprite = new Sprite(two_state_wall_texture, new Rectangle(TILE_SIZE * 2, 0, TILE_SIZE, TILE_SIZE));
+        // this.wall_sprite.rotation = this.dir.getRadians();
     };
 
     mainUpdate(state: GameState, button_active: boolean, button_prev_active: boolean): GameState[] {
@@ -733,20 +754,14 @@ class TwoStateWall extends ButtonTarget {
     }
 
     draw(turn_time: number): void {
-        Shaku.gfx!.drawSprite(this.rail_sprite);
+        // Shaku.gfx!.drawSprite(this.rail_sprite);
 
-        let pos = this.extended ? this.pos.add(this.dir) : this.pos;
-        if (this.previous && this.previous.extended != this.extended) {
-            pos = Vector2.lerp(this.previous.extended ? this.pos.add(this.dir) : this.pos, pos, turn_time);
-        }
-        this.wall_sprite.position.copy(pos.add(1, 1).mul(TILE_SIZE));
-        Shaku.gfx!.drawSprite(this.wall_sprite);
-
-        // Shaku.gfx.drawLine(
-        //     this.pos.add(1, 1).mul(TILE_SIZE),
-        //     this.pos.add(this.dir).add(1, 1).mul(TILE_SIZE),
-        //     Color.blue,
-        // );
+        // let pos = this.extended ? this.pos.add(this.dir) : this.pos;
+        // if (this.previous && this.previous.extended != this.extended) {
+        //     pos = Vector2.lerp(this.previous.extended ? this.pos.add(this.dir) : this.pos, pos, turn_time);
+        // }
+        // this.wall_sprite.position.copy(pos.add(1, 1).mul(TILE_SIZE));
+        // Shaku.gfx!.drawSprite(this.wall_sprite);
     }
 
     move(state: GameState, pos: Vector2, direction: Vector2): boolean {
@@ -762,6 +777,7 @@ class TwoStateWall extends ButtonTarget {
     }
 
 }
+
 
 abstract class Pushable extends GameObject {
     public abstract sprite: Sprite;
@@ -2757,52 +2773,6 @@ function moveTowards(cur_val: number, target_val: number, max_delta: number): nu
     } else {
         return target_val;
     }
-}
-
-async function makeAsciiSprite(ascii: string, colors: (string | Color)[]): Promise<Sprite> {
-    let texture = await loadAsciiTexture(ascii, colors);
-    let result_sprite = new Shaku.gfx!.Sprite(texture);
-    result_sprite.size.set(TILE_SIZE, TILE_SIZE)
-    return result_sprite;
-}
-
-
-async function loadAsciiTexture(ascii: string, colors: (string | Color)[]): Promise<TextureAsset> {
-
-    let rows = ascii.trim().split("\n").map(x => x.trim())
-    let height = rows.length
-    let width = rows[0].length
-
-    // create render target
-    // @ts-ignore
-    let renderTarget = await Shaku.assets.createRenderTarget(null, width, height, 4);
-
-    // use render target
-    Shaku.gfx!.setRenderTarget(renderTarget, false);
-
-    for (let j = 0; j < height; j++) {
-        for (let i = 0; i < width; i++) {
-            let val = rows[j][i];
-            if (val === '.' || val === ' ') continue;
-            let n = parseInt(val);
-
-            let col = colors[n];
-            if (typeof col === 'string') {
-                col = Shaku.utils.Color.fromHex(col);
-            }
-            Shaku.gfx!.fillRect(
-                new Shaku.utils.Rectangle(i, height - j - 1, 1, 1),
-                col,
-                BlendModes.Opaque, 0
-            );
-        }
-    }
-
-    // reset render target
-    // @ts-ignore
-    Shaku.gfx!.setRenderTarget(null, false);
-
-    return renderTarget;
 }
 
 function makeRectArray<T>(width: number, height: number, fill: T): T[][] {
