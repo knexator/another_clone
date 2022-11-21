@@ -66,4 +66,4 @@ for n, (i, j) in [
     ))
 
 
-spritesheet.save("imgs/geo.png", "PNG")
+spritesheet.save("dist/imgs/geo.png", "PNG")
