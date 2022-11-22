@@ -11130,16 +11130,16 @@ import_shaku.default.gfx.clear(import_shaku.default.utils.Color.darkslategray);
 import_shaku.default.endFrame();
 var game_size = new import_vector2.default(800, 430);
 var muted = false;
-var logo_texture = import_shaku.default.assets.loadTexture("imgs/logo.png").asset;
-var logo_start_texture = import_shaku.default.assets.loadTexture("imgs/start.png").asset;
-var logo_loading_texture = import_shaku.default.assets.loadTexture("imgs/loading.png").asset;
+var COLOR_LOGO = import_color.default.fromHex("#47B2CE");
+var generateText = (0, import_lodash.default)((text, x, y, size = 32, color = import_color.default.white, aligment = import_text_alignments.TextAlignments.Center, font = instructions_font) => {
+  console.log("building text");
+  let group = import_shaku.default.gfx.buildText(font, text, size, color, aligment);
+  group.position.set(x, y);
+  return group;
+}, (text, x, y) => text + x.toString() + y.toString());
+var instructions_font = import_shaku.default.assets.loadMsdfFontTexture("fonts/Arial.ttf", { jsonUrl: "fonts/Arial.json", textureUrl: "fonts/Arial.png" }).asset;
+var logo_font = import_shaku.default.assets.loadMsdfFontTexture("fonts/BowlbyOne-Regular.ttf", { jsonUrl: "fonts/BowlbyOne-Regular.json", textureUrl: "fonts/BowlbyOne-Regular.png" }).asset;
 await import_shaku.default.assets.waitForAll();
-var logo_sprite = new import_sprite.default(logo_texture);
-logo_sprite.origin.set(0, 0);
-var logo_start_sprite = new import_sprite.default(logo_start_texture);
-logo_start_sprite.origin.set(0, 0);
-var logo_loading_sprite = new import_sprite.default(logo_loading_texture);
-logo_loading_sprite.origin.set(0, 0);
 var LOWER_SCREEN_SPRITE = new import_sprite.default(import_shaku.default.gfx.whiteTexture);
 LOWER_SCREEN_SPRITE.origin = import_vector2.default.zero;
 LOWER_SCREEN_SPRITE.size.set(800, 600 - game_size.y);
@@ -11150,20 +11150,25 @@ MID_LINE_SPRITE.origin = import_vector2.default.zero;
 MID_LINE_SPRITE.size.set(800, 8);
 MID_LINE_SPRITE.position.set(0, game_size.y);
 MID_LINE_SPRITE.color = import_color.default.fromHex("#12679B");
+var logo_group_1 = generateText("Another", 400, 10, 136, COLOR_LOGO, import_text_alignments.TextAlignments.Center, logo_font);
+var logo_group_2 = generateText("Clone", 400, 136, 136, COLOR_LOGO, import_text_alignments.TextAlignments.Center, logo_font);
+var logo_loading_group = generateText("Loading...", 400, 490, 48, import_color.default.white, import_text_alignments.TextAlignments.Center, instructions_font);
 import_shaku.default.startFrame();
 import_shaku.default.gfx.clear(import_shaku.default.utils.Color.darkslategray);
-import_shaku.default.gfx.drawSprite(logo_sprite);
 import_shaku.default.gfx.drawSprite(LOWER_SCREEN_SPRITE);
 import_shaku.default.gfx.drawSprite(MID_LINE_SPRITE);
-import_shaku.default.gfx.drawSprite(logo_loading_sprite);
+import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
+import_shaku.default.gfx.drawGroup(logo_group_1, false);
+import_shaku.default.gfx.drawGroup(logo_group_2, false);
+import_shaku.default.gfx.drawGroup(logo_loading_group, false);
 import_shaku.default.endFrame();
+var logo_start_group = generateText("Press any key to start", 400, 490, 48, import_color.default.white, import_text_alignments.TextAlignments.Center, instructions_font);
 var storage = new import_shaku.default.utils.Storage();
 var menu_row_size = 6;
 var menu_button_spacing = 125;
 var menu_button_size = 100;
 var menu_off_x = (game_size.x - menu_button_spacing * (menu_row_size - 1) - menu_button_size) * 0.5;
 var menu_off_y = (game_size.y - menu_button_spacing * 2 - menu_button_size) * 0.5;
-var instructions_font = import_shaku.default.assets.loadMsdfFontTexture("fonts/Arial.ttf", { jsonUrl: "fonts/Arial.json", textureUrl: "fonts/Arial.png" }).asset;
 var dirs_texture = import_shaku.default.assets.loadTexture("imgs/directions.png", { generateMipMaps: true }).asset;
 var space_texture = import_shaku.default.assets.loadTexture("imgs/spacebar.png", { generateMipMaps: true }).asset;
 var undo_texture = import_shaku.default.assets.loadTexture("imgs/undo_redo.png", { generateMipMaps: true }).asset;
@@ -12152,7 +12157,7 @@ var levels = [
       new Crate(new import_vector2.default(10, 2), null)
     ]
   )),
-  new Level("u_chain", "eyes", 16, 2, new GameState(
+  new Level("u_chain", "chip", 16, 2, new GameState(
     -1,
     0,
     [
@@ -12211,7 +12216,7 @@ var level_icon_sprites = /* @__PURE__ */ new Map();
 {
   let atlas_size = new import_vector2.default(6, 3);
   let k = 0;
-  for (let level_name of ["sofa", "cap", "hat", "soko", "whale", "house", "stairs", "snake", "train", "pipe", "claw", "toad", "duck", "car", "factory"]) {
+  for (let level_name of ["sofa", "cap", "hat", "soko", "whale", "house", "stairs", "snake", "train", "pipe", "claw", "toad", "duck", "car", "factory", "fish", "chip", "worm"]) {
     let cur_spr = new import_sprite.default(icons_texture);
     cur_spr.setSourceFromSpritesheet(new import_vector2.default(k % atlas_size.x, Math.floor(k / atlas_size.x)), atlas_size);
     cur_spr.position.set(
@@ -12463,12 +12468,6 @@ var drawExtra = function() {
     }
   };
 }();
-var generateText = (0, import_lodash.default)((text, x, y, size = 32, color = import_color.default.white, aligment = import_text_alignments.TextAlignments.Center, font = instructions_font) => {
-  console.log("building text");
-  let group = import_shaku.default.gfx.buildText(font, text, size, color, aligment);
-  group.position.set(x, y);
-  return group;
-}, (text, x, y) => text + x.toString() + y.toString());
 var intro_exit_time = 0;
 var editor_button_looking_for_target = -1;
 function update() {
@@ -12796,7 +12795,9 @@ function update() {
     import_shaku.default.gfx.drawSprite(FULL_SCREEN_SPRITE);
     import_shaku.default.gfx.useEffect(null);
     import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
-    import_shaku.default.gfx.drawGroup(generateText("Thanks for\nplaying!", 400, 100, 112, import_color.default.white), false);
+    import_shaku.default.gfx.drawGroup(generateText("Thanks for", 400, 75, 112, COLOR_LOGO, import_text_alignments.TextAlignments.Center, logo_font), false);
+    import_shaku.default.gfx.drawGroup(generateText("playing!", 400, 200, 112, COLOR_LOGO, import_text_alignments.TextAlignments.Center, logo_font), false);
+    import_shaku.default.gfx.drawGroup(generateText("- knexator", 600, 450, 42, COLOR_LOGO, import_text_alignments.TextAlignments.Center, logo_font), false);
     import_shaku.default.gfx.useEffect(null);
   }
   if (state === 1 /* GAME */ && !in_end_screen) {
@@ -12865,6 +12866,9 @@ function update() {
       }
     }
   }
+  if (import_shaku.default.input.pressed("u")) {
+    initTransitionToExitLevel(() => initTransitionToEnterEnd());
+  }
   drawExtra();
   if (state === 2 /* MENU */) {
     FULL_SCREEN_SPRITE.color = new import_color.default(0, 0, 0, 0.7);
@@ -12900,18 +12904,6 @@ function update() {
         );
       }
     }
-    import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
-    for (let k = 0; k < levels.length; k++) {
-      if (level_icon_sprites.has(levels[k].public_name))
-        continue;
-      let name_spr = generateText(
-        levels[k].public_name,
-        k % menu_row_size * menu_button_spacing + menu_off_x + menu_button_size / 2,
-        Math.floor(k / menu_row_size) * menu_button_spacing + menu_off_y + menu_button_size / 5,
-        24
-      );
-      import_shaku.default.gfx.drawGroup(name_spr, false);
-    }
     import_shaku.default.gfx.useEffect(bar_effect);
     bar_effect.uniforms["u_dark"](0.7);
     import_shaku.default.gfx.drawSprite(LOWER_SCREEN_SPRITE);
@@ -12943,18 +12935,27 @@ function update() {
     import_shaku.default.gfx.useEffect(bar_effect);
     bar_effect.uniforms["u_alpha"](1 - intro_exit_time * intro_exit_time);
     import_shaku.default.gfx.drawSprite(LOWER_SCREEN_SPRITE);
-    import_shaku.default.gfx.useEffect(null);
-    logo_sprite.position.y = lerp(0, -400, intro_exit_time * intro_exit_time);
-    import_shaku.default.gfx.drawSprite(logo_sprite);
+    import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
+    logo_group_1.position.y = lerp(10, -400 + 10, intro_exit_time * intro_exit_time);
+    logo_group_2.position.y = lerp(136, -400 + 136, intro_exit_time * intro_exit_time);
+    import_shaku.default.gfx.drawGroup(logo_group_1, false);
+    import_shaku.default.gfx.drawGroup(logo_group_2, false);
     if (intro_exit_time === 0) {
-      logo_loading_sprite.color.a -= import_shaku.default.gameTime.delta * 2;
-      logo_start_sprite.color.a = clamp(import_shaku.default.gameTime.elapsed - 0.8, 0, 1);
+      logo_loading_group._sprites.forEach((s) => {
+        s.color.a -= import_shaku.default.gameTime.delta * 2;
+      });
+      logo_start_group._sprites.forEach((s) => {
+        s.color.a = clamp(import_shaku.default.gameTime.elapsed - 0.8, 0, 1);
+      });
     } else {
-      logo_start_sprite.color.a -= import_shaku.default.gameTime.delta;
-      logo_start_sprite.position.y = lerp(0, 200, intro_exit_time * intro_exit_time);
+      logo_start_group._sprites.forEach((s) => {
+        s.color.a -= import_shaku.default.gameTime.delta;
+      });
+      logo_start_group.position.y = lerp(490, 690, intro_exit_time * intro_exit_time);
     }
-    import_shaku.default.gfx.drawSprite(logo_loading_sprite);
-    import_shaku.default.gfx.drawSprite(logo_start_sprite);
+    import_shaku.default.gfx.drawGroup(logo_loading_group, false);
+    import_shaku.default.gfx.drawGroup(logo_start_group, false);
+    import_shaku.default.gfx.useEffect(null);
     if (state === 1 /* GAME */) {
       LOWER_SCREEN_SPRITE.color.a = 1;
     }
@@ -12962,10 +12963,6 @@ function update() {
       intro_exit_time += 1e-4;
     }
   }
-  let level_name_spr = generateText(cur_level.public_name, 5, 0, 24, import_color.default.white, import_text_alignments.TextAlignments.Left);
-  import_shaku.default.gfx.useEffect(import_shaku.default.gfx.builtinEffects.MsdfFont);
-  import_shaku.default.gfx.drawGroup(level_name_spr, false);
-  import_shaku.default.gfx.useEffect(null);
   kalbakUpdate();
   import_shaku.default.endFrame();
   import_shaku.default.requestAnimationFrame(update);
@@ -13053,9 +13050,14 @@ function initTransitionToEnterLevel(n) {
 function initTransitionToEnterEnd() {
   let enter_end_time = 0;
   in_end_screen = true;
+  import_shaku.default.gfx.useEffect(transition_effect);
+  transition_effect.uniforms["u_pos"](FULL_SCREEN_SPRITE.size.x / 2, FULL_SCREEN_SPRITE.size.y / 2);
+  import_shaku.default.gfx.useEffect(null);
   doEveryFrameUntilTrue(() => {
-    FULL_SCREEN_SPRITE.color = new import_color.default(0, 0, 0, 1 - enter_end_time);
+    import_shaku.default.gfx.useEffect(transition_effect);
+    transition_effect.uniforms["u_progress"](1 - enter_end_time);
     import_shaku.default.gfx.drawSprite(FULL_SCREEN_SPRITE);
+    import_shaku.default.gfx.useEffect(null);
     enter_end_time = moveTowards(enter_end_time, 1, import_shaku.default.gameTime.delta * 3);
     return enter_end_time >= 1;
   });
