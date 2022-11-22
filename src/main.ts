@@ -2079,7 +2079,7 @@ function update() {
         case STATE.MENU:
             if (Shaku.input.pressed("escape")) {
                 state = STATE.GAME;
-            } else if (Shaku.input.pressed(["enter", "space"])) {
+            } else if (Shaku.input.pressed(["enter", "space"]) || Shaku.input.mousePressed()) {
                 initTransitionToLevel(menu_selected_level);
             }
             break;
@@ -2492,6 +2492,13 @@ function update() {
         ], Shaku.gameTime.delta);
         if (delta_level !== null) {
             menu_selected_level = mod(menu_selected_level + delta_level, levels.length);
+        }
+        if (Shaku.input.mouseDelta.length > 0) {
+            let selected_i = Math.floor((Shaku.input.mousePosition.x - menu_off_x + 13) / menu_button_spacing);
+            let selected_j = Math.floor((Shaku.input.mousePosition.y - menu_off_y + 13) / menu_button_spacing);
+            selected_i = clamp(selected_i, 0, menu_row_size - 1);
+            selected_j = clamp(selected_j, 0, 2);
+            menu_selected_level = selected_j * menu_row_size + selected_i;
         }
 
         for (let k = 0; k < levels.length; k++) {
