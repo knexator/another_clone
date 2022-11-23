@@ -60,6 +60,7 @@ Shaku.endFrame();
 let game_size = new Vector2(800, 430);
 
 let muted = false;
+let background_paused = false;
 
 const COLOR_LOGO = Color.fromHex("#47B2CE");
 
@@ -1755,12 +1756,15 @@ let cur_level_n = 0;
 let cur_level: Level;
 load_level(levels[cur_level_n]);
 
+let n_flashing = 0;
+
 function load_level(level: Level) {
     cur_level = level;
     selected_turn = 0;
     cur_turn = 0;
     time_offset = -.99;
     ending_boost = 2;
+    n_flashing = 0;
     robot_delay = level.n_delay;
     updateTapeLength(level.n_moves)
     initial_state = level.initial_state.nextStates().at(-1)!;
@@ -2034,12 +2038,17 @@ function update() {
         new Animator(mute_sprite).to({ "size.x": 100, "size.y": 50, "rotation": 0 }).duration(.1).play();
     }
 
+    if (Shaku.input.pressed("b")) {
+        background_paused = !background_paused;
+    }
+
     Shaku.gfx.useEffect(background_effect);
-    // @ts-ignore
-    background_effect.uniforms["u_time"](Shaku.gameTime.elapsed);
+    if (!background_paused) {
+        // @ts-ignore
+        background_effect.uniforms["u_time"](Shaku.gameTime.elapsed);
+    }
     // @ts-ignore
     background_effect.uniforms["u_alpha"](1);
-    // background_effect.uniforms["u_time"](cur_turn + time_offset);
     Shaku.gfx.drawSprite(MAIN_SCREEN_SPRITE);
     // @ts-ignore
     Shaku.gfx.useEffect(null);
@@ -2067,14 +2076,14 @@ function update() {
     // changing game state
     switch (state) {
         case STATE.GAME:
-            if (time_offset === 0 && !exiting_level && Shaku.input.pressed("escape")) {
+            if (time_offset === 0 && !exiting_level && Shaku.input.pressed(["escape", "p"])) {
                 menu_selected_level = cur_level_n;
                 state = STATE.MENU;
             }
             break;
 
         case STATE.MENU:
-            if (Shaku.input.pressed("escape")) {
+            if (Shaku.input.pressed(["escape", "p"])) {
                 state = STATE.GAME;
             } else if (Shaku.input.pressed(["enter", "space"]) || Shaku.input.mousePressed()) {
                 initTransitionToLevel(menu_selected_level);
@@ -2152,6 +2161,7 @@ function update() {
                     }
                 } else {
                     if (CONFIG.time === "MANUAL") {
+                        n_flashing += 1;
                         let time_left = .1;
                         let first = cur_level.dev_name === "first";
                         if (first) {
@@ -2172,9 +2182,12 @@ function update() {
                             }
                             time_left -= Shaku.gameTime.delta;
                             if (time_left < 0) {
-                                row_1_background.color = COLOR_TAPE;
-                                row_2_background.color = COLOR_TAPE;
-                                space_sprite.color = Color.white;
+                                n_flashing -= 1;
+                                if (n_flashing === 0) {
+                                    row_1_background.color = COLOR_TAPE;
+                                    row_2_background.color = COLOR_TAPE;
+                                    space_sprite.color = Color.white;
+                                }
                                 return true;
                             }
                             return false;
