@@ -1,6 +1,3 @@
-// todo:
-//  - bump against walls
-
 import Shaku from "shaku/lib/shaku";
 import TextureAsset from "shaku/lib/assets/texture_asset";
 import Sprite from "shaku/lib/gfx/sprite";
@@ -2472,10 +2469,6 @@ function update() {
                 initTransitionToExitLevel(() => initTransitionToEnterEnd());
             }
         }
-    }
-
-    if (Shaku.input.pressed("u")) {
-        initTransitionToExitLevel(() => initTransitionToEnterEnd());
     }
 
     drawExtra();

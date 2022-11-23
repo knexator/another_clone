@@ -12866,9 +12866,6 @@ function update() {
       }
     }
   }
-  if (import_shaku.default.input.pressed("u")) {
-    initTransitionToExitLevel(() => initTransitionToEnterEnd());
-  }
   drawExtra();
   if (state === 2 /* MENU */) {
     FULL_SCREEN_SPRITE.color = new import_color.default(0, 0, 0, 0.7);
