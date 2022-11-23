@@ -860,7 +860,7 @@ class Player extends Pushable {
 
         if (turn_time !== 1 && this.previous) {
             // turn_time = clamp(remap(turn_time, .2, 1, 0, 1), 0, 1);
-            if (cur_turn === 0) {
+            if (cur_turn === 0 && time_offset < 0) {
                 // special first turn
                 this.sprite.position.copy(Vector2.lerp(this.pos.sub(this.dir), this.pos, turn_time).add(1, 1).mul(TILE_SIZE));
             } else {
