@@ -9,7 +9,7 @@ require('esbuild')
     watch: watchFlag,
     format: 'esm', // allows top level await
     // when building, change these 2
-    // minify: true,
-    sourcemap: true
+    minify: true
+    // sourcemap: true
   })
   .catch(() => process.exit(1))
