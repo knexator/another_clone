@@ -2166,6 +2166,9 @@ function update() {
                         let first = cur_level.dev_name === "first";
                         if (first) {
                             space_sprite.color = COLOR_BRIGHT;
+                            space_sprite.size.mulSelf(1.15);
+                            space_sprite.rotation = (Math.random() - .5) * .2;
+                            new Animator(space_sprite).to({ "size.x": 200, "size.y": 50, "rotation": 0 }).duration(.1).play();
                         } else {
                             row_1_background.color = COLOR_SYMBOL;
                             row_2_background.color = COLOR_SYMBOL;
